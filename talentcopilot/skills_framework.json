@@ -3,130 +3,130 @@
         "category": "HR Technology",
         "family": "HR Systems",
         "aliases": [
+            "HRIS",
             "SIRH",
             "Human Resources Information System",
-            "HR Information Systems"
-        ],
-        "parent": null,
-        "related_skills": [
-            "Payroll",
-            "Time & Attendance",
-            "HR Reporting"
+            "Système d'information RH",
+            "Système d'information ressources humaines",
+            "人力资源信息系统",
+            "人力资源系统"
         ],
         "default_weight": 30,
-        "default_expected_level": "Advanced",
-        "evidence_examples": [
-            "Implemented HRIS systems",
-            "Led HRIS deployment",
-            "Managed HRIS configuration"
-        ]
+        "default_expected_level": "Advanced"
     },
     "API": {
         "category": "Integration",
         "family": "System Integration",
         "aliases": [
+            "API",
             "REST API",
             "SOAP API",
-            "REST",
-            "Web service"
-        ],
-        "parent": "Integration",
-        "related_skills": [
-            "JSON",
-            "XML",
-            "Middleware"
+            "Web service",
+            "API REST",
+            "interface API",
+            "intégration API",
+            "接口",
+            "API接口",
+            "系统接口"
         ],
         "default_weight": 20,
-        "default_expected_level": "Intermediate",
-        "evidence_examples": [
-            "Built REST APIs",
-            "Integrated systems via API",
-            "Worked with web services"
-        ]
+        "default_expected_level": "Intermediate"
     },
     "Power BI": {
         "category": "Data",
         "family": "Business Intelligence",
         "aliases": [
+            "Power BI",
             "Microsoft Power BI",
-            "PowerBI"
-        ],
-        "parent": "Reporting",
-        "related_skills": [
-            "SQL",
-            "Data Analysis",
-            "Dashboarding"
+            "PowerBI",
+            "tableau de bord Power BI",
+            "报表",
+            "仪表盘",
+            "数据看板"
         ],
         "default_weight": 15,
-        "default_expected_level": "Intermediate",
-        "evidence_examples": [
-            "Created Power BI dashboards",
-            "Built reports",
-            "Developed KPI dashboards"
-        ]
+        "default_expected_level": "Intermediate"
     },
     "Project Management": {
         "category": "Project",
         "family": "Delivery Management",
         "aliases": [
+            "Project Management",
             "Project Manager",
-            "Project Lead",
-            "PM"
-        ],
-        "parent": null,
-        "related_skills": [
-            "Risk Management",
-            "Stakeholder Management",
-            "Change Management"
+            "gestion de projet",
+            "chef de projet",
+            "pilotage de projet",
+            "项目管理",
+            "项目经理"
         ],
         "default_weight": 25,
-        "default_expected_level": "Advanced",
-        "evidence_examples": [
-            "Managed implementation projects",
-            "Led project delivery",
-            "Coordinated project stakeholders"
-        ]
+        "default_expected_level": "Advanced"
     },
     "Change Management": {
         "category": "Management",
         "family": "Transformation",
         "aliases": [
-            "Organizational Change",
-            "Change adoption",
-            "Transformation"
-        ],
-        "parent": null,
-        "related_skills": [
-            "Communication",
-            "Training",
-            "Stakeholder Management"
+            "Change Management",
+            "conduite du changement",
+            "accompagnement au changement",
+            "gestion du changement",
+            "变革管理",
+            "变更管理"
         ],
         "default_weight": 20,
-        "default_expected_level": "Intermediate",
-        "evidence_examples": [
-            "Led change management",
-            "Supported user adoption",
-            "Designed communication plans"
-        ]
+        "default_expected_level": "Intermediate"
     },
     "Stakeholder Management": {
         "category": "Management",
         "family": "Relationship Management",
         "aliases": [
+            "Stakeholder Management",
             "Stakeholder Engagement",
-            "Business Partnering"
-        ],
-        "parent": null,
-        "related_skills": [
-            "Communication",
-            "Project Management"
+            "gestion des parties prenantes",
+            "coordination des parties prenantes",
+            "利益相关者管理",
+            "相关方管理",
+            "跨部门协调"
         ],
         "default_weight": 20,
-        "default_expected_level": "Advanced",
-        "evidence_examples": [
-            "Coordinated internal stakeholders",
-            "Managed vendor and business relationships",
-            "Worked with cross-functional teams"
-        ]
+        "default_expected_level": "Advanced"
+    },
+    "Mandarin": {
+        "category": "Language",
+        "family": "Languages",
+        "aliases": [
+            "Mandarin",
+            "Chinese",
+            "Mandarin Chinese",
+            "chinois mandarin",
+            "chinois",
+            "中文",
+            "普通话",
+            "汉语"
+        ],
+        "default_weight": 10,
+        "default_expected_level": "Intermediate"
+    },
+    "French": {
+        "category": "Language",
+        "family": "Languages",
+        "aliases": [
+            "French",
+            "français",
+            "法语"
+        ],
+        "default_weight": 10,
+        "default_expected_level": "Intermediate"
+    },
+    "English": {
+        "category": "Language",
+        "family": "Languages",
+        "aliases": [
+            "English",
+            "anglais",
+            "英语"
+        ],
+        "default_weight": 10,
+        "default_expected_level": "Intermediate"
     }
 }
