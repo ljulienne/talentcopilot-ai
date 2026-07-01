@@ -6,6 +6,7 @@ from talentcopilot.ui.theme import apply_theme
 from talentcopilot.ui.home import render_home
 from talentcopilot.ui.dashboard import render_dashboard
 from talentcopilot.ui.comparison import render_candidate_comparison
+from talentcopilot.ui.recruitment_wizard import render_new_recruitment
 
 st.set_page_config(page_title=APP_NAME, page_icon="🧠", layout="wide")
 apply_theme()
@@ -13,16 +14,30 @@ apply_theme()
 if "analysis_batch" not in st.session_state:
     st.session_state.analysis_batch = None
 
+if "recruitment_context" not in st.session_state:
+    st.session_state.recruitment_context = None
+
 st.sidebar.title("🧠 TalentCopilot")
 st.sidebar.caption(f"Version {APP_VERSION}")
 
 page = st.sidebar.radio(
     "Navigation",
-    ["🏠 Home", "📊 Dashboard", "👥 Candidates", "⚖️ Comparison", "📄 Reports", "⚙️ Settings"]
+    [
+        "🏠 Home",
+        "➕ New Recruitment",
+        "📊 Dashboard",
+        "👥 Candidates",
+        "⚖️ Comparison",
+        "📄 Reports",
+        "⚙️ Settings"
+    ]
 )
 
 if page == "🏠 Home":
     render_home()
+
+elif page == "➕ New Recruitment":
+    render_new_recruitment()
 
 elif page == "📊 Dashboard":
     render_dashboard()
