@@ -20,22 +20,9 @@ def metric_card(title, value, subtitle="", color="#4F46E5"):
         box-shadow:0 4px 12px rgba(0,0,0,.08);
         margin-bottom:15px;
     ">
-        <div style="font-size:14px;color:#64748B;">
-            {title}
-        </div>
-
-        <div style="
-            font-size:34px;
-            font-weight:700;
-            margin-top:6px;
-            color:#0F172A;
-        ">
-            {value}
-        </div>
-
-        <div style="color:#64748B;">
-            {subtitle}
-        </div>
+        <div style="font-size:14px;color:#64748B;">{title}</div>
+        <div style="font-size:34px;font-weight:700;margin-top:6px;color:#0F172A;">{value}</div>
+        <div style="color:#64748B;">{subtitle}</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -47,6 +34,7 @@ def assistant_panel(title, message):
         border-radius:18px;
         padding:18px;
         border:1px solid #C7D2FE;
+        margin-bottom:16px;
     ">
         <h4>🤖 {title}</h4>
         <p>{message}</p>
@@ -55,7 +43,7 @@ def assistant_panel(title, message):
 
 
 def candidate_card(name, score, recommendation):
-    color = "#10B981" if score >= 85 else "#F59E0B"
+    color = "#10B981" if score >= 85 else "#F59E0B" if score >= 70 else "#EF4444"
 
     st.markdown(f"""
     <div style="
@@ -64,17 +52,10 @@ def candidate_card(name, score, recommendation):
         padding:18px;
         border:1px solid #E2E8F0;
         margin-bottom:12px;
+        box-shadow:0 4px 12px rgba(0,0,0,.05);
     ">
         <h4>{name}</h4>
-
-        <div style="
-            font-size:28px;
-            font-weight:bold;
-            color:{color};
-        ">
-            {score}%
-        </div>
-
+        <div style="font-size:28px;font-weight:bold;color:{color};">{score}%</div>
         <div>{recommendation}</div>
     </div>
     """, unsafe_allow_html=True)
