@@ -5,6 +5,7 @@ from talentcopilot.config import APP_NAME, APP_VERSION
 from talentcopilot.ui.theme import apply_theme
 from talentcopilot.ui.home import render_home
 from talentcopilot.ui.dashboard import render_dashboard
+from talentcopilot.ui.comparison import render_candidate_comparison
 
 st.set_page_config(page_title=APP_NAME, page_icon="🧠", layout="wide")
 apply_theme()
@@ -28,11 +29,21 @@ elif page == "📊 Dashboard":
 
 elif page == "👥 Candidates":
     st.title("👥 Candidates")
-    st.info("Candidate workspace will be added in v0.6.1.")
+    batch = st.session_state.get("analysis_batch")
+    if not batch:
+        st.info("Run an analysis first from the Dashboard.")
+    else:
+        for index, item in enumerate(batch["results"], start=1):
+            candidate = item["candidate"]
+            match = item["match_result"]
+            st.write(f"**#{index} — {candidate.name}**")
+            st.write(f"Match: {match.overall_score}% | Recommendation: {match.recommendation}")
+            st.divider()
 
 elif page == "⚖️ Comparison":
-    st.title("⚖️ Candidate Comparison")
-    st.info("Comparison module will be added in v0.6.2.")
+    batch = st.session_state.get("analysis_batch")
+    results = batch["results"] if batch and batch.get("success") else []
+    render_candidate_comparison(results)
 
 elif page == "📄 Reports":
     st.title("📄 Reports")
