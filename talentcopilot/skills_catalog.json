@@ -1,0 +1,70 @@
+{
+    "HRIS": {
+        "category": "HR Technology",
+        "aliases": [
+            "Human Resources Information System",
+            "SIRH",
+            "HR Information Systems"
+        ]
+    },
+    "Workday": {
+        "category": "HR Technology",
+        "aliases": [
+            "Workday HCM"
+        ]
+    },
+    "SAP SuccessFactors": {
+        "category": "HR Technology",
+        "aliases": [
+            "SuccessFactors",
+            "SAP SF"
+        ]
+    },
+    "Oracle HCM": {
+        "category": "HR Technology",
+        "aliases": [
+            "Oracle Fusion HCM"
+        ]
+    },
+    "API": {
+        "category": "Integration",
+        "aliases": [
+            "REST API",
+            "REST",
+            "SOAP API"
+        ]
+    },
+    "SQL": {
+        "category": "Data",
+        "aliases": [
+            "SQL Server",
+            "T-SQL"
+        ]
+    },
+    "Power BI": {
+        "category": "Data",
+        "aliases": [
+            "Microsoft Power BI"
+        ]
+    },
+    "Project Management": {
+        "category": "Project",
+        "aliases": [
+            "Project Manager",
+            "Project Lead"
+        ]
+    },
+    "Change Management": {
+        "category": "Management",
+        "aliases": [
+            "Organizational Change",
+            "Transformation"
+        ]
+    },
+    "Stakeholder Management": {
+        "category": "Management",
+        "aliases": [
+            "Stakeholder Engagement"
+        ]
+    }
+}

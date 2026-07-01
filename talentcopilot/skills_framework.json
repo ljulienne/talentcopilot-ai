@@ -1,0 +1,132 @@
+{
+    "HRIS": {
+        "category": "HR Technology",
+        "family": "HR Systems",
+        "aliases": [
+            "SIRH",
+            "Human Resources Information System",
+            "HR Information Systems"
+        ],
+        "parent": null,
+        "related_skills": [
+            "Payroll",
+            "Time & Attendance",
+            "HR Reporting"
+        ],
+        "default_weight": 30,
+        "default_expected_level": "Advanced",
+        "evidence_examples": [
+            "Implemented HRIS systems",
+            "Led HRIS deployment",
+            "Managed HRIS configuration"
+        ]
+    },
+    "API": {
+        "category": "Integration",
+        "family": "System Integration",
+        "aliases": [
+            "REST API",
+            "SOAP API",
+            "REST",
+            "Web service"
+        ],
+        "parent": "Integration",
+        "related_skills": [
+            "JSON",
+            "XML",
+            "Middleware"
+        ],
+        "default_weight": 20,
+        "default_expected_level": "Intermediate",
+        "evidence_examples": [
+            "Built REST APIs",
+            "Integrated systems via API",
+            "Worked with web services"
+        ]
+    },
+    "Power BI": {
+        "category": "Data",
+        "family": "Business Intelligence",
+        "aliases": [
+            "Microsoft Power BI",
+            "PowerBI"
+        ],
+        "parent": "Reporting",
+        "related_skills": [
+            "SQL",
+            "Data Analysis",
+            "Dashboarding"
+        ],
+        "default_weight": 15,
+        "default_expected_level": "Intermediate",
+        "evidence_examples": [
+            "Created Power BI dashboards",
+            "Built reports",
+            "Developed KPI dashboards"
+        ]
+    },
+    "Project Management": {
+        "category": "Project",
+        "family": "Delivery Management",
+        "aliases": [
+            "Project Manager",
+            "Project Lead",
+            "PM"
+        ],
+        "parent": null,
+        "related_skills": [
+            "Risk Management",
+            "Stakeholder Management",
+            "Change Management"
+        ],
+        "default_weight": 25,
+        "default_expected_level": "Advanced",
+        "evidence_examples": [
+            "Managed implementation projects",
+            "Led project delivery",
+            "Coordinated project stakeholders"
+        ]
+    },
+    "Change Management": {
+        "category": "Management",
+        "family": "Transformation",
+        "aliases": [
+            "Organizational Change",
+            "Change adoption",
+            "Transformation"
+        ],
+        "parent": null,
+        "related_skills": [
+            "Communication",
+            "Training",
+            "Stakeholder Management"
+        ],
+        "default_weight": 20,
+        "default_expected_level": "Intermediate",
+        "evidence_examples": [
+            "Led change management",
+            "Supported user adoption",
+            "Designed communication plans"
+        ]
+    },
+    "Stakeholder Management": {
+        "category": "Management",
+        "family": "Relationship Management",
+        "aliases": [
+            "Stakeholder Engagement",
+            "Business Partnering"
+        ],
+        "parent": null,
+        "related_skills": [
+            "Communication",
+            "Project Management"
+        ],
+        "default_weight": 20,
+        "default_expected_level": "Advanced",
+        "evidence_examples": [
+            "Coordinated internal stakeholders",
+            "Managed vendor and business relationships",
+            "Worked with cross-functional teams"
+        ]
+    }
+}
