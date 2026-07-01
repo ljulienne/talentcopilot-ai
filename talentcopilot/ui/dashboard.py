@@ -1,7 +1,13 @@
 
 import streamlit as st
 from talentcopilot.engines.recruitment_pipeline import analyze_recruitment_batch
-from talentcopilot.ui.widgets import metric_row, score_badge
+from talentcopilot.ui.widgets import score_badge
+from talentcopilot.ui.components import (
+    section_title,
+    metric_card,
+    assistant_panel,
+    candidate_card,
+)
 
 MAX_CV_UPLOADS = 50
 
@@ -57,12 +63,29 @@ def render_dashboard():
     strong = sum(1 for item in results if item["match_result"].overall_score >= 85)
     interview = sum(1 for item in results if 70 <= item["match_result"].overall_score < 85)
 
-    metric_row([
-        ("CV analyzed", len(results), "Number of analyzed CVs"),
-        ("Average score", f"{avg_score}%", "Average match score"),
-        ("Strong shortlist", strong, "Candidates above 85%"),
-        ("Interview", interview, "Candidates between 70% and 84%"),
-    ])
+    section_title(
+        "Recruitment Summary",
+        "AI-powered overview of your candidate pool"
+    )
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        metric_card("CV analyzed", len(results), "Candidate files processed")
+
+    with col2:
+        metric_card("Average Match", f"{avg_score}%", "Overall candidate pool")
+
+    with col3:
+        metric_card("Strong shortlist", strong, "Candidates above 85%", "#10B981")
+
+    with col4:
+        metric_card("Interview", interview, "Candidates between 70% and 84%", "#F59E0B")
+
+    assistant_panel(
+        "Recruiter Copilot",
+        f"I analyzed {len(results)} candidates. The average match score is {avg_score}%. Start by reviewing the strongest profiles, then use Candidate Comparison to compare your shortlist."
+    )
 
     st.divider()
     st.subheader("🏆 Candidate Ranking")
@@ -74,9 +97,10 @@ def render_dashboard():
         with st.container():
             col1, col2, col3, col4 = st.columns([1, 4, 2, 2])
             col1.subheader(f"#{index}")
-            col2.write(f"**{candidate.name}**")
-            col2.caption(item["file"])
-            col3.metric("Match", f"{match.overall_score}%")
+            with col2:
+                candidate_card(candidate.name, match.overall_score, match.recommendation)
+                st.caption(item["file"])
+            col3.metric("Confidence", f"{match.confidence_score}%")
             col4.write(f"**{score_badge(match.overall_score)}**")
             st.write(match.executive_summary)
             st.divider()
