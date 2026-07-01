@@ -1,0 +1,640 @@
+[
+  {
+    "id": "SK-000001",
+    "canonical_name": "HRIS",
+    "type": "skill",
+    "category": "HR Technology",
+    "family": "Core HR",
+    "aliases": {
+      "en": [
+        "HRIS",
+        "Human Resources Information System",
+        "HR Information System"
+      ],
+      "fr": [
+        "SIRH",
+        "Système d'information RH",
+        "Système d'information ressources humaines"
+      ],
+      "zh": [
+        "人力资源信息系统",
+        "人力资源系统"
+      ]
+    },
+    "keywords": [
+      "HRIS",
+      "SIRH",
+      "Core HR"
+    ],
+    "related_tools": [],
+    "related_capabilities": [
+      "CAP-000001"
+    ]
+  },
+  {
+    "id": "SK-000002",
+    "canonical_name": "Core HR",
+    "type": "skill",
+    "category": "HR Technology",
+    "family": "Core HR",
+    "aliases": {
+      "en": [
+        "Core HR",
+        "Employee Data Management",
+        "Employee Records"
+      ],
+      "fr": [
+        "Socle RH",
+        "Gestion administrative RH",
+        "Données agents",
+        "Dossiers agents"
+      ],
+      "zh": [
+        "核心人事",
+        "员工数据管理",
+        "员工档案"
+      ]
+    },
+    "keywords": [
+      "employee data",
+      "personnel records",
+      "dossier agent"
+    ],
+    "related_tools": [],
+    "related_capabilities": [
+      "CAP-000001"
+    ]
+  },
+  {
+    "id": "SK-000003",
+    "canonical_name": "Payroll",
+    "type": "skill",
+    "category": "HR Operations",
+    "family": "Payroll",
+    "aliases": {
+      "en": [
+        "Payroll",
+        "Payroll Processing",
+        "Payroll Management"
+      ],
+      "fr": [
+        "Paie",
+        "Gestion de la paie",
+        "Traitement de la paie"
+      ],
+      "zh": [
+        "薪资",
+        "薪酬发放",
+        "工资处理"
+      ]
+    },
+    "keywords": [
+      "payroll",
+      "paie",
+      "salary"
+    ],
+    "related_tools": [],
+    "related_capabilities": [
+      "CAP-000002"
+    ]
+  },
+  {
+    "id": "SK-000004",
+    "canonical_name": "Time & Attendance",
+    "type": "skill",
+    "category": "HR Operations",
+    "family": "Workforce Management",
+    "aliases": {
+      "en": [
+        "Time and Attendance",
+        "Time & Attendance",
+        "T&A",
+        "Workforce Time Management"
+      ],
+      "fr": [
+        "Gestion des temps",
+        "GTA",
+        "Temps et activités",
+        "Pointage"
+      ],
+      "zh": [
+        "考勤管理",
+        "工时管理",
+        "出勤管理"
+      ]
+    },
+    "keywords": [
+      "time attendance",
+      "GTA",
+      "overtime"
+    ],
+    "related_tools": [],
+    "related_capabilities": [
+      "CAP-000002"
+    ]
+  },
+  {
+    "id": "SK-000005",
+    "canonical_name": "Leave Management",
+    "type": "skill",
+    "category": "HR Operations",
+    "family": "Absence Management",
+    "aliases": {
+      "en": [
+        "Leave Management",
+        "Absence Management",
+        "Vacation Management"
+      ],
+      "fr": [
+        "Gestion des congés",
+        "Gestion des absences",
+        "Absences et congés"
+      ],
+      "zh": [
+        "休假管理",
+        "请假管理",
+        "缺勤管理"
+      ]
+    },
+    "keywords": [
+      "leave",
+      "absence",
+      "congé"
+    ],
+    "related_tools": [],
+    "related_capabilities": [
+      "CAP-000002"
+    ]
+  },
+  {
+    "id": "SK-000006",
+    "canonical_name": "Recruitment",
+    "type": "skill",
+    "category": "Talent Acquisition",
+    "family": "Recruitment",
+    "aliases": {
+      "en": [
+        "Recruitment",
+        "Talent Acquisition",
+        "Hiring"
+      ],
+      "fr": [
+        "Recrutement",
+        "Acquisition de talents",
+        "Embauche"
+      ],
+      "zh": [
+        "招聘",
+        "人才招聘",
+        "人才获取"
+      ]
+    },
+    "keywords": [
+      "recruitment",
+      "hiring",
+      "ATS"
+    ],
+    "related_tools": [],
+    "related_capabilities": [
+      "CAP-000003"
+    ]
+  },
+  {
+    "id": "SK-000007",
+    "canonical_name": "Applicant Tracking System",
+    "type": "skill",
+    "category": "Talent Acquisition",
+    "family": "Recruitment Technology",
+    "aliases": {
+      "en": [
+        "ATS",
+        "Applicant Tracking System",
+        "Recruitment System"
+      ],
+      "fr": [
+        "ATS",
+        "Outil de recrutement",
+        "Système de suivi des candidatures"
+      ],
+      "zh": [
+        "招聘系统",
+        "候选人跟踪系统",
+        "ATS系统"
+      ]
+    },
+    "keywords": [
+      "ATS",
+      "candidate tracking"
+    ],
+    "related_tools": [],
+    "related_capabilities": [
+      "CAP-000003"
+    ]
+  },
+  {
+    "id": "SK-000008",
+    "canonical_name": "Talent Management",
+    "type": "skill",
+    "category": "Talent Management",
+    "family": "Talent",
+    "aliases": {
+      "en": [
+        "Talent Management",
+        "Talent Processes"
+      ],
+      "fr": [
+        "Gestion des talents",
+        "Processus talents"
+      ],
+      "zh": [
+        "人才管理",
+        "人才流程"
+      ]
+    },
+    "keywords": [
+      "talent",
+      "talent review"
+    ],
+    "related_tools": [],
+    "related_capabilities": [
+      "CAP-000004"
+    ]
+  },
+  {
+    "id": "SK-000009",
+    "canonical_name": "Performance Management",
+    "type": "skill",
+    "category": "Talent Management",
+    "family": "Performance",
+    "aliases": {
+      "en": [
+        "Performance Management",
+        "Performance Review",
+        "Appraisal"
+      ],
+      "fr": [
+        "Gestion de la performance",
+        "Entretien annuel",
+        "Évaluation de la performance"
+      ],
+      "zh": [
+        "绩效管理",
+        "绩效评估",
+        "年度评估"
+      ]
+    },
+    "keywords": [
+      "performance review",
+      "appraisal"
+    ],
+    "related_tools": [],
+    "related_capabilities": [
+      "CAP-000004"
+    ]
+  },
+  {
+    "id": "SK-000010",
+    "canonical_name": "Learning Management",
+    "type": "skill",
+    "category": "Learning",
+    "family": "Learning & Development",
+    "aliases": {
+      "en": [
+        "Learning Management",
+        "LMS",
+        "Training Management"
+      ],
+      "fr": [
+        "Gestion de la formation",
+        "LMS",
+        "Formation"
+      ],
+      "zh": [
+        "学习管理",
+        "培训管理",
+        "LMS系统"
+      ]
+    },
+    "keywords": [
+      "LMS",
+      "training",
+      "learning"
+    ],
+    "related_tools": [],
+    "related_capabilities": [
+      "CAP-000005"
+    ]
+  },
+  {
+    "id": "SK-000011",
+    "canonical_name": "Succession Planning",
+    "type": "skill",
+    "category": "Talent Management",
+    "family": "Succession",
+    "aliases": {
+      "en": [
+        "Succession Planning",
+        "Succession Management"
+      ],
+      "fr": [
+        "Plan de succession",
+        "Gestion des successions"
+      ],
+      "zh": [
+        "继任计划",
+        "继任管理"
+      ]
+    },
+    "keywords": [
+      "succession",
+      "talent pipeline"
+    ],
+    "related_tools": [],
+    "related_capabilities": [
+      "CAP-000004"
+    ]
+  },
+  {
+    "id": "SK-000012",
+    "canonical_name": "Compensation & Benefits",
+    "type": "skill",
+    "category": "HR Operations",
+    "family": "Compensation",
+    "aliases": {
+      "en": [
+        "Compensation and Benefits",
+        "C&B",
+        "Rewards"
+      ],
+      "fr": [
+        "Rémunération et avantages",
+        "Compensation & Benefits",
+        "C&B"
+      ],
+      "zh": [
+        "薪酬福利",
+        "薪酬与福利"
+      ]
+    },
+    "keywords": [
+      "compensation",
+      "benefits",
+      "rewards"
+    ],
+    "related_tools": [],
+    "related_capabilities": [
+      "CAP-000002"
+    ]
+  },
+  {
+    "id": "SK-000013",
+    "canonical_name": "Workforce Planning",
+    "type": "skill",
+    "category": "HR Strategy",
+    "family": "Workforce",
+    "aliases": {
+      "en": [
+        "Workforce Planning",
+        "Strategic Workforce Planning"
+      ],
+      "fr": [
+        "Planification des effectifs",
+        "Gestion prévisionnelle des effectifs",
+        "GPEC"
+      ],
+      "zh": [
+        "人力规划",
+        "战略人力资源规划"
+      ]
+    },
+    "keywords": [
+      "workforce planning",
+      "headcount planning",
+      "GPEC"
+    ],
+    "related_tools": [],
+    "related_capabilities": [
+      "CAP-000006"
+    ]
+  },
+  {
+    "id": "SK-000014",
+    "canonical_name": "Organization Management",
+    "type": "skill",
+    "category": "HR Technology",
+    "family": "Organization",
+    "aliases": {
+      "en": [
+        "Organization Management",
+        "Org Management",
+        "Organizational Structure"
+      ],
+      "fr": [
+        "Gestion de l'organisation",
+        "Organigramme",
+        "Structure organisationnelle"
+      ],
+      "zh": [
+        "组织管理",
+        "组织架构",
+        "组织结构"
+      ]
+    },
+    "keywords": [
+      "org chart",
+      "organization structure"
+    ],
+    "related_tools": [],
+    "related_capabilities": [
+      "CAP-000001"
+    ]
+  },
+  {
+    "id": "SK-000015",
+    "canonical_name": "Employee Self Service",
+    "type": "skill",
+    "category": "HR Technology",
+    "family": "Employee Experience",
+    "aliases": {
+      "en": [
+        "Employee Self Service",
+        "ESS",
+        "Employee Portal"
+      ],
+      "fr": [
+        "Portail salarié",
+        "Portail agent",
+        "Self-service employé"
+      ],
+      "zh": [
+        "员工自助服务",
+        "员工门户"
+      ]
+    },
+    "keywords": [
+      "ESS",
+      "employee portal",
+      "portail RH"
+    ],
+    "related_tools": [],
+    "related_capabilities": [
+      "CAP-000007"
+    ]
+  },
+  {
+    "id": "SK-000016",
+    "canonical_name": "Manager Self Service",
+    "type": "skill",
+    "category": "HR Technology",
+    "family": "Employee Experience",
+    "aliases": {
+      "en": [
+        "Manager Self Service",
+        "MSS",
+        "Manager Portal"
+      ],
+      "fr": [
+        "Portail manager",
+        "Self-service manager"
+      ],
+      "zh": [
+        "经理自助服务",
+        "经理门户"
+      ]
+    },
+    "keywords": [
+      "MSS",
+      "manager portal"
+    ],
+    "related_tools": [],
+    "related_capabilities": [
+      "CAP-000007"
+    ]
+  },
+  {
+    "id": "SK-000017",
+    "canonical_name": "HR Analytics",
+    "type": "skill",
+    "category": "HR Data",
+    "family": "Analytics",
+    "aliases": {
+      "en": [
+        "HR Analytics",
+        "People Analytics",
+        "Workforce Analytics"
+      ],
+      "fr": [
+        "Analytique RH",
+        "People Analytics",
+        "Analyse RH"
+      ],
+      "zh": [
+        "人力资源分析",
+        "人才分析",
+        "员工数据分析"
+      ]
+    },
+    "keywords": [
+      "HR analytics",
+      "people analytics"
+    ],
+    "related_tools": [],
+    "related_capabilities": [
+      "CAP-000008"
+    ]
+  },
+  {
+    "id": "SK-000018",
+    "canonical_name": "HR Data Migration",
+    "type": "skill",
+    "category": "HR Data",
+    "family": "Data Migration",
+    "aliases": {
+      "en": [
+        "HR Data Migration",
+        "Data Migration",
+        "Migration of HR Data"
+      ],
+      "fr": [
+        "Migration de données RH",
+        "Reprise de données",
+        "Migration des données"
+      ],
+      "zh": [
+        "人力资源数据迁移",
+        "数据迁移"
+      ]
+    },
+    "keywords": [
+      "data migration",
+      "reprise de données"
+    ],
+    "related_tools": [],
+    "related_capabilities": [
+      "CAP-000009"
+    ]
+  },
+  {
+    "id": "SK-000019",
+    "canonical_name": "HR Data Governance",
+    "type": "skill",
+    "category": "HR Data",
+    "family": "Data Governance",
+    "aliases": {
+      "en": [
+        "HR Data Governance",
+        "Data Quality",
+        "HR Data Quality"
+      ],
+      "fr": [
+        "Gouvernance des données RH",
+        "Qualité des données RH",
+        "Data quality RH"
+      ],
+      "zh": [
+        "人力资源数据治理",
+        "数据质量"
+      ]
+    },
+    "keywords": [
+      "data governance",
+      "data quality"
+    ],
+    "related_tools": [],
+    "related_capabilities": [
+      "CAP-000008"
+    ]
+  },
+  {
+    "id": "SK-000020",
+    "canonical_name": "HR Reporting",
+    "type": "skill",
+    "category": "HR Data",
+    "family": "Reporting",
+    "aliases": {
+      "en": [
+        "HR Reporting",
+        "HR Reports",
+        "People Reporting"
+      ],
+      "fr": [
+        "Reporting RH",
+        "Rapports RH",
+        "Tableaux de bord RH"
+      ],
+      "zh": [
+        "人力资源报表",
+        "人事报表",
+        "HR报表"
+      ]
+    },
+    "keywords": [
+      "HR reporting",
+      "reporting RH"
+    ],
+    "related_tools": [],
+    "related_capabilities": [
+      "CAP-000008"
+    ]
+  }
+]
