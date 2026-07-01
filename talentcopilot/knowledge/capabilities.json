@@ -1,0 +1,97 @@
+[
+  {
+    "id": "CAP-000001",
+    "name": "HRIS Project Delivery",
+    "description": "Ability to lead and deliver HRIS implementation and transformation projects.",
+    "skills": [
+      {
+        "skill_id": "SK-000001",
+        "weight": 0.3
+      },
+      {
+        "skill_id": "SK-000014",
+        "weight": 0.15
+      },
+      {
+        "skill_id": "SK-000017",
+        "weight": 0.15
+      },
+      {
+        "skill_id": "SK-000018",
+        "weight": 0.2
+      },
+      {
+        "skill_id": "SK-000019",
+        "weight": 0.2
+      }
+    ]
+  },
+  {
+    "id": "CAP-000002",
+    "name": "HR Operations Excellence",
+    "description": "Ability to manage operational HR processes.",
+    "skills": [
+      {
+        "skill_id": "SK-000003",
+        "weight": 0.3
+      },
+      {
+        "skill_id": "SK-000004",
+        "weight": 0.25
+      },
+      {
+        "skill_id": "SK-000005",
+        "weight": 0.2
+      },
+      {
+        "skill_id": "SK-000012",
+        "weight": 0.25
+      }
+    ]
+  },
+  {
+    "id": "CAP-000003",
+    "name": "Talent Acquisition",
+    "description": "Ability to recruit and hire candidates.",
+    "skills": [
+      {
+        "skill_id": "SK-000006",
+        "weight": 0.5
+      },
+      {
+        "skill_id": "SK-000007",
+        "weight": 0.5
+      }
+    ]
+  },
+  {
+    "id": "CAP-000004",
+    "name": "Talent Development",
+    "description": "Ability to develop and retain talent.",
+    "skills": [
+      {
+        "skill_id": "SK-000008",
+        "weight": 0.35
+      },
+      {
+        "skill_id": "SK-000009",
+        "weight": 0.35
+      },
+      {
+        "skill_id": "SK-000011",
+        "weight": 0.3
+      }
+    ]
+  },
+  {
+    "id": "CAP-000005",
+    "name": "Learning & Development",
+    "description": "Ability to manage employee learning.",
+    "skills": [
+      {
+        "skill_id": "SK-000010",
+        "weight": 1.0
+      }
+    ]
+  }
+]
