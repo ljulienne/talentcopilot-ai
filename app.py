@@ -4,15 +4,12 @@ import streamlit as st
 from talentcopilot.config import APP_NAME, APP_VERSION
 from talentcopilot.engines.recruitment_pipeline import analyze_recruitment_batch
 
-
 MAX_CV_UPLOADS = 50
 
-st.set_page_config(
-    page_title=APP_NAME,
-    page_icon="🧠",
-    layout="wide"
-)
+st.set_page_config(page_title=APP_NAME, page_icon="🧠", layout="wide")
 
+if "analysis_batch" not in st.session_state:
+    st.session_state.analysis_batch = None
 
 def score_badge(score):
     if score >= 85:
@@ -23,41 +20,22 @@ def score_badge(score):
         return "🟠"
     return "🔴"
 
-
 def progress(label, score):
     st.write(f"**{label}** — {score_badge(score)} {score}%")
     st.progress(score / 100)
 
-
-def get_pool_quality(avg_score):
-    if avg_score >= 85:
-        return "Excellent"
-    elif avg_score >= 70:
-        return "Good"
-    elif avg_score >= 50:
-        return "Mixed"
-    return "Weak"
-
-
 def display_kpis(results):
     scores = [item["match_result"].overall_score for item in results]
     avg_score = round(sum(scores) / len(scores)) if scores else 0
-
     strong = sum(1 for item in results if item["match_result"].overall_score >= 85)
     interview = sum(1 for item in results if 70 <= item["match_result"].overall_score < 85)
-    maybe = sum(1 for item in results if 50 <= item["match_result"].overall_score < 70)
     weak = sum(1 for item in results if item["match_result"].overall_score < 50)
 
-    col1, col2, col3, col4, col5 = st.columns(5)
-
+    col1, col2, col3, col4 = st.columns(4)
     col1.metric("CV analyzed", len(results))
     col2.metric("Average score", f"{avg_score}%")
     col3.metric("Strong shortlist", strong)
-    col4.metric("Interview", interview)
-    col5.metric("Weak fit", weak)
-
-    st.info(f"Overall candidate pool quality: **{get_pool_quality(avg_score)}**")
-
+    col4.metric("Weak fit", weak)
 
 def display_ranking(results):
     st.header("🏆 Candidate Ranking")
@@ -66,28 +44,14 @@ def display_ranking(results):
         match = item["match_result"]
         candidate = item["candidate"]
 
-        with st.container():
-            col1, col2, col3, col4, col5 = st.columns([1, 4, 2, 2, 2])
-
-            with col1:
-                st.subheader(f"#{index}")
-
-            with col2:
-                st.write(f"**{candidate.name}**")
-                st.caption(candidate.current_role or item["file"])
-
-            with col3:
-                st.metric("Match", f"{match.overall_score}%")
-
-            with col4:
-                st.metric("Confidence", f"{match.confidence_score}%")
-
-            with col5:
-                st.write(f"**{score_badge(match.overall_score)} {match.recommendation}**")
-
-            st.write(match.executive_summary)
-            st.divider()
-
+        col1, col2, col3, col4 = st.columns([1, 4, 2, 2])
+        col1.subheader(f"#{index}")
+        col2.write(f"**{candidate.name}**")
+        col2.caption(candidate.current_role or item["file"])
+        col3.metric("Match", f"{match.overall_score}%")
+        col4.metric("Confidence", f"{match.confidence_score}%")
+        st.write(match.executive_summary)
+        st.divider()
 
 def display_candidate_detail(item):
     match = item["match_result"]
@@ -96,7 +60,6 @@ def display_candidate_detail(item):
     st.header("🔍 Candidate Detail")
 
     col1, col2, col3 = st.columns(3)
-
     col1.metric("Candidate", candidate.name)
     col2.metric("TalentCopilot Score", f"{match.overall_score}%")
     col3.metric("Confidence", f"{match.confidence_score}%")
@@ -106,7 +69,6 @@ def display_candidate_detail(item):
     st.write(match.executive_summary)
 
     st.divider()
-
     st.subheader("Why this score?")
 
     for detail in match.match_details:
@@ -115,20 +77,15 @@ def display_candidate_detail(item):
 
         with st.expander(f"{score_badge(detail.score)} {requirement.name} — {detail.score}%"):
             progress("Match", detail.score)
-
             st.write(f"**Importance:** {requirement.importance}")
             st.write(f"**Expected level:** {requirement.expected_level}")
 
             if capability:
                 st.write(f"**Detected level:** {capability.detected_level}")
                 st.write(f"**Confidence:** {capability.confidence}%")
-
                 st.write("**Evidence:**")
-                if capability.evidence:
-                    for evidence in capability.evidence:
-                        st.write(f"- {evidence.text}")
-                else:
-                    st.write("- No explicit evidence found")
+                for evidence in capability.evidence:
+                    st.write(f"- {evidence.text}")
             else:
                 st.write("**Detected level:** Not detected")
                 st.write("**Evidence:** No evidence found")
@@ -156,16 +113,12 @@ def display_candidate_detail(item):
             st.write(q.question)
             st.caption(q.purpose)
 
-
 st.title("🧠 TalentCopilot AI")
 st.caption(f"Version {APP_VERSION} — Understand every candidate. Explain every decision.")
 
 st.sidebar.header("Recruitment Analysis")
 
-job_file = st.sidebar.file_uploader(
-    "Upload job description PDF",
-    type=["pdf"]
-)
+job_file = st.sidebar.file_uploader("Upload job description PDF", type=["pdf"])
 
 cv_files = st.sidebar.file_uploader(
     f"Upload candidate CV PDFs — max {MAX_CV_UPLOADS}",
@@ -174,6 +127,11 @@ cv_files = st.sidebar.file_uploader(
 )
 
 analyze = st.sidebar.button("Analyze candidates")
+reset = st.sidebar.button("Reset analysis")
+
+if reset:
+    st.session_state.analysis_batch = None
+    st.rerun()
 
 if analyze:
     if not job_file:
@@ -188,47 +146,40 @@ if analyze:
         st.error(f"You can upload a maximum of {MAX_CV_UPLOADS} CVs at once.")
         st.stop()
 
-    st.info(f"Analyzing {len(cv_files)} CV(s). This may take a few minutes for large batches.")
-
     with st.spinner("Running TalentCopilot analysis..."):
-        batch = analyze_recruitment_batch(job_file, cv_files)
+        st.session_state.analysis_batch = analyze_recruitment_batch(job_file, cv_files)
 
-    if not batch["success"]:
-        st.error("The job description could not be processed.")
-        for error in batch["errors"]:
-            st.write(f"- {error['file']}: {error['error']}")
-        st.stop()
+batch = st.session_state.analysis_batch
 
-    if batch["errors"]:
-        st.warning("Some files could not be processed:")
-        for error in batch["errors"]:
-            st.write(f"- {error['file']}: {error['error']}")
-
-    results = batch["results"]
-
-    if not results:
-        st.error("No candidate could be analyzed.")
-        st.stop()
-
-    st.success(f"{len(results)} candidate(s) analyzed successfully.")
-
-    st.subheader("Job analyzed")
-    st.write(f"**{batch['job'].title}**")
-
-    display_kpis(results)
-    st.divider()
-
-    display_ranking(results)
-
-    options = [
-        f"#{i+1} - {item['candidate'].name}"
-        for i, item in enumerate(results)
-    ]
-
-    selected = st.selectbox("Select a candidate for detailed analysis", options)
-    selected_index = options.index(selected)
-
-    display_candidate_detail(results[selected_index])
-
-else:
+if batch is None:
     st.info("Upload one job description PDF and up to 50 candidate CV PDFs to start.")
+    st.stop()
+
+if not batch["success"]:
+    st.error("The job description could not be processed.")
+    for error in batch["errors"]:
+        st.write(f"- {error['file']}: {error['error']}")
+    st.stop()
+
+results = batch["results"]
+
+if not results:
+    st.error("No candidate could be analyzed.")
+    st.stop()
+
+st.success(f"{len(results)} candidate(s) analyzed successfully.")
+
+st.subheader("Job analyzed")
+st.write(f"**{batch['job'].title}**")
+
+display_kpis(results)
+st.divider()
+
+display_ranking(results)
+
+options = [f"#{i+1} - {item['candidate'].name}" for i, item in enumerate(results)]
+
+selected = st.selectbox("Select a candidate for detailed analysis", options)
+selected_index = options.index(selected)
+
+display_candidate_detail(results[selected_index])
