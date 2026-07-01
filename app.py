@@ -6,6 +6,7 @@ from talentcopilot.ui.theme import apply_theme
 from talentcopilot.ui.home import render_home
 from talentcopilot.ui.dashboard import render_dashboard
 from talentcopilot.ui.comparison import render_candidate_comparison
+from talentcopilot.ui.reports import render_reports
 from talentcopilot.ui.recruitment_wizard import render_new_recruitment
 
 st.set_page_config(page_title=APP_NAME, page_icon="🧠", layout="wide")
@@ -61,8 +62,7 @@ elif page == "⚖️ Comparison":
     render_candidate_comparison(results)
 
 elif page == "📄 Reports":
-    st.title("📄 Reports")
-    st.info("Recruiter reports will be added in v0.7.")
+    render_reports()
 
 elif page == "⚙️ Settings":
     st.title("⚙️ Settings")
