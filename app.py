@@ -12,6 +12,7 @@ from talentcopilot.ui.components import footer
 from talentcopilot.ui.recruitment_wizard import render_new_recruitment
 from talentcopilot.ui.open_recruitment import render_open_recruitment
 from talentcopilot.ui.talent_pool import render_talent_pool
+from talentcopilot.ui.recruiter_copilot import render_recruiter_copilot
 
 st.set_page_config(page_title=APP_NAME, page_icon="🧠", layout="wide")
 apply_theme()
@@ -42,8 +43,9 @@ st.sidebar.caption("1. New Recruitment")
 st.sidebar.caption("2. Open Recruitment")
 st.sidebar.caption("3. Dashboard Analysis")
 st.sidebar.caption("4. Talent Review")
-st.sidebar.caption("5. Candidate Comparison")
-st.sidebar.caption("6. Recruiter Report")
+st.sidebar.caption("5. Recruiter Copilot")
+st.sidebar.caption("6. Candidate Comparison")
+st.sidebar.caption("7. Recruiter Report")
 st.sidebar.markdown("---")
 
 page = st.sidebar.radio(
@@ -55,6 +57,7 @@ page = st.sidebar.radio(
         "📊 Dashboard",
         "👥 Candidates",
         "🧠 Talent Pool",
+        "💬 Recruiter Copilot",
         "⚖️ Comparison",
         "📄 Reports",
         "⚙️ Settings",
@@ -78,6 +81,9 @@ elif page == "👥 Candidates":
 
 elif page == "🧠 Talent Pool":
     render_talent_pool()
+
+elif page == "💬 Recruiter Copilot":
+    render_recruiter_copilot()
 
 elif page == "⚖️ Comparison":
     batch = st.session_state.get("analysis_batch")
