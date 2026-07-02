@@ -8,6 +8,7 @@ from talentcopilot.ui.dashboard import render_dashboard
 from talentcopilot.ui.comparison import render_candidate_comparison
 from talentcopilot.ui.reports import render_reports
 from talentcopilot.ui.settings import render_settings
+from talentcopilot.ui.candidates import render_candidates
 from talentcopilot.ui.recruitment_wizard import render_new_recruitment
 
 st.set_page_config(page_title=APP_NAME, page_icon="🧠", layout="wide")
@@ -45,17 +46,7 @@ elif page == "📊 Dashboard":
     render_dashboard()
 
 elif page == "👥 Candidates":
-    st.title("👥 Candidates")
-    batch = st.session_state.get("analysis_batch")
-    if not batch:
-        st.info("Run an analysis first from the Dashboard.")
-    else:
-        for index, item in enumerate(batch["results"], start=1):
-            candidate = item["candidate"]
-            match = item["match_result"]
-            st.write(f"**#{index} — {candidate.name}**")
-            st.write(f"Match: {match.overall_score}% | Recommendation: {match.recommendation}")
-            st.divider()
+    render_candidates()
 
 elif page == "⚖️ Comparison":
     batch = st.session_state.get("analysis_batch")
