@@ -1,4 +1,3 @@
-
 import streamlit as st
 
 from talentcopilot.config import APP_NAME, APP_VERSION
@@ -11,6 +10,7 @@ from talentcopilot.ui.settings import render_settings
 from talentcopilot.ui.candidates import render_candidates
 from talentcopilot.ui.components import footer
 from talentcopilot.ui.recruitment_wizard import render_new_recruitment
+from talentcopilot.ui.open_recruitment import render_open_recruitment
 
 st.set_page_config(page_title=APP_NAME, page_icon="🧠", layout="wide")
 apply_theme()
@@ -20,6 +20,9 @@ if "analysis_batch" not in st.session_state:
 
 if "recruitment_context" not in st.session_state:
     st.session_state.recruitment_context = None
+
+if "current_recruitment" not in st.session_state:
+    st.session_state.current_recruitment = None
 
 st.sidebar.markdown("## 🧠 TalentCopilot AI")
 st.sidebar.caption(f"Version {APP_VERSION} · Beta")
@@ -35,10 +38,11 @@ if context:
 
 st.sidebar.markdown("**Workflow**")
 st.sidebar.caption("1. New Recruitment")
-st.sidebar.caption("2. Dashboard Analysis")
-st.sidebar.caption("3. Candidate Review")
-st.sidebar.caption("4. Candidate Comparison")
-st.sidebar.caption("5. Recruiter Report")
+st.sidebar.caption("2. Open Recruitment")
+st.sidebar.caption("3. Dashboard Analysis")
+st.sidebar.caption("4. Candidate Review")
+st.sidebar.caption("5. Candidate Comparison")
+st.sidebar.caption("6. Recruiter Report")
 st.sidebar.markdown("---")
 
 page = st.sidebar.radio(
@@ -46,11 +50,12 @@ page = st.sidebar.radio(
     [
         "🏠 Home",
         "➕ New Recruitment",
+        "📂 Open Recruitment",
         "📊 Dashboard",
         "👥 Candidates",
         "⚖️ Comparison",
         "📄 Reports",
-        "⚙️ Settings"
+        "⚙️ Settings",
     ]
 )
 
@@ -59,6 +64,9 @@ if page == "🏠 Home":
 
 elif page == "➕ New Recruitment":
     render_new_recruitment()
+
+elif page == "📂 Open Recruitment":
+    render_open_recruitment()
 
 elif page == "📊 Dashboard":
     render_dashboard()
