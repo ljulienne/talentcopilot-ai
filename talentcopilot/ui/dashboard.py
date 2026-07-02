@@ -4,6 +4,7 @@ from datetime import datetime
 from talentcopilot.engines.recruitment_pipeline import analyze_recruitment_batch
 from talentcopilot.storage.recruitment_store import save_recruitment
 from talentcopilot.ui.widgets import score_badge
+from talentcopilot.ui.ask_copilot import render_ask_copilot
 from talentcopilot.ui.components import (
     section_title,
     metric_card,
@@ -183,6 +184,9 @@ def render_dashboard():
         "Recruiter Copilot",
         f"I analyzed {len(results)} candidates. The average match score is {avg_score}%. Start by reviewing the strongest profiles, then use Candidate Comparison to compare your shortlist."
     )
+
+    st.divider()
+    render_ask_copilot()
 
     st.divider()
     section_title("Candidate Ranking", "Ranked by TalentCopilot match score.")
