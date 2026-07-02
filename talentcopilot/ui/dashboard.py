@@ -1,7 +1,8 @@
-
 import streamlit as st
+from datetime import datetime
 
 from talentcopilot.engines.recruitment_pipeline import analyze_recruitment_batch
+from talentcopilot.storage.recruitment_store import save_recruitment
 from talentcopilot.ui.widgets import score_badge
 from talentcopilot.ui.components import (
     section_title,
@@ -18,6 +19,23 @@ def _get_recruitment_title():
     if not context:
         return "Recruitment Dashboard"
     return context.get("job_title") or "Recruitment Dashboard"
+
+
+def _ensure_current_recruitment():
+    context = st.session_state.get("recruitment_context")
+
+    if "current_recruitment" not in st.session_state and context:
+        now = datetime.now().isoformat()
+        st.session_state.current_recruitment = {
+            "title": context.get("job_title", "Untitled Recruitment"),
+            "context": context,
+            "language": context.get("language", "Auto Detect"),
+            "job_description": None,
+            "analysis_batch": st.session_state.get("analysis_batch"),
+            "created_at": context.get("created_at", now),
+            "updated_at": now,
+            "status": "created",
+        }
 
 
 def _render_recruitment_context():
@@ -38,7 +56,29 @@ def _render_recruitment_context():
     """, unsafe_allow_html=True)
 
 
+def _save_current_recruitment(job_file_name=None, cv_file_names=None):
+    _ensure_current_recruitment()
+
+    current = st.session_state.get("current_recruitment")
+
+    if not current:
+        st.warning("Create a recruitment context first before saving.")
+        return None
+
+    current["analysis_batch"] = st.session_state.get("analysis_batch")
+    current["job_file_name"] = job_file_name
+    current["cv_file_names"] = cv_file_names or []
+    current["updated_at"] = datetime.now().isoformat()
+    current["status"] = "analyzed" if current.get("analysis_batch") else "created"
+
+    saved = save_recruitment(current)
+    st.session_state.current_recruitment = saved
+
+    return saved
+
+
 def render_dashboard():
+    _ensure_current_recruitment()
     _render_recruitment_context()
 
     section_title(
@@ -54,7 +94,22 @@ def render_dashboard():
         accept_multiple_files=True
     )
 
-    analyze = st.button("🚀 Analyze candidates", use_container_width=True)
+    col_analyze, col_save = st.columns([2, 1])
+
+    with col_analyze:
+        analyze = st.button("🚀 Analyze candidates", use_container_width=True)
+
+    with col_save:
+        manual_save = st.button("💾 Save Recruitment", use_container_width=True)
+
+    if manual_save:
+        saved = _save_current_recruitment(
+            job_file_name=job_file.name if job_file else None,
+            cv_file_names=[file.name for file in cv_files] if cv_files else [],
+        )
+
+        if saved:
+            st.success(f"Recruitment saved: {saved['id']}")
 
     if analyze:
         if not job_file:
@@ -71,6 +126,14 @@ def render_dashboard():
 
         with st.spinner("Running TalentCopilot analysis..."):
             st.session_state.analysis_batch = analyze_recruitment_batch(job_file, cv_files)
+
+        saved = _save_current_recruitment(
+            job_file_name=job_file.name,
+            cv_file_names=[file.name for file in cv_files],
+        )
+
+        if saved:
+            st.success(f"Analysis completed and recruitment saved: {saved['id']}")
 
     batch = st.session_state.get("analysis_batch")
 

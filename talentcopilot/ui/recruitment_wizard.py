@@ -1,7 +1,7 @@
-
 import streamlit as st
 from datetime import datetime
 
+from talentcopilot.storage.recruitment_store import generate_recruitment_id
 from talentcopilot.ui.components import section_title, assistant_panel, card
 
 
@@ -57,7 +57,10 @@ def render_new_recruitment():
                 st.warning("Please enter a job title.")
                 return
 
-            st.session_state.recruitment_context = {
+            now = datetime.now().isoformat()
+            recruitment_id = generate_recruitment_id()
+
+            context = {
                 "job_title": job_title,
                 "company": company,
                 "department": department,
@@ -65,8 +68,25 @@ def render_new_recruitment():
                 "recruitment_type": recruitment_type,
                 "language": language,
                 "max_candidates": max_candidates,
-                "created_at": datetime.now().isoformat()
+                "created_at": now,
             }
+
+            st.session_state.recruitment_context = context
+
+            st.session_state.current_recruitment = {
+                "id": recruitment_id,
+                "title": job_title,
+                "context": context,
+                "language": language,
+                "job_description": None,
+                "analysis_batch": None,
+                "created_at": now,
+                "updated_at": now,
+                "status": "created",
+            }
+
+            if "analysis_batch" in st.session_state:
+                del st.session_state.analysis_batch
 
             st.success("Recruitment created. Go to Dashboard to upload files.")
 
