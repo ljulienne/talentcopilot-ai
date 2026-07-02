@@ -1,5 +1,9 @@
 import streamlit as st
 
+from talentcopilot.finance.financial_analyzer import (
+    analyze_candidate_financial_fit,
+    generate_financial_summary,
+)
 from talentcopilot.interview.interview_generator import generate_interview_guide
 from talentcopilot.talent_pool.talent_metrics import enrich_talent_profiles
 from talentcopilot.talent_pool.talent_skills import enrich_talent_with_skills
@@ -121,6 +125,87 @@ def _render_interview_intelligence(talent):
         _render_bullets(guide.get("interview_focus", []))
 
 
+def _render_financial_intelligence(talent):
+    section_title(
+        "Financial Intelligence",
+        "Assess salary expectations against the recruitment budget."
+    )
+
+    candidate_key = talent.get("candidate_key", "unknown")
+    name = talent.get("name", "Unknown Candidate")
+
+    with st.expander("Budget & Salary Simulation", expanded=True):
+        col1, col2, col3, col4 = st.columns(4)
+
+        with col1:
+            budget_min = st.number_input(
+                "Budget min",
+                min_value=0,
+                value=70000,
+                step=1000,
+                key=f"budget_min_{candidate_key}",
+            )
+
+        with col2:
+            budget_max = st.number_input(
+                "Budget max",
+                min_value=0,
+                value=85000,
+                step=1000,
+                key=f"budget_max_{candidate_key}",
+            )
+
+        with col3:
+            expected_salary = st.number_input(
+                "Expected salary",
+                min_value=0,
+                value=82000,
+                step=1000,
+                key=f"expected_salary_{candidate_key}",
+            )
+
+        with col4:
+            currency = st.selectbox(
+                "Currency",
+                ["EUR", "USD", "XPF", "GBP", "CNY"],
+                key=f"currency_{candidate_key}",
+            )
+
+        analysis = analyze_candidate_financial_fit(
+            candidate_name=name,
+            expected_salary=expected_salary,
+            budget_min=budget_min,
+            budget_max=budget_max,
+            currency=currency,
+        )
+
+        col_a, col_b, col_c = st.columns(3)
+
+        with col_a:
+            metric_card(
+                "Budget Fit",
+                f"{analysis.get('budget_fit_score', 0)}%",
+                "Salary vs budget"
+            )
+
+        with col_b:
+            metric_card(
+                "Salary Gap",
+                f"{analysis.get('salary_gap', 0):,.0f} {currency}",
+                "Expected salary minus max budget"
+            )
+
+        with col_c:
+            metric_card(
+                "Verdict",
+                analysis.get("verdict", "-"),
+                "Financial recommendation"
+            )
+
+        st.progress(min(analysis.get("budget_fit_score", 0), 100) / 100)
+        st.write(generate_financial_summary(analysis))
+
+
 def _render_talent_profile(talent):
     name = talent.get("name", "Unknown Candidate")
     talent_score = talent.get("talent_score", 0)
@@ -195,6 +280,10 @@ def _render_talent_profile(talent):
 
     st.divider()
 
+    _render_financial_intelligence(talent)
+
+    st.divider()
+
     section_title(
         "Application History",
         "All recruitment analyses linked to this talent."
@@ -206,7 +295,7 @@ def _render_talent_profile(talent):
 
     assistant_panel(
         "TalentCopilot Assessment",
-        "This profile consolidates performance, recruitment history, detected skills and interview guidance. Future versions will add salary expectations, interview notes and AI-generated talent summaries."
+        "This profile consolidates performance, recruitment history, detected skills, interview guidance and financial simulation. Future versions will persist salary data and generate AI-powered offer recommendations."
     )
 
 
