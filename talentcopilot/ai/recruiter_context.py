@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
+from talentcopilot.semantic.semantic_search import semantic_search
+
 
 def _safe_list(value: Any) -> List[Any]:
     return value if isinstance(value, list) else []
@@ -37,14 +39,28 @@ def build_recruiter_context(
     local_response: Dict[str, Any] | None = None,
     max_talents: int = 10,
 ) -> Dict[str, Any]:
+    safe_talents = _safe_list(talents)
+
+    semantic_results = semantic_search(
+        safe_talents,
+        question,
+        top_k=max_talents,
+    )
+
+    if semantic_results:
+        selected_talents = [result["talent"] for result in semantic_results]
+    else:
+        selected_talents = safe_talents[:max_talents]
+
     summarized_talents = [
         summarize_talent(talent)
-        for talent in _safe_list(talents)[:max_talents]
+        for talent in selected_talents
     ]
 
     return {
         "question": question,
-        "talent_count": len(talents),
+        "talent_count": len(safe_talents),
+        "selected_talent_count": len(selected_talents),
         "talents": summarized_talents,
         "local_response": local_response or {},
         "instructions": {
@@ -74,6 +90,7 @@ def format_context_for_prompt(context: Dict[str, Any]) -> str:
     lines.append(f"Answer: {local_response.get('answer', '-')}")
     lines.append("")
     lines.append(f"Talent count: {context.get('talent_count', 0)}")
+    lines.append(f"Relevant talents selected: {context.get('selected_talent_count', 0)}")
     lines.append("")
     lines.append("Talent summaries:")
 

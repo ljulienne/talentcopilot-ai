@@ -55,9 +55,34 @@ def test_build_recruiter_context():
 
     assert context["question"] == "Who is the best candidate?"
     assert context["talent_count"] == 2
+    assert context["selected_talent_count"] == 2
     assert len(context["talents"]) == 2
     assert context["local_response"]["title"] == "Best Candidate"
     assert context["instructions"]["role"] == "Senior Recruitment Consultant"
+
+
+def test_context_uses_semantic_search_when_relevant():
+    talents = [
+        {
+            "name": "Emma Martin",
+            "talent_score": 95,
+            "detected_skills": {"HRIS": ["Workday"]},
+        },
+        {
+            "name": "John Smith",
+            "talent_score": 82,
+            "detected_skills": {"Payroll": ["SAP Payroll"]},
+        },
+    ]
+
+    context = build_recruiter_context(
+        question="Find Workday candidates",
+        talents=talents,
+    )
+
+    assert context["talent_count"] == 2
+    assert context["selected_talent_count"] == 1
+    assert context["talents"][0]["name"] == "Emma Martin"
 
 
 def test_format_context_for_prompt():
@@ -86,4 +111,5 @@ def test_format_context_for_prompt():
     assert "TalentCopilot" in prompt
     assert "Emma Martin" in prompt
     assert "Best Candidate" in prompt
+    assert "Relevant talents selected" in prompt
     assert "Do not invent candidate information." in prompt
