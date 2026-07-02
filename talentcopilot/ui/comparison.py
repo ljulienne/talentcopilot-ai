@@ -2,6 +2,8 @@
 import streamlit as st
 import pandas as pd
 
+from talentcopilot.ui.components import section_title, assistant_panel
+
 MIN_COMPARE_CANDIDATES = 2
 MAX_COMPARE_CANDIDATES = 5
 
@@ -31,12 +33,11 @@ def _hiring_risk(match):
 
 
 def _get_strengths(match_result, limit=3):
-    strengths = [
+    return [
         detail.requirement.name
         for detail in match_result.match_details
         if detail.score >= 80
-    ]
-    return strengths[:limit]
+    ][:limit]
 
 
 def _get_gaps(match_result, limit=3):
@@ -87,13 +88,30 @@ def _candidate_card(item, index, all_items):
     candidate = item["candidate"]
     match = item["match_result"]
 
-    st.markdown(f"### #{index + 1} — {candidate.name}")
-    st.caption(_main_badge(item, all_items))
+    st.markdown(f"""
+    <div style="
+        background:white;
+        border-radius:18px;
+        padding:18px;
+        border:1px solid #E2E8F0;
+        box-shadow:0 4px 12px rgba(0,0,0,.05);
+        margin-bottom:16px;
+    ">
+        <div style="font-size:13px;color:#64748B;">#{index + 1}</div>
+        <h3 style="margin-bottom:4px;">{candidate.name}</h3>
+        <div style="font-size:13px;color:#4F46E5;font-weight:600;">
+            {_main_badge(item, all_items)}
+        </div>
+        <div style="font-size:34px;font-weight:700;color:#0F172A;margin-top:12px;">
+            {match.overall_score}%
+        </div>
+        <div style="color:#64748B;margin-bottom:10px;">
+            {_score_status(match.overall_score)}
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    st.metric("Match", f"{match.overall_score}%")
     st.progress(match.overall_score / 100)
-
-    st.write(_score_status(match.overall_score))
     st.write(f"**Confidence:** {match.confidence_score}%")
     st.write(f"**Hiring Risk:** {_hiring_risk(match)}")
     st.write(f"**Languages:** {_detect_languages(candidate)}")
@@ -101,12 +119,29 @@ def _candidate_card(item, index, all_items):
 
 
 def render_candidate_comparison(results):
-    st.title("⚖️ Candidate Comparison")
-    st.caption("Compare 2 to 5 candidates side by side.")
+    st.markdown("""
+    <div class="tc-hero">
+        <h1>⚖️ Candidate Comparison</h1>
+        <h3>Shortlist Evaluation Workspace</h3>
+        <p class="tc-muted">
+        Compare up to five candidates side by side with AI-powered insights.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
     if not results:
         st.info("Run an analysis first from the Dashboard.")
         return
+
+    section_title(
+        "Comparison Workspace",
+        "Select between two and five candidates for a detailed comparison."
+    )
+
+    assistant_panel(
+        "Recruiter Copilot",
+        "Choose your shortlisted candidates. I will compare match score, confidence, languages, hiring risk, strengths and gaps."
+    )
 
     labels = [_candidate_label(item, index) for index, item in enumerate(results)]
 
@@ -122,7 +157,10 @@ def render_candidate_comparison(results):
 
     selected_items = [results[labels.index(label)] for label in selected_labels]
 
-    st.subheader("Candidate cards")
+    section_title(
+        "Candidate Cards",
+        "Quick overview of selected candidates."
+    )
 
     cols = st.columns(len(selected_items))
 
@@ -132,7 +170,10 @@ def render_candidate_comparison(results):
 
     st.divider()
 
-    st.subheader("Overview")
+    section_title(
+        "Comparison Table",
+        "Side-by-side decision matrix."
+    )
 
     overview_rows = []
 
@@ -152,7 +193,12 @@ def render_candidate_comparison(results):
 
     st.dataframe(pd.DataFrame(overview_rows), use_container_width=True)
 
-    st.subheader("Strengths and gaps")
+    st.divider()
+
+    section_title(
+        "Strengths & Gaps",
+        "Key observations for each candidate."
+    )
 
     cols = st.columns(len(selected_items))
 
@@ -182,7 +228,10 @@ def render_candidate_comparison(results):
 
     st.divider()
 
-    st.subheader("Decision summary")
+    section_title(
+        "Recruiter Recommendation",
+        "AI-generated conclusion."
+    )
 
     best = max(selected_items, key=lambda item: item["match_result"].overall_score)
     best_candidate = best["candidate"].name
@@ -190,5 +239,5 @@ def render_candidate_comparison(results):
 
     st.success(
         f"{best_candidate} currently has the strongest overall fit among the selected candidates "
-        f"with a match score of {best_score}%. Review the strengths, gaps and hiring risk before making the final decision."
+        f"with a match score of {best_score}%. Review strengths, gaps, languages and hiring risk before making the final decision."
     )
