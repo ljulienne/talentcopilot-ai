@@ -10,6 +10,8 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+from talentcopilot.talent_pool.talent_profile import index_recruitment_talents
+
 DATA_DIR = Path("data")
 RECRUITMENTS_DIR = DATA_DIR / "recruitments"
 
