@@ -23,7 +23,45 @@ def _load_agent():
     return RecruiterAgent(enriched), enriched
 
 
+def _init_conversation():
+    if "recruiter_copilot_history" not in st.session_state:
+        st.session_state.recruiter_copilot_history = []
+
+
+def _add_message(role, content, title=None):
+    st.session_state.recruiter_copilot_history.append(
+        {
+            "role": role,
+            "title": title,
+            "content": content,
+        }
+    )
+
+
+def _render_conversation():
+    history = st.session_state.get("recruiter_copilot_history", [])
+
+    if not history:
+        st.info("No conversation yet. Ask TalentCopilot your first question.")
+        return
+
+    for message in history:
+        role = message.get("role")
+        title = message.get("title")
+        content = message.get("content", "")
+
+        if role == "user":
+            st.markdown(f"**🧑 Recruiter:** {content}")
+        else:
+            st.markdown(f"### 🧠 {title or 'Recruiter Copilot'}")
+            st.markdown(content)
+
+        st.divider()
+
+
 def render_recruiter_copilot():
+    _init_conversation()
+
     st.markdown("""
     <div class="tc-hero">
         <h1>💬 Recruiter Copilot</h1>
@@ -73,15 +111,45 @@ def render_recruiter_copilot():
         key="recruiter_copilot_question",
     )
 
-    if st.button("💬 Ask Recruiter Copilot", use_container_width=True):
-        response = agent.answer(question)
+    col_ask, col_clear = st.columns([3, 1])
 
-        st.markdown(f"### 🧠 {response.get('title', 'Recruiter Copilot')}")
-        st.markdown(response.get("answer", "No answer available."))
+    with col_ask:
+        ask = st.button("💬 Ask Recruiter Copilot", use_container_width=True)
+
+    with col_clear:
+        clear = st.button("🧹 Clear", use_container_width=True)
+
+    if clear:
+        st.session_state.recruiter_copilot_history = []
+        st.rerun()
+
+    if ask:
+        if not question.strip():
+            st.warning("Please enter a question.")
+        else:
+            response = agent.answer(question)
+
+            _add_message("user", question)
+            _add_message(
+                "assistant",
+                response.get("answer", "No answer available."),
+                response.get("title", "Recruiter Copilot"),
+            )
+
+            st.rerun()
+
+    st.divider()
+
+    section_title(
+        "Conversation",
+        "Recruiter questions and TalentCopilot answers."
+    )
+
+    _render_conversation()
 
     st.divider()
 
     assistant_panel(
         "How it works",
-        "This first version uses TalentCopilot's local intelligence engine. Future versions will add OpenAI reasoning, conversation memory and advanced tool usage."
+        "This version uses TalentCopilot's local intelligence engine with conversation memory. Future versions will add OpenAI reasoning and advanced tool usage."
     )
