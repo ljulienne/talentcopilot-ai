@@ -114,13 +114,26 @@ def render_dashboard():
     item = results[selected_index]
     match = item["match_result"]
 
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Candidate", item["candidate"].name)
-    col2.metric("Score", f"{match.overall_score}%")
-    col3.metric("Confidence", f"{match.confidence_score}%")
+    section_title(
+        "Candidate Insight",
+        "Detailed recommendation, score and confidence for the selected candidate."
+    )
 
-    st.write(f"**Recommendation:** {match.recommendation}")
-    st.write(match.executive_summary)
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        metric_card("Candidate", item["candidate"].name, "Selected profile")
+
+    with col2:
+        metric_card("Score", f"{match.overall_score}%", "TalentCopilot match")
+
+    with col3:
+        metric_card("Confidence", f"{match.confidence_score}%", "AI confidence", "#10B981")
+
+    assistant_panel(
+        "Hiring Recommendation",
+        f"{match.recommendation}. {match.executive_summary}"
+    )
 
     with st.expander("Why this score?"):
         for detail in match.match_details:
