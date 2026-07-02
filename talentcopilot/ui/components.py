@@ -83,3 +83,18 @@ def card(title, body="", badge=None):
         <p style="color:#64748B;">{body}</p>
     </div>
     """, unsafe_allow_html=True)
+
+
+def footer(version=""):
+    st.markdown(f"""
+    <div style="
+        margin-top:40px;
+        padding-top:20px;
+        border-top:1px solid #E2E8F0;
+        color:#64748B;
+        font-size:13px;
+        text-align:center;
+    ">
+        TalentCopilot AI {version} — Understand every candidate. Explain every hiring decision.
+    </div>
+    """, unsafe_allow_html=True)
