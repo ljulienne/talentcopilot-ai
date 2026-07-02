@@ -59,7 +59,13 @@ def upsert_talent_profile(profile: Dict[str, Any]) -> Dict[str, Any]:
 
     for index, existing in enumerate(talents):
         if existing.get("candidate_key") == candidate_key:
+            financial_data = existing.get("financial_data")
+
             existing.update(profile)
+
+            if financial_data and not profile.get("financial_data"):
+                existing["financial_data"] = financial_data
+
             existing["updated_at"] = now
             talents[index] = existing
             save_talents(talents)
@@ -71,6 +77,24 @@ def upsert_talent_profile(profile: Dict[str, Any]) -> Dict[str, Any]:
     save_talents(talents)
 
     return profile
+
+
+def update_talent_financial_data(
+    candidate_key: str,
+    financial_data: Dict[str, Any],
+) -> Dict[str, Any]:
+    talents = load_talents()
+    now = get_current_timestamp()
+
+    for index, talent in enumerate(talents):
+        if talent.get("candidate_key") == candidate_key:
+            talent["financial_data"] = financial_data
+            talent["updated_at"] = now
+            talents[index] = talent
+            save_talents(talents)
+            return talent
+
+    raise ValueError(f"Talent not found: {candidate_key}")
 
 
 def list_talent_profiles() -> List[Dict[str, Any]]:
