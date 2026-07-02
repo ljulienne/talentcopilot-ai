@@ -1,5 +1,6 @@
 
 import streamlit as st
+
 from talentcopilot.engines.recruitment_pipeline import analyze_recruitment_batch
 from talentcopilot.ui.widgets import score_badge
 from talentcopilot.ui.components import (
@@ -11,9 +12,39 @@ from talentcopilot.ui.components import (
 
 MAX_CV_UPLOADS = 50
 
+
+def _get_recruitment_title():
+    context = st.session_state.get("recruitment_context")
+    if not context:
+        return "Recruitment Dashboard"
+    return context.get("job_title") or "Recruitment Dashboard"
+
+
+def _render_recruitment_context():
+    context = st.session_state.get("recruitment_context")
+
+    if not context:
+        st.info("Tip: create a recruitment context first from **New Recruitment** for a richer report.")
+        return
+
+    st.markdown(f"""
+    <div class="tc-hero">
+        <h1>📊 {_get_recruitment_title()}</h1>
+        <h3>{context.get("company", "")} · {context.get("department", "")}</h3>
+        <p class="tc-muted">
+        {context.get("location", "")} · {context.get("recruitment_type", "")} · Language: {context.get("language", "Auto Detect")}
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+
 def render_dashboard():
-    st.title("📊 Recruitment Dashboard")
-    st.caption("Upload a job description and candidate CVs to start the analysis.")
+    _render_recruitment_context()
+
+    section_title(
+        "Upload Files",
+        "Upload one job description and up to 50 candidate CVs."
+    )
 
     job_file = st.file_uploader("Upload job description PDF", type=["pdf"])
 
@@ -44,7 +75,10 @@ def render_dashboard():
     batch = st.session_state.get("analysis_batch")
 
     if not batch:
-        st.info("No analysis yet. Upload files above to begin.")
+        assistant_panel(
+            "Recruiter Copilot",
+            "Upload a job description and candidate CVs to start. Once the analysis is complete, I will summarize the candidate pool and recommend where to focus first."
+        )
         return
 
     if not batch["success"]:
@@ -65,7 +99,7 @@ def render_dashboard():
 
     section_title(
         "Recruitment Summary",
-        "AI-powered overview of your candidate pool"
+        "AI-powered overview of your candidate pool."
     )
 
     col1, col2, col3, col4 = st.columns(4)
@@ -88,24 +122,34 @@ def render_dashboard():
     )
 
     st.divider()
-    st.subheader("🏆 Candidate Ranking")
+    section_title("Candidate Ranking", "Ranked by TalentCopilot match score.")
 
     for index, item in enumerate(results, start=1):
         match = item["match_result"]
         candidate = item["candidate"]
 
-        with st.container():
-            col1, col2, col3, col4 = st.columns([1, 4, 2, 2])
-            col1.subheader(f"#{index}")
-            with col2:
-                candidate_card(candidate.name, match.overall_score, match.recommendation)
-                st.caption(item["file"])
-            col3.metric("Confidence", f"{match.confidence_score}%")
-            col4.write(f"**{score_badge(match.overall_score)}**")
-            st.write(match.executive_summary)
-            st.divider()
+        col_rank, col_card, col_conf, col_status = st.columns([1, 4, 2, 2])
 
-    st.subheader("🔍 Candidate Detail")
+        with col_rank:
+            st.subheader(f"#{index}")
+
+        with col_card:
+            candidate_card(candidate.name, match.overall_score, match.recommendation)
+            st.caption(item["file"])
+
+        with col_conf:
+            metric_card("Confidence", f"{match.confidence_score}%", "AI confidence")
+
+        with col_status:
+            st.write(f"**{score_badge(match.overall_score)}**")
+
+        st.write(match.executive_summary)
+        st.divider()
+
+    section_title(
+        "Candidate Insight",
+        "Detailed recommendation, score and confidence for the selected candidate."
+    )
 
     options = [f"#{i+1} - {item['candidate'].name}" for i, item in enumerate(results)]
     selected = st.selectbox("Select a candidate", options)
@@ -113,11 +157,6 @@ def render_dashboard():
 
     item = results[selected_index]
     match = item["match_result"]
-
-    section_title(
-        "Candidate Insight",
-        "Detailed recommendation, score and confidence for the selected candidate."
-    )
 
     col1, col2, col3 = st.columns(3)
 
