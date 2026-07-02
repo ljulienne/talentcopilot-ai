@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-from talentcopilot.semantic.semantic_search import semantic_search
+from talentcopilot.semantic.lexical_search import LexicalSearchEngine
+from talentcopilot.semantic.search_engine import SearchEngine
 
 
 def _safe_list(value: Any) -> List[Any]:
@@ -38,12 +39,14 @@ def build_recruiter_context(
     talents: List[Dict[str, Any]],
     local_response: Dict[str, Any] | None = None,
     max_talents: int = 10,
+    search_engine: SearchEngine | None = None,
 ) -> Dict[str, Any]:
     safe_talents = _safe_list(talents)
+    engine = search_engine or LexicalSearchEngine()
 
-    semantic_results = semantic_search(
-        safe_talents,
-        question,
+    semantic_results = engine.search(
+        talents=safe_talents,
+        query=question,
         top_k=max_talents,
     )
 
@@ -63,6 +66,7 @@ def build_recruiter_context(
         "selected_talent_count": len(selected_talents),
         "talents": summarized_talents,
         "local_response": local_response or {},
+        "search_engine": engine.__class__.__name__,
         "instructions": {
             "role": "Senior Recruitment Consultant",
             "tone": "professional, concise, evidence-based",
@@ -91,6 +95,7 @@ def format_context_for_prompt(context: Dict[str, Any]) -> str:
     lines.append("")
     lines.append(f"Talent count: {context.get('talent_count', 0)}")
     lines.append(f"Relevant talents selected: {context.get('selected_talent_count', 0)}")
+    lines.append(f"Search engine: {context.get('search_engine', '-')}")
     lines.append("")
     lines.append("Talent summaries:")
 
