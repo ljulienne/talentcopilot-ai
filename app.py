@@ -21,8 +21,15 @@ if "analysis_batch" not in st.session_state:
 if "recruitment_context" not in st.session_state:
     st.session_state.recruitment_context = None
 
-st.sidebar.title("🧠 TalentCopilot")
-st.sidebar.caption(f"Version {APP_VERSION}")
+st.sidebar.markdown("## 🧠 TalentCopilot AI")
+st.sidebar.caption(f"Version {APP_VERSION} · Beta")
+st.sidebar.markdown("---")
+st.sidebar.markdown("**Workflow**")
+st.sidebar.caption("1. New Recruitment")
+st.sidebar.caption("2. Dashboard Analysis")
+st.sidebar.caption("3. Candidate Comparison")
+st.sidebar.caption("4. Recruiter Report")
+st.sidebar.markdown("---")
 
 page = st.sidebar.radio(
     "Navigation",
