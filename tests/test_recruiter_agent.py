@@ -4,14 +4,14 @@ from talentcopilot.ai.recruiter_agent import RecruiterAgent
 def test_best_candidate():
     talents = [
         {
-            "name": "Emma",
+            "name": "Emma Martin",
             "talent_score": 95,
             "average_score": 91,
             "highest_score": 97,
             "average_confidence": 94,
         },
         {
-            "name": "John",
+            "name": "John Smith",
             "talent_score": 82,
             "average_score": 80,
             "highest_score": 85,
@@ -30,7 +30,7 @@ def test_best_candidate():
 def test_budget_analysis():
     talents = [
         {
-            "name": "John",
+            "name": "John Smith",
             "financial_data": {
                 "expected_salary": 95000,
                 "budget_max": 85000,
@@ -38,7 +38,7 @@ def test_budget_analysis():
             },
         },
         {
-            "name": "Emma",
+            "name": "Emma Martin",
             "financial_data": {
                 "expected_salary": 80000,
                 "budget_max": 85000,
@@ -60,7 +60,7 @@ def test_budget_analysis():
 def test_skills_summary():
     talents = [
         {
-            "name": "Emma",
+            "name": "Emma Martin",
             "detected_skills": {
                 "HRIS": ["workday", "successfactors"],
                 "Data": ["power bi"],
@@ -76,10 +76,79 @@ def test_skills_summary():
     assert "workday" in answer["answer"]
 
 
+def test_find_talents_by_skill():
+    talents = [
+        {
+            "name": "Emma Martin",
+            "talent_score": 95,
+            "detected_skills": {
+                "HRIS": ["workday"],
+                "Data": ["power bi"],
+            },
+        },
+        {
+            "name": "John Smith",
+            "talent_score": 81,
+            "detected_skills": {
+                "Payroll": ["payroll"],
+            },
+        },
+    ]
+
+    agent = RecruiterAgent(talents)
+    answer = agent.answer("Who has workday experience?")
+
+    assert answer["title"] == "Talent Search by Skill"
+    assert "Emma Martin" in answer["answer"]
+    assert "John Smith" not in answer["answer"]
+
+
+def test_compare_two_talents():
+    talents = [
+        {
+            "name": "Emma Martin",
+            "candidate_key": "emma-martin",
+            "talent_score": 95,
+            "average_score": 91,
+            "average_confidence": 94,
+        },
+        {
+            "name": "John Smith",
+            "candidate_key": "john-smith",
+            "talent_score": 82,
+            "average_score": 80,
+            "average_confidence": 88,
+        },
+    ]
+
+    agent = RecruiterAgent(talents)
+    answer = agent.answer("Compare Emma and John")
+
+    assert answer["title"] == "Talent Comparison"
+    assert "Emma Martin" in answer["answer"]
+    assert "John Smith" in answer["answer"]
+    assert "appears stronger" in answer["answer"]
+
+
+def test_compare_requires_two_talents():
+    talents = [
+        {
+            "name": "Emma Martin",
+            "talent_score": 95,
+        }
+    ]
+
+    agent = RecruiterAgent(talents)
+    answer = agent.answer("Compare Emma")
+
+    assert answer["title"] == "Talent Comparison"
+    assert "Please mention two talent names" in answer["answer"]
+
+
 def test_interview_priority():
     talents = [
-        {"name": "John", "talent_score": 82},
-        {"name": "Emma", "talent_score": 95},
+        {"name": "John Smith", "talent_score": 82},
+        {"name": "Emma Martin", "talent_score": 95},
     ]
 
     agent = RecruiterAgent(talents)
@@ -92,7 +161,7 @@ def test_interview_priority():
 def test_risk_summary():
     talents = [
         {
-            "name": "John",
+            "name": "John Smith",
             "average_score": 68,
             "average_confidence": 72,
         }

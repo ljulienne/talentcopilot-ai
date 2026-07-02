@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 
 class RecruiterAgent:
@@ -12,6 +12,14 @@ class RecruiterAgent:
 
         if not q:
             return self._unknown_question()
+
+        if any(keyword in q for keyword in ["compare", "versus", "vs"]):
+            return self._compare_talents(q)
+
+        if any(keyword in q for keyword in ["who has", "with", "has experience", "experience in"]):
+            matched = self._find_talents_by_skill(q)
+            if matched:
+                return matched
 
         if any(keyword in q for keyword in ["best", "top", "strongest"]):
             return self._best_candidate()
@@ -38,6 +46,8 @@ class RecruiterAgent:
                 "- best candidate\n"
                 "- budget or salary\n"
                 "- skills\n"
+                "- finding candidates by skill\n"
+                "- comparing two talents\n"
                 "- interview priority\n"
                 "- risks or gaps"
             ),
@@ -129,6 +139,96 @@ class RecruiterAgent:
         return {
             "title": "Skills Summary",
             "answer": "\n\n".join(lines),
+        }
+
+    def _find_talents_by_skill(self, question: str) -> Optional[Dict[str, Any]]:
+        matches = []
+
+        for talent in self.talents:
+            detected = talent.get("detected_skills", {}) or {}
+
+            flattened_skills = []
+            for skills in detected.values():
+                flattened_skills.extend(skills)
+
+            for skill in flattened_skills:
+                if skill.lower() in question:
+                    matches.append(
+                        f"- **{talent.get('name', 'Unknown Candidate')}** — "
+                        f"{talent.get('talent_score', 0)}% Talent Score"
+                    )
+                    break
+
+        if not matches:
+            return None
+
+        return {
+            "title": "Talent Search by Skill",
+            "answer": "Matching talents:\n\n" + "\n".join(matches),
+        }
+
+    def _find_talent_by_name(self, question: str) -> Optional[Dict[str, Any]]:
+        for talent in self.talents:
+            name = talent.get("name", "").lower()
+            if name and name in question:
+                return talent
+
+        for talent in self.talents:
+            first_name = talent.get("name", "").lower().split(" ")[0]
+            if first_name and first_name in question:
+                return talent
+
+        return None
+
+    def _compare_talents(self, question: str) -> Dict[str, Any]:
+        selected = []
+
+        for talent in self.talents:
+            name = talent.get("name", "").lower()
+            first_name = name.split(" ")[0] if name else ""
+
+            if name and name in question:
+                selected.append(talent)
+            elif first_name and first_name in question:
+                selected.append(talent)
+
+        unique = []
+        seen = set()
+
+        for talent in selected:
+            key = talent.get("candidate_key") or talent.get("name")
+            if key not in seen:
+                unique.append(talent)
+                seen.add(key)
+
+        if len(unique) < 2:
+            return {
+                "title": "Talent Comparison",
+                "answer": (
+                    "Please mention two talent names to compare them. "
+                    "Example: Compare Emma and John."
+                ),
+            }
+
+        first, second = unique[:2]
+
+        winner = first if first.get("talent_score", 0) >= second.get("talent_score", 0) else second
+
+        return {
+            "title": "Talent Comparison",
+            "answer": (
+                f"**{first.get('name', 'Talent A')}** vs **{second.get('name', 'Talent B')}**\n\n"
+                f"- {first.get('name', 'Talent A')}: Talent Score "
+                f"**{first.get('talent_score', 0)}%**, Average Match "
+                f"**{first.get('average_score', 0)}%**, Confidence "
+                f"**{first.get('average_confidence', 0)}%**\n"
+                f"- {second.get('name', 'Talent B')}: Talent Score "
+                f"**{second.get('talent_score', 0)}%**, Average Match "
+                f"**{second.get('average_score', 0)}%**, Confidence "
+                f"**{second.get('average_confidence', 0)}%**\n\n"
+                f"Current recommendation: **{winner.get('name', 'the first talent')}** appears stronger "
+                f"based on the consolidated Talent Score."
+            ),
         }
 
     def _interview_priority(self) -> Dict[str, Any]:
