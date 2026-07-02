@@ -1,5 +1,6 @@
 import streamlit as st
 
+from talentcopilot.interview.interview_generator import generate_interview_guide
 from talentcopilot.talent_pool.talent_metrics import enrich_talent_profiles
 from talentcopilot.talent_pool.talent_skills import enrich_talent_with_skills
 from talentcopilot.talent_pool.talent_store import list_talent_profiles
@@ -18,6 +19,15 @@ def _filter_talents(talents, search):
         or query in talent.get("candidate_key", "").lower()
         or query in talent.get("last_recruitment_title", "").lower()
     ]
+
+
+def _render_bullets(items):
+    if not items:
+        st.info("No item available.")
+        return
+
+    for item in items:
+        st.write(f"• {item}")
 
 
 def _render_history(history):
@@ -69,6 +79,46 @@ def _render_skills_intelligence(talent):
     for category, skills in detected_skills.items():
         with st.expander(category, expanded=True):
             st.write(", ".join(sorted(set(skills))))
+
+
+def _render_interview_intelligence(talent):
+    guide = generate_interview_guide(talent)
+
+    section_title(
+        "Interview Intelligence",
+        "Structured interview guide generated from the talent profile."
+    )
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        metric_card(
+            "Best Recommendation",
+            guide.get("best_recommendation", "-"),
+            "Based on best application"
+        )
+
+    with col2:
+        metric_card(
+            "Interview Focus Areas",
+            len(guide.get("interview_focus", [])),
+            "Suggested focus points"
+        )
+
+    with st.expander("Technical Questions", expanded=True):
+        _render_bullets(guide.get("technical_questions", []))
+
+    with st.expander("Behavioral Questions", expanded=True):
+        _render_bullets(guide.get("behavioral_questions", []))
+
+    with st.expander("Risk Validation Questions", expanded=True):
+        _render_bullets(guide.get("risk_validation_questions", []))
+
+    with st.expander("Role Fit Questions", expanded=True):
+        _render_bullets(guide.get("role_fit_questions", []))
+
+    with st.expander("Interview Focus", expanded=True):
+        _render_bullets(guide.get("interview_focus", []))
 
 
 def _render_talent_profile(talent):
@@ -141,6 +191,10 @@ def _render_talent_profile(talent):
 
     st.divider()
 
+    _render_interview_intelligence(talent)
+
+    st.divider()
+
     section_title(
         "Application History",
         "All recruitment analyses linked to this talent."
@@ -152,7 +206,7 @@ def _render_talent_profile(talent):
 
     assistant_panel(
         "TalentCopilot Assessment",
-        "This profile consolidates performance, recruitment history and detected skills. Future versions will add languages, salary expectations, interview notes and AI-generated talent summaries."
+        "This profile consolidates performance, recruitment history, detected skills and interview guidance. Future versions will add salary expectations, interview notes and AI-generated talent summaries."
     )
 
 
