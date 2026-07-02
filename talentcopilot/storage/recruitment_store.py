@@ -8,9 +8,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-logger = logging.getLogger(__name__)
-
 from talentcopilot.talent_pool.talent_profile import index_recruitment_talents
+
+logger = logging.getLogger(__name__)
 
 DATA_DIR = Path("data")
 RECRUITMENTS_DIR = DATA_DIR / "recruitments"
@@ -55,7 +55,7 @@ def make_json_safe(value: Any) -> Any:
             pass
 
     if isinstance(value, dict):
-        return {str(k): make_json_safe(v) for k, v in value.items()}
+        return {str(key): make_json_safe(val) for key, val in value.items()}
 
     if isinstance(value, (list, tuple, set)):
         return [make_json_safe(item) for item in value]
@@ -64,6 +64,20 @@ def make_json_safe(value: Any) -> Any:
         return make_json_safe(vars(value))
 
     return str(value)
+
+
+def update_talent_pool_if_needed(recruitment_data: Dict[str, Any]) -> None:
+    analysis_batch = recruitment_data.get("analysis_batch")
+
+    if not analysis_batch:
+        return
+
+    try:
+        indexed_profiles = index_recruitment_talents(recruitment_data)
+        logger.info("Talent Pool updated with %s talent(s).", len(indexed_profiles))
+
+    except Exception as exc:
+        logger.exception("Talent Pool update failed: %s", exc)
 
 
 def save_recruitment(recruitment_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -92,6 +106,9 @@ def save_recruitment(recruitment_data: Dict[str, Any]) -> Dict[str, Any]:
             json.dump(safe_data, file, ensure_ascii=False, indent=2)
 
         logger.info("Recruitment saved: %s", file_path)
+
+        update_talent_pool_if_needed(safe_data)
+
         return safe_data
 
     except Exception as exc:
@@ -128,7 +145,9 @@ def list_recruitments() -> List[Dict[str, Any]]:
                     "created_at": data.get("created_at"),
                     "updated_at": data.get("updated_at"),
                     "language": data.get("language"),
-                    "candidate_count": len(data.get("analysis_batch", {}).get("results", [])),
+                    "candidate_count": len(
+                        data.get("analysis_batch", {}).get("results", [])
+                    ),
                     "file_path": str(file_path),
                 }
             )
