@@ -1,6 +1,7 @@
 import streamlit as st
 
 from talentcopilot.talent_pool.talent_metrics import enrich_talent_profiles
+from talentcopilot.talent_pool.talent_skills import enrich_talent_with_skills
 from talentcopilot.talent_pool.talent_store import list_talent_profiles
 from talentcopilot.ui.components import section_title, assistant_panel, metric_card
 
@@ -41,12 +42,40 @@ def _render_history(history):
         st.divider()
 
 
+def _render_skills_intelligence(talent):
+    enriched = enrich_talent_with_skills(talent)
+    detected_skills = enriched.get("detected_skills", {})
+    skill_coverage = enriched.get("skill_coverage", 0)
+
+    section_title(
+        "Skills Intelligence",
+        "Skills detected from the talent's recruitment history and AI summaries."
+    )
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        metric_card("Skill Coverage", f"{skill_coverage}%", "Detected skill categories")
+
+    with col2:
+        metric_card("Skill Categories", len(detected_skills), "Detected domains")
+
+    st.progress(min(skill_coverage, 100) / 100)
+
+    if not detected_skills:
+        st.info("No structured skills detected yet. Future analyses will enrich this profile.")
+        return
+
+    for category, skills in detected_skills.items():
+        with st.expander(category, expanded=True):
+            st.write(", ".join(sorted(set(skills))))
+
+
 def _render_talent_profile(talent):
     name = talent.get("name", "Unknown Candidate")
     talent_score = talent.get("talent_score", 0)
     progression = talent.get("progression_trend", "Not enough history")
     best_application = talent.get("best_application")
-    latest_application = talent.get("latest_application")
 
     st.markdown(f"""
     <div class="tc-hero">
@@ -108,6 +137,10 @@ def _render_talent_profile(talent):
 
     st.divider()
 
+    _render_skills_intelligence(talent)
+
+    st.divider()
+
     section_title(
         "Application History",
         "All recruitment analyses linked to this talent."
@@ -119,7 +152,7 @@ def _render_talent_profile(talent):
 
     assistant_panel(
         "TalentCopilot Assessment",
-        "This profile consolidates the candidate's historical performance. Future versions will add skills, languages, salary expectations, interview notes and AI-generated talent summaries."
+        "This profile consolidates performance, recruitment history and detected skills. Future versions will add languages, salary expectations, interview notes and AI-generated talent summaries."
     )
 
 
