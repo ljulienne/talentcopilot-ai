@@ -5,6 +5,7 @@ from talentcopilot.engines.recruitment_pipeline import analyze_recruitment_batch
 from talentcopilot.storage.recruitment_store import save_recruitment
 from talentcopilot.ui.widgets import score_badge
 from talentcopilot.ui.ask_copilot import render_ask_copilot
+from talentcopilot.ai.candidate_explainer import explain_candidate
 from talentcopilot.ui.components import (
     section_title,
     metric_card,
@@ -240,6 +241,40 @@ def render_dashboard():
         "Hiring Recommendation",
         f"{match.recommendation}. {match.executive_summary}"
     )
+
+    explanation = explain_candidate(item)
+
+    st.divider()
+    section_title(
+        "Explainable Candidate Intelligence",
+        "Structured assessment generated from the AI matching analysis."
+    )
+
+    col_a, col_b, col_c = st.columns(3)
+
+    with col_a:
+        metric_card("Final Assessment", explanation["final_assessment"], "Recruitment decision support")
+
+    with col_b:
+        metric_card("Match Score", f"{explanation['score']}%", "Candidate-role alignment")
+
+    with col_c:
+        metric_card("AI Confidence", f"{explanation['confidence']}%", "Assessment reliability", "#10B981")
+
+    with st.expander("Executive Assessment", expanded=True):
+        st.write(explanation["executive_summary"] or "No executive summary available.")
+
+    with st.expander("Strengths", expanded=True):
+        for strength in explanation["strengths"]:
+            st.write(f"• {strength}")
+
+    with st.expander("Potential Risks", expanded=True):
+        for risk in explanation["risks"]:
+            st.write(f"• {risk}")
+
+    with st.expander("Interview Focus", expanded=True):
+        for focus in explanation["interview_focus"]:
+            st.write(f"• {focus}")
 
     with st.expander("Why this score?"):
         for detail in match.match_details:
