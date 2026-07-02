@@ -59,3 +59,27 @@ def candidate_card(name, score, recommendation):
         <div>{recommendation}</div>
     </div>
     """, unsafe_allow_html=True)
+
+
+def card(title, body="", badge=None):
+    badge_html = (
+        f'<span style="background:#EEF2FF;color:#4338CA;'
+        f'padding:4px 10px;border-radius:999px;'
+        f'font-size:12px;font-weight:600;">{badge}</span>'
+        if badge else ""
+    )
+
+    st.markdown(f"""
+    <div style="
+        background:white;
+        border-radius:18px;
+        padding:20px;
+        border:1px solid #E2E8F0;
+        box-shadow:0 4px 12px rgba(0,0,0,.05);
+        margin-bottom:16px;
+    ">
+        {badge_html}
+        <h3 style="margin-top:12px;">{title}</h3>
+        <p style="color:#64748B;">{body}</p>
+    </div>
+    """, unsafe_allow_html=True)
