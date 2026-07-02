@@ -24,11 +24,21 @@ if "recruitment_context" not in st.session_state:
 st.sidebar.markdown("## 🧠 TalentCopilot AI")
 st.sidebar.caption(f"Version {APP_VERSION} · Beta")
 st.sidebar.markdown("---")
+
+context = st.session_state.get("recruitment_context")
+
+if context:
+    st.sidebar.markdown("**Current Recruitment**")
+    st.sidebar.caption(context.get("job_title", "Untitled recruitment"))
+    st.sidebar.caption(context.get("company", ""))
+    st.sidebar.markdown("---")
+
 st.sidebar.markdown("**Workflow**")
 st.sidebar.caption("1. New Recruitment")
 st.sidebar.caption("2. Dashboard Analysis")
-st.sidebar.caption("3. Candidate Comparison")
-st.sidebar.caption("4. Recruiter Report")
+st.sidebar.caption("3. Candidate Review")
+st.sidebar.caption("4. Candidate Comparison")
+st.sidebar.caption("5. Recruiter Report")
 st.sidebar.markdown("---")
 
 page = st.sidebar.radio(
@@ -66,6 +76,5 @@ elif page == "📄 Reports":
 
 elif page == "⚙️ Settings":
     render_settings()
-
 
 footer(APP_VERSION)
