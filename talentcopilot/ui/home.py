@@ -1,5 +1,10 @@
 
 import streamlit as st
+
+from talentcopilot.demo.demo_data import (
+    load_demo_batch,
+    load_demo_recruitment_context,
+)
 from talentcopilot.ui.components import card, assistant_panel, section_title
 
 
@@ -22,6 +27,11 @@ def render_home():
             "Create a recruitment, analyze CVs, compare candidates and generate recruiter-ready reports."
         )
 
+        if st.button("🎬 Launch Demo", use_container_width=True):
+            st.session_state.recruitment_context = load_demo_recruitment_context()
+            st.session_state.analysis_batch = load_demo_batch()
+            st.success("Demo loaded. Go to Dashboard, Candidates, Comparison or Reports.")
+
         card(
             "🚀 Start a new recruitment",
             "Create a recruitment context, upload one job description and analyze up to 50 CVs.",
@@ -43,7 +53,7 @@ def render_home():
     with col2:
         assistant_panel(
             "Recruiter Copilot",
-            "Start by creating a new recruitment. Then upload your job description and CVs from the Dashboard."
+            "Click Launch Demo to explore TalentCopilot instantly, or start a new recruitment from scratch."
         )
 
         card(
