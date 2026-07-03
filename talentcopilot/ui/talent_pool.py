@@ -2,12 +2,8 @@ import streamlit as st
 
 from talentcopilot.talent_pool.talent_metrics import enrich_talent_profiles
 from talentcopilot.talent_pool.talent_store import list_talent_profiles
+from talentcopilot.ui.candidate_workspace import render_candidate_workspace
 from talentcopilot.ui.components import section_title, assistant_panel, metric_card
-from talentcopilot.ui.talent_profile.financial import render_financial
-from talentcopilot.ui.talent_profile.history import render_history
-from talentcopilot.ui.talent_profile.interview import render_interview
-from talentcopilot.ui.talent_profile.overview import render_overview
-from talentcopilot.ui.talent_profile.skills import render_skills
 
 
 def _filter_talents(talents, search):
@@ -24,47 +20,13 @@ def _filter_talents(talents, search):
     ]
 
 
-def _render_talent_profile(talent):
-    name = talent.get("name", "Unknown Candidate")
-
-    st.markdown(f"""
-    <div class="tc-hero">
-        <h1>👤 {name}</h1>
-        <h3>Talent Intelligence Profile</h3>
-        <p class="tc-muted">
-        Consolidated profile based on all recruitment analyses involving this talent.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    render_overview(talent)
-
-    st.divider()
-    render_skills(talent)
-
-    st.divider()
-    render_interview(talent)
-
-    st.divider()
-    render_financial(talent)
-
-    st.divider()
-    render_history(talent)
-
-    st.divider()
-    assistant_panel(
-        "TalentCopilot Assessment",
-        "This profile consolidates performance, recruitment history, detected skills, interview guidance and financial simulation. Future versions will add AI-powered offer recommendations, interview notes and career fit analysis.",
-    )
-
-
 def render_talent_pool():
     st.markdown("""
     <div class="tc-hero">
-        <h1>👥 Talent Pool</h1>
-        <h3>Enterprise Talent Intelligence</h3>
+        <h1>👥 Talent Intelligence</h1>
+        <h3>Enterprise Talent Workspace</h3>
         <p class="tc-muted">
-        Explore consolidated talent profiles automatically built from recruitment analyses.
+        Search, select and open consolidated Candidate Workspaces.
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -96,7 +58,7 @@ def render_talent_pool():
         metric_card("Applications", total_applications, "Across recruitments")
 
     with col3:
-        metric_card("Average Match", f"{avg_score}%", "Talent Pool average")
+        metric_card("Average Match", f"{avg_score}%", "Talent average")
 
     with col4:
         metric_card(
@@ -109,12 +71,12 @@ def render_talent_pool():
 
     section_title(
         "Talent Explorer",
-        "Search, select and review consolidated Talent Profiles.",
+        "Search a talent and open the Candidate Workspace."
     )
 
     search = st.text_input(
         "Search talents",
-        placeholder="Search by candidate name or recruitment...",
+        placeholder="Search by candidate name, recruitment or profile key...",
     )
 
     filtered_talents = _filter_talents(talents, search)
@@ -123,7 +85,7 @@ def render_talent_pool():
         st.info("No talent matches your search.")
         return
 
-    col_list, col_profile = st.columns([1, 2])
+    col_list, col_workspace = st.columns([1, 2.4])
 
     with col_list:
         st.caption(f"{len(filtered_talents)} talent(s) found")
@@ -145,12 +107,18 @@ def render_talent_pool():
         st.divider()
 
         for talent in filtered_talents[:10]:
-            st.write(f"**{talent.get('name', 'Unknown Candidate')}**")
-            st.caption(
-                f"Talent Score: {talent.get('talent_score', 0)}% · "
-                f"Applications: {talent.get('application_count', 0)}"
+            st.markdown(
+                f"""
+                <div class="tc-card">
+                    <strong>{talent.get('name', 'Unknown Candidate')}</strong><br>
+                    <span class="tc-muted">
+                    Talent Score: {talent.get('talent_score', 0)}% · 
+                    Applications: {talent.get('application_count', 0)}
+                    </span>
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
-            st.divider()
 
-    with col_profile:
-        _render_talent_profile(selected_talent)
+    with col_workspace:
+        render_candidate_workspace(selected_talent)
