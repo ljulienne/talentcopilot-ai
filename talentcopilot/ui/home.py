@@ -5,6 +5,7 @@ from talentcopilot.analytics.recruitment_statistics import (
     get_workspace_statistics,
 )
 from talentcopilot.ai.openai_recruiter import is_openai_available
+from talentcopilot.services.ranking_service import rank_candidates
 from talentcopilot.demo.demo_data import (
     load_demo_batch,
     load_demo_recruitment_context,
@@ -137,7 +138,9 @@ def render_home():
         with col_a:
             if st.button("🎬 Launch Demo", use_container_width=True):
                 st.session_state.recruitment_context = load_demo_recruitment_context()
-                st.session_state.analysis_batch = load_demo_batch()
+                demo_batch = load_demo_batch()
+                demo_batch["results"] = rank_candidates(demo_batch.get("results", []))
+                st.session_state.analysis_batch = demo_batch
                 st.success("Demo loaded. Go to Dashboard, Candidates, Comparison or Reports.")
 
         with col_b:

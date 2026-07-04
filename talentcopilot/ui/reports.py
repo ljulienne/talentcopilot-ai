@@ -1,6 +1,8 @@
 
 import streamlit as st
 
+from talentcopilot.services.ranking_service import rank_candidates
+
 from talentcopilot.reports.pdf_report import generate_recruiter_report
 from talentcopilot.ui.components import section_title, metric_card, assistant_panel, card
 

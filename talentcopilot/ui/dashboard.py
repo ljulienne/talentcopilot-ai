@@ -1,4 +1,6 @@
 import streamlit as st
+
+from talentcopilot.services.ranking_service import rank_candidates
 from datetime import datetime
 
 from talentcopilot.engines.recruitment_pipeline import analyze_recruitment_batch
@@ -150,7 +152,7 @@ def render_dashboard():
         st.error("The job description could not be processed.")
         return
 
-    results = batch["results"]
+    results = rank_candidates(batch["results"])
 
     if not results:
         st.error("No candidate could be analyzed.")

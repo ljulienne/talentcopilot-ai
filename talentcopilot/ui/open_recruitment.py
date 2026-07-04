@@ -1,5 +1,7 @@
 import streamlit as st
 
+from talentcopilot.services.ranking_service import rank_candidates
+
 from talentcopilot.storage.recruitment_store import (
     list_recruitments,
     load_recruitment,

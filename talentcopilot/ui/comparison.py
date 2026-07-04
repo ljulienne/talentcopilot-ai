@@ -1,5 +1,7 @@
 
 import streamlit as st
+
+from talentcopilot.services.ranking_service import rank_candidates
 import pandas as pd
 
 from talentcopilot.ui.components import section_title, assistant_panel
