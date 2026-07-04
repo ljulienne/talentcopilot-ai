@@ -2,6 +2,7 @@ import streamlit as st
 
 from talentcopilot.talent_pool.talent_metrics import enrich_talent_profiles
 from talentcopilot.talent_pool.talent_store import list_talent_profiles
+from talentcopilot.services.ranking_service import rank_candidates
 from talentcopilot.ui.candidate_workspace import render_candidate_workspace
 from talentcopilot.ui.components import section_title, assistant_panel, metric_card
 
@@ -40,7 +41,7 @@ def render_talent_pool():
         )
         return
 
-    talents = enrich_talent_profiles(raw_talents)
+    talents = rank_candidates(enrich_talent_profiles(raw_talents))
 
     total_talents = len(talents)
     total_applications = sum(talent.get("application_count", 0) for talent in talents)
@@ -79,7 +80,7 @@ def render_talent_pool():
         placeholder="Search by candidate name, recruitment or profile key...",
     )
 
-    filtered_talents = _filter_talents(talents, search)
+    filtered_talents = rank_candidates(_filter_talents(talents, search))
 
     if not filtered_talents:
         st.info("No talent matches your search.")
