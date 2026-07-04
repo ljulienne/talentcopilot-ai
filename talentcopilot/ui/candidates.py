@@ -65,8 +65,38 @@ def render_candidates():
 
         with col2:
             candidate_card(candidate.name, match.overall_score, match.recommendation)
-            st.caption(f"Confidence: {match.confidence_score}% | File: {item['file']}")
+            weighted = item.get("weighted_ranking", {})
+            official_score = weighted.get("weighted_ranking_score", match.overall_score)
+
+            st.caption(
+                f"Official Ranking Score: {official_score}% | "
+                f"Match Score: {match.overall_score}% | "
+                f"Confidence: {match.confidence_score}% | "
+                f"File: {item['file']}"
+            )
+
             st.write(match.executive_summary)
+
+            if weighted:
+                with st.expander("⚖️ Why this rank?", expanded=False):
+                    st.write(weighted.get("explanation", ""))
+
+                    criteria = weighted.get("criteria", {})
+                    weights = weighted.get("weights", {})
+
+                    for key, score in criteria.items():
+                        weight = weights.get(key, 0)
+                        contribution = round(score * weight, 1)
+                        label = key.replace("_", " ").title()
+
+                        st.write(
+                            f"**{label}**: {score}% × {round(weight * 100)}% = {contribution}"
+                        )
+
+                    st.caption(
+                        "The official ranking score is calculated from weighted criteria. "
+                        "This makes the ranking more explainable than a single raw match score."
+                    )
 
             intelligence = item.get("candidate_intelligence")
             if intelligence:
