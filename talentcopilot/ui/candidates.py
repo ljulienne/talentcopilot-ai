@@ -68,4 +68,22 @@ def render_candidates():
             st.caption(f"Confidence: {match.confidence_score}% | File: {item['file']}")
             st.write(match.executive_summary)
 
+            intelligence = item.get("candidate_intelligence")
+            if intelligence:
+                with st.expander("🧠 Candidate Intelligence", expanded=False):
+                    st.write(f"**Readiness:** {intelligence.get('readiness', '-')}")
+                    st.write(f"**Why:** {intelligence.get('why', '-')}")
+
+                    st.write("**Strengths**")
+                    for strength in intelligence.get("strengths", []):
+                        st.write(f"✅ {strength}")
+
+                    st.write("**Development areas**")
+                    for area in intelligence.get("development_areas", []):
+                        st.write(f"⚠️ {area}")
+
+                    st.write("**Interview focus**")
+                    for focus in intelligence.get("interview_focus", []):
+                        st.write(f"🎯 {focus}")
+
         st.divider()

@@ -1,5 +1,7 @@
 import streamlit as st
 
+from talentcopilot.engines.candidate_intelligence_engine import enrich_with_candidate_intelligence
+
 from talentcopilot.analytics.recruitment_statistics import (
     get_ai_insights,
     get_workspace_statistics,
@@ -140,6 +142,7 @@ def render_home():
                 st.session_state.recruitment_context = load_demo_recruitment_context()
                 demo_batch = load_demo_batch()
                 demo_batch["results"] = rank_candidates(demo_batch.get("results", []))
+                demo_batch["results"] = enrich_with_candidate_intelligence(demo_batch["results"])
                 st.session_state.analysis_batch = demo_batch
                 st.success("Demo loaded. Go to Dashboard, Candidates, Comparison or Reports.")
 
