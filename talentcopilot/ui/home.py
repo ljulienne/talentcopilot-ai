@@ -19,6 +19,7 @@ from talentcopilot.demo.demo_data import (
     load_demo_recruitment_context,
 )
 from talentcopilot.ui.components import card, assistant_panel, section_title, metric_card
+from talentcopilot.ui.design_system import render_page_header
 
 
 def _render_recent_recruitments(recent_recruitments):
@@ -91,15 +92,12 @@ def render_home():
     insights = get_ai_insights()
     top_candidate = stats.get("top_candidate")
 
-    st.markdown(f"""
-    <div class="tc-hero">
-        <h1>👋 {tr('home.greeting')}</h1>
-        <h3>{tr('home.command_center')}</h3>
-        <p class="tc-muted">
-        {tr('home.subtitle')}
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    render_page_header(
+        title=tr("home.greeting"),
+        subtitle=tr("home.command_center"),
+        description=tr("home.subtitle"),
+        icon="👋",
+    )
 
     col1, col2, col3, col4 = st.columns(4)
 
