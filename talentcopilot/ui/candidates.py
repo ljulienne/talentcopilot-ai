@@ -2,7 +2,7 @@
 import streamlit as st
 
 from talentcopilot.ui.cards import render_decision_header
-from talentcopilot.ui.design_system import render_decision_drivers, render_evidence_card
+from talentcopilot.ui.design_system import render_decision_drivers, render_evidence_card, render_risk_card
 
 from talentcopilot.services.ranking_service import rank_candidates
 
@@ -116,6 +116,8 @@ def render_candidates():
                     st.write("**Strengths**")
                     for strength in intelligence.get("strengths", []):
                         st.write(f"✅ {strength}")
+
+                    render_risk_card(intelligence.get("risk_factors", []))
 
                     st.write("**Development areas**")
                     for area in intelligence.get("development_areas", []):
