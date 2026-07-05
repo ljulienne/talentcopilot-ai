@@ -2,6 +2,7 @@
 import streamlit as st
 
 from talentcopilot.ui.cards import render_decision_header
+from talentcopilot.ui.design_system import render_decision_drivers
 
 from talentcopilot.services.ranking_service import rank_candidates
 
