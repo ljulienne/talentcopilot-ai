@@ -67,6 +67,7 @@ def render_candidates():
 
         with col2:
             render_decision_header(
+                candidate_decision=item.get("candidate_decision"),
                 match_result=match,
                 rank=item.get("rank", index)
             )
