@@ -23,6 +23,7 @@ translations = {
     "decision.rank": "Classement officiel",
     "decision.basis": "Base de décision",
     "decision.next_action": "Action recommandée",
+    "decision.default_next_action": "Poursuivre selon la recommandation de recrutement.",
     "decision.drivers": "Facteurs de décision",
     "decision.evidence": "Preuves",
     "decision.risks": "Risques de recrutement",

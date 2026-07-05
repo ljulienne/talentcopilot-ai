@@ -31,14 +31,14 @@ def render_decision_header(candidate_decision=None, match_result=None, rank=None
         match_score = candidate_decision.match_score
         confidence = candidate_decision.confidence
         rank = candidate_decision.rank
-        decision_basis = candidate_decision.decision_basis
-        next_action = candidate_decision.next_action or "Proceed according to the hiring recommendation."
+        decision_basis = tr("decision.match_score")
+        next_action = candidate_decision.next_action or tr("decision.default_next_action")
     else:
         recommendation = getattr(match_result, "recommendation", "Not Available")
         match_score = getattr(match_result, "overall_score", 0)
         confidence = getattr(match_result, "confidence_score", 0)
-        decision_basis = "{tr('decision.match_score')}"
-        next_action = "Proceed according to the hiring recommendation."
+        decision_basis = tr("decision.match_score")
+        next_action = tr("decision.default_next_action")
 
     color = _recommendation_color(recommendation)
 

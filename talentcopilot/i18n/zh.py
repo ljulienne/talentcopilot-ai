@@ -23,6 +23,7 @@ translations = {
     "decision.rank": "官方排名",
     "decision.basis": "决策依据",
     "decision.next_action": "建议下一步",
+    "decision.default_next_action": "根据招聘建议继续下一步。",
     "decision.drivers": "决策驱动因素",
     "decision.evidence": "证据",
     "decision.risks": "招聘风险",

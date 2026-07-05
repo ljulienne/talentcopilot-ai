@@ -23,6 +23,7 @@ translations = {
     "decision.rank": "Official Rank",
     "decision.basis": "Decision Basis",
     "decision.next_action": "Next Recommended Action",
+    "decision.default_next_action": "Proceed according to the hiring recommendation.",
     "decision.drivers": "Decision Drivers",
     "decision.evidence": "Evidence",
     "decision.risks": "Hiring Risks",
