@@ -2,7 +2,7 @@
 import streamlit as st
 
 from talentcopilot.ui.cards import render_decision_header
-from talentcopilot.ui.design_system import render_decision_drivers, render_evidence_card, render_risk_card
+from talentcopilot.ui.design_system import render_decision_drivers, render_evidence_card, render_risk_card, render_interview_focus_card
 
 from talentcopilot.services.ranking_service import rank_candidates
 
@@ -123,8 +123,12 @@ def render_candidates():
                     for area in intelligence.get("development_areas", []):
                         st.write(f"⚠️ {area}")
 
-                    st.write("**Interview focus**")
-                    for focus in intelligence.get("interview_focus", []):
-                        st.write(f"🎯 {focus}")
+                    decision = item.get("candidate_decision")
+                    if decision:
+                        render_interview_focus_card(decision.interview_plan)
+                    else:
+                        st.write("**Interview focus**")
+                        for focus in intelligence.get("interview_focus", []):
+                            st.write(f"🎯 {focus}")
 
         st.divider()
