@@ -29,4 +29,13 @@ translations = {
     "decision.evidence": "证据",
     "decision.risks": "招聘风险",
     "decision.interview_focus": "面试重点",
+    "candidates.list_title": "候选人列表",
+    "candidates.no_batch": "暂无候选人分析。请先启动演示或运行招聘分析。",
+    "candidates.subtitle": "查看候选人排名及其决策洞察。",
+    "candidates.top_score": "最高分",
+    "candidates.title": "候选人",
+    "candidates.total": "候选人",
+    "candidates.average_match": "平均匹配分数",
+    "candidates.top_confidence": "最高置信度",
+    "candidates.list_subtitle": "按官方匹配分数排序。",
 }

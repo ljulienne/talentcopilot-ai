@@ -29,4 +29,13 @@ translations = {
     "decision.evidence": "Evidence",
     "decision.risks": "Hiring Risks",
     "decision.interview_focus": "Interview Focus",
+    "candidates.list_subtitle": "Ranked by Official Match Score.",
+    "candidates.no_batch": "No candidate analysis available. Launch the demo or run a recruitment analysis first.",
+    "candidates.subtitle": "Review ranked candidates and their decision insights.",
+    "candidates.top_confidence": "Top Confidence",
+    "candidates.total": "Candidates",
+    "candidates.title": "Candidates",
+    "candidates.list_title": "Candidate List",
+    "candidates.top_score": "Top Score",
+    "candidates.average_match": "Average Match",
 }

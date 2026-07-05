@@ -1,6 +1,8 @@
 
 import streamlit as st
 
+from talentcopilot.i18n import tr
+
 from talentcopilot.ui.cards import render_decision_header
 from talentcopilot.ui.design_system import render_decision_center, render_risk_card, render_interview_focus_card, render_interview_focus_card, render_risk_card
 
@@ -12,7 +14,7 @@ from talentcopilot.ui.components import section_title, metric_card, assistant_pa
 def render_candidates():
     st.markdown("""
     <div class="tc-hero">
-        <h1>👥 Candidates</h1>
+        <h1>👥 {tr('candidates.title')}</h1>
         <h3>Candidate workspace</h3>
         <p class="tc-muted">
         Review analyzed candidates, scores, recommendations and confidence levels.
@@ -40,13 +42,13 @@ def render_candidates():
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        metric_card("Candidates", len(results), "Analyzed profiles")
+        metric_card(tr("candidates.total"), len(results), "Analyzed profiles")
 
     with col2:
-        metric_card("Top Score", f"{top_match.overall_score}%", top_candidate["candidate"].name, "#10B981")
+        metric_card(tr("candidates.top_score"), f"{top_match.overall_score}%", top_candidate["candidate"].name, "#10B981")
 
     with col3:
-        metric_card("Top Confidence", f"{top_match.confidence_score}%", "Highest ranked profile")
+        metric_card(tr("candidates.top_confidence"), f"{top_match.confidence_score}%", "Highest ranked profile")
 
     assistant_panel(
         "Recruiter Copilot",
@@ -55,7 +57,7 @@ def render_candidates():
 
     st.divider()
 
-    section_title("Candidate List", "Ranked by TalentCopilot match score.")
+    section_title(tr("candidates.list_title"), tr("candidates.list_subtitle"))
 
     for index, item in enumerate(results, start=1):
         candidate = item["candidate"]

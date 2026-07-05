@@ -29,4 +29,13 @@ translations = {
     "decision.evidence": "Preuves",
     "decision.risks": "Risques de recrutement",
     "decision.interview_focus": "Axes d'entretien",
+    "candidates.total": "Candidats",
+    "candidates.subtitle": "Analysez les candidats classés et leurs informations de décision.",
+    "candidates.average_match": "Score moyen",
+    "candidates.title": "Candidats",
+    "candidates.list_title": "Liste des candidats",
+    "candidates.top_confidence": "Meilleure confiance",
+    "candidates.list_subtitle": "Classés par Score officiel de correspondance.",
+    "candidates.no_batch": "Aucune analyse candidat disponible. Lancez la démo ou exécutez d’abord une analyse de recrutement.",
+    "candidates.top_score": "Meilleur score",
 }
