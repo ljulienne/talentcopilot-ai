@@ -72,4 +72,9 @@ translations = {
     "reports.summary": "Résumé du rapport",
     "reports.summary_subtitle": "Aperçu des informations clés incluses dans le PDF.",
     "reports.download_pdf": "📄 Télécharger le rapport recruteur PDF",
+    "comparison.title": "Comparaison des candidats",
+    "comparison.subtitle": "Espace d’évaluation de la shortlist",
+    "comparison.description": "Comparez jusqu’à cinq candidats côte à côte avec des insights IA.",
+    "comparison.workspace": "Espace de comparaison",
+    "comparison.workspace_subtitle": "Sélectionnez entre deux et cinq candidats pour une comparaison détaillée.",
 }

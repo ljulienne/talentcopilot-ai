@@ -72,4 +72,9 @@ translations = {
     "reports.summary": "报告摘要",
     "reports.summary_subtitle": "预览 PDF 中包含的关键信息。",
     "reports.download_pdf": "📄 下载招聘报告 PDF",
+    "comparison.title": "候选人对比",
+    "comparison.subtitle": "入围候选人评估空间",
+    "comparison.description": "并排比较最多五位候选人，并查看 AI 洞察。",
+    "comparison.workspace": "对比工作区",
+    "comparison.workspace_subtitle": "请选择二到五位候选人进行详细对比。",
 }

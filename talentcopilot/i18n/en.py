@@ -72,4 +72,9 @@ translations = {
     "reports.summary": "Report Summary",
     "reports.summary_subtitle": "Preview the key information that will be included in the PDF.",
     "reports.download_pdf": "📄 Download Recruiter Report PDF",
+    "comparison.title": "Candidate Comparison",
+    "comparison.subtitle": "Shortlist Evaluation Workspace",
+    "comparison.description": "Compare up to five candidates side by side with AI-powered insights.",
+    "comparison.workspace": "Comparison Workspace",
+    "comparison.workspace_subtitle": "Select between two and five candidates for a detailed comparison.",
 }

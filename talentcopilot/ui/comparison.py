@@ -1,10 +1,13 @@
 
 import streamlit as st
 
+from talentcopilot.i18n import tr
+
 from talentcopilot.services.ranking_service import rank_candidates
 import pandas as pd
 
 from talentcopilot.ui.components import section_title, assistant_panel
+from talentcopilot.ui.design_system import render_page_header
 
 MIN_COMPARE_CANDIDATES = 2
 MAX_COMPARE_CANDIDATES = 5
@@ -121,23 +124,20 @@ def _candidate_card(item, index, all_items):
 
 
 def render_candidate_comparison(results):
-    st.markdown("""
-    <div class="tc-hero">
-        <h1>⚖️ Candidate Comparison</h1>
-        <h3>Shortlist Evaluation Workspace</h3>
-        <p class="tc-muted">
-        Compare up to five candidates side by side with AI-powered insights.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    render_page_header(
+        title=tr("comparison.title"),
+        subtitle=tr("comparison.subtitle"),
+        description=tr("comparison.description"),
+        icon="⚖️",
+    )
 
     if not results:
         st.info("Run an analysis first from the Dashboard.")
         return
 
     section_title(
-        "Comparison Workspace",
-        "Select between two and five candidates for a detailed comparison."
+        tr("comparison.workspace"),
+        tr("comparison.workspace_subtitle")
     )
 
     assistant_panel(
