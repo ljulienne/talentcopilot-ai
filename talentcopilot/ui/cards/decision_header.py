@@ -1,5 +1,7 @@
 import streamlit as st
 
+from talentcopilot.i18n import tr
+
 
 def _recommendation_color(recommendation: str) -> str:
     recommendation = (recommendation or "").lower()
@@ -35,7 +37,7 @@ def render_decision_header(candidate_decision=None, match_result=None, rank=None
         recommendation = getattr(match_result, "recommendation", "Not Available")
         match_score = getattr(match_result, "overall_score", 0)
         confidence = getattr(match_result, "confidence_score", 0)
-        decision_basis = "Official Match Score"
+        decision_basis = "{tr('decision.match_score')}"
         next_action = "Proceed according to the hiring recommendation."
 
     color = _recommendation_color(recommendation)
@@ -45,7 +47,7 @@ def render_decision_header(candidate_decision=None, match_result=None, rank=None
 <div class="tc-card" style="padding:30px;border-radius:14px;">
 
 <h3 style="margin-bottom:10px;">
-🧠 Decision Summary
+🧠 {tr('decision.summary')}
 </h3>
 
 <div style="
@@ -64,17 +66,17 @@ margin-bottom:25px;
 <div style="display:flex;justify-content:space-between;gap:30px;">
 
 <div style="text-align:center;flex:1;">
-<div style="font-size:14px;color:#777;">Official Match Score</div>
+<div style="font-size:14px;color:#777;">{tr('decision.match_score')}</div>
 <div style="font-size:32px;font-weight:bold;">{match_score}%</div>
 </div>
 
 <div style="text-align:center;flex:1;">
-<div style="font-size:14px;color:#777;">Decision Confidence</div>
+<div style="font-size:14px;color:#777;">{tr('decision.confidence')}</div>
 <div style="font-size:32px;font-weight:bold;">{confidence}%</div>
 </div>
 
 <div style="text-align:center;flex:1;">
-<div style="font-size:14px;color:#777;">Official Rank</div>
+<div style="font-size:14px;color:#777;">{tr('decision.rank')}</div>
 <div style="font-size:32px;font-weight:bold;">#{rank if rank else "-"}</div>
 </div>
 
@@ -82,10 +84,10 @@ margin-bottom:25px;
 
 <hr style="margin-top:25px;margin-bottom:20px;">
 
-<b>Decision Basis</b>
+<b>{tr('decision.basis')}</b>
 <p style="margin-top:5px;">{decision_basis}</p>
 
-<b>Next Recommended Action</b>
+<b>{tr('decision.next_action')}</b>
 <p style="margin-top:5px;">{next_action}</p>
 
 </div>
