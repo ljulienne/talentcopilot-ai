@@ -1,13 +1,15 @@
 import streamlit as st
 
+from talentcopilot.i18n import tr
 
-def render_interview_focus_card(interview_plan=None, questions=None, title: str = "🎯 Interview Focus"):
+
+def render_interview_focus_card(interview_plan=None, questions=None, title: str | None = None):
     """
     Displays interview focus areas and suggested questions.
     Pure UI component.
     """
 
-    st.subheader(title)
+    st.subheader(title or f"🎯 {tr('decision.interview_focus')}")
 
     focus_areas = []
     question_items = []

@@ -1,5 +1,7 @@
 import streamlit as st
 
+from talentcopilot.i18n import tr
+
 from talentcopilot.ui.cards import render_decision_header
 from talentcopilot.ui.design_system import (
     render_decision_drivers,
@@ -21,7 +23,7 @@ def render_decision_center(item):
     evidence = item.get("evidence", [])
     intelligence = item.get("candidate_intelligence", {}) or {}
 
-    st.markdown("## 🧠 Candidate Decision Center")
+    st.markdown(f"## 🧠 {tr('decision.center')}")
 
     render_decision_header(
         candidate_decision=decision,

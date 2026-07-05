@@ -17,6 +17,7 @@ translations = {
     "menu.recruiter_copilot": "Copilote recruteur",
     "menu.settings": "Paramètres",
 
+    "decision.center": "Centre de décision candidat",
     "decision.summary": "Résumé de décision",
     "decision.match_score": "Score officiel de correspondance",
     "decision.confidence": "Confiance de la décision",

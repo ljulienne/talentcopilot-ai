@@ -17,6 +17,7 @@ translations = {
     "menu.recruiter_copilot": "招聘助手",
     "menu.settings": "设置",
 
+    "decision.center": "候选人决策中心",
     "decision.summary": "决策摘要",
     "decision.match_score": "官方匹配分数",
     "decision.confidence": "决策置信度",

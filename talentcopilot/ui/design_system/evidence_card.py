@@ -1,5 +1,7 @@
 import streamlit as st
 
+from talentcopilot.i18n import tr
+
 
 def _status_icon(status: str) -> str:
     status = (status or "").lower()
@@ -17,7 +19,7 @@ def render_evidence_card(evidences, limit: int = 5):
     Pure UI component.
     """
 
-    st.subheader("📌 Evidence")
+    st.subheader(f"📌 {tr('decision.evidence')}")
 
     if not evidences:
         st.info("No evidence available.")

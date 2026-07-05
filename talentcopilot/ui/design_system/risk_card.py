@@ -1,13 +1,15 @@
 import streamlit as st
 
+from talentcopilot.i18n import tr
 
-def render_risk_card(risks, title: str = "⚠️ Hiring Risks"):
+
+def render_risk_card(risks, title: str | None = None):
     """
     Displays candidate hiring risks.
     Pure UI component.
     """
 
-    st.subheader(title)
+    st.subheader(title or f"⚠️ {tr('decision.risks')}")
 
     if not risks:
         st.success("No major hiring risk detected.")

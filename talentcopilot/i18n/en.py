@@ -17,6 +17,7 @@ translations = {
     "menu.recruiter_copilot": "Recruiter Copilot",
     "menu.settings": "Settings",
 
+    "decision.center": "Candidate Decision Center",
     "decision.summary": "Decision Summary",
     "decision.match_score": "Official Match Score",
     "decision.confidence": "Decision Confidence",
