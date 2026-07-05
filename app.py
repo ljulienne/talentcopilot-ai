@@ -1,5 +1,7 @@
 import streamlit as st
 
+from talentcopilot.i18n import tr, LANGUAGES
+
 from talentcopilot.config import APP_NAME, APP_VERSION
 from talentcopilot.ui.theme import apply_theme
 from talentcopilot.ui.home import render_home
@@ -17,6 +19,9 @@ from talentcopilot.ui.recruiter_copilot import render_recruiter_copilot
 st.set_page_config(page_title=APP_NAME, page_icon="🧠", layout="wide")
 apply_theme()
 
+if "language" not in st.session_state:
+    st.session_state.language = "English"
+
 if "analysis_batch" not in st.session_state:
     st.session_state.analysis_batch = None
 
@@ -28,6 +33,16 @@ if "current_recruitment" not in st.session_state:
 
 st.sidebar.markdown("## 🧠 TalentCopilot AI")
 st.sidebar.caption(f"Version {APP_VERSION} · Beta")
+st.sidebar.markdown("---")
+
+selected_language = st.sidebar.selectbox(
+    "🌍 Language",
+    list(LANGUAGES.keys()),
+    index=list(LANGUAGES.keys()).index(st.session_state.language),
+)
+
+st.session_state.language = selected_language
+
 st.sidebar.markdown("---")
 
 context = st.session_state.get("recruitment_context")
