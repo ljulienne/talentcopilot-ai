@@ -63,52 +63,31 @@ st.sidebar.caption("6. Candidate Comparison")
 st.sidebar.caption("7. Recruiter Report")
 st.sidebar.markdown("---")
 
+pages = {
+    tr("menu.home"): render_home,
+    tr("menu.new_recruitment"): render_new_recruitment,
+    tr("menu.open_recruitment"): render_open_recruitment,
+    tr("menu.dashboard"): render_dashboard,
+    tr("menu.candidates"): render_candidates,
+    tr("menu.talent_pool"): render_talent_pool,
+    tr("menu.recruiter_copilot"): render_recruiter_copilot,
+    tr("menu.comparison"): "comparison",
+    tr("menu.reports"): render_reports,
+    tr("menu.settings"): render_settings,
+}
+
 page = st.sidebar.radio(
-    "Navigation",
-    [
-        "🏠 Home",
-        "➕ New Recruitment",
-        "📂 Open Recruitment",
-        "📊 Dashboard",
-        "👥 Candidates",
-        "🧠 Talent Pool",
-        "💬 Recruiter Copilot",
-        "⚖️ Comparison",
-        "📄 Reports",
-        "⚙️ Settings",
-    ]
+    tr("navigation"),
+    list(pages.keys())
 )
 
-if page == "🏠 Home":
-    render_home()
+selected_page = pages[page]
 
-elif page == "➕ New Recruitment":
-    render_new_recruitment()
-
-elif page == "📂 Open Recruitment":
-    render_open_recruitment()
-
-elif page == "📊 Dashboard":
-    render_dashboard()
-
-elif page == "👥 Candidates":
-    render_candidates()
-
-elif page == "🧠 Talent Pool":
-    render_talent_pool()
-
-elif page == "💬 Recruiter Copilot":
-    render_recruiter_copilot()
-
-elif page == "⚖️ Comparison":
+if selected_page == "comparison":
     batch = st.session_state.get("analysis_batch")
     results = batch["results"] if batch and batch.get("success") else []
     render_candidate_comparison(results)
-
-elif page == "📄 Reports":
-    render_reports()
-
-elif page == "⚙️ Settings":
-    render_settings()
+else:
+    selected_page()
 
 footer(APP_VERSION)

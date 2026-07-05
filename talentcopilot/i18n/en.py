@@ -4,6 +4,10 @@ translations = {
     "app.title": "TalentCopilot",
 
     "menu.home": "Home",
+    "menu.new_recruitment": "New Recruitment",
+    "menu.open_recruitment": "Open Recruitment",
+    "menu.recruiter_copilot": "Recruiter Copilot",
+    "navigation": "Navigation",
     "menu.dashboard": "Dashboard",
     "menu.candidates": "Candidates",
     "menu.comparison": "Comparison",
