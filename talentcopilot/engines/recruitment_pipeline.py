@@ -3,6 +3,7 @@ from talentcopilot.parsers.pdf_parser import extract_text_from_pdf
 from talentcopilot.engines.job_builder import build_job_from_text
 from talentcopilot.engines.candidate_builder import build_candidate_from_cv_text
 from talentcopilot.engines.matching_engine import match_candidate_to_job
+from talentcopilot.services.ranking_service import rank_candidates
 
 
 def analyze_recruitment_batch(job_file, cv_files):
@@ -49,11 +50,7 @@ def analyze_recruitment_batch(job_file, cv_files):
             "match_result": match_result
         })
 
-    results = sorted(
-        results,
-        key=lambda x: x["match_result"].overall_score,
-        reverse=True
-    )
+    results = rank_candidates(results)
 
     return {
         "success": True,
