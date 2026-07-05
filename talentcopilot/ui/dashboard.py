@@ -1,11 +1,14 @@
 import streamlit as st
 
+from talentcopilot.i18n import tr
+
 from talentcopilot.services.ranking_service import rank_candidates
 from datetime import datetime
 
 from talentcopilot.engines.recruitment_pipeline import analyze_recruitment_batch
 from talentcopilot.storage.recruitment_store import save_recruitment
 from talentcopilot.ui.widgets import score_badge
+from talentcopilot.ui.design_system import render_page_header
 from talentcopilot.ui.ask_copilot import render_ask_copilot
 from talentcopilot.ai.candidate_explainer import explain_candidate
 from talentcopilot.ui.components import (
@@ -46,15 +49,12 @@ def _render_recruitment_context():
     context = st.session_state.get("recruitment_context")
 
     if not context:
-        st.markdown("""
-        <div class="tc-hero">
-            <h1>📊 Recruitment Dashboard</h1>
-            <h3>Analyze candidates and review recruitment intelligence</h3>
-            <p class="tc-muted">
-            Upload a job description and candidate CVs to start the analysis.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+        render_page_header(
+            title=tr("dashboard.default_title"),
+            subtitle=tr("dashboard.default_subtitle"),
+            description=tr("dashboard.default_description"),
+            icon="📊",
+        )
 
         st.info("Tip: create a recruitment context first from **New Recruitment** for a richer report.")
         return

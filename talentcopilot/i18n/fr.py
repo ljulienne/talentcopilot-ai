@@ -63,4 +63,7 @@ translations = {
     "home.ai_advisor_text": "TalentCopilot résume votre portefeuille et vous aide à décider où concentrer vos efforts.",
     "home.platform_status": "Statut de la plateforme",
     "home.platform_status_subtitle": "Disponibilité du système et des services d’intelligence.",
+    "dashboard.default_title": "Tableau de bord recrutement",
+    "dashboard.default_subtitle": "Analysez les candidats et consultez l’intelligence recrutement",
+    "dashboard.default_description": "Importez une fiche de poste et des CV candidats pour lancer l’analyse.",
 }

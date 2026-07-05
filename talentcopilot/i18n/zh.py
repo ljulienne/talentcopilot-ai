@@ -63,4 +63,7 @@ translations = {
     "home.ai_advisor_text": "TalentCopilot 总结您的招聘组合，并帮助您决定优先关注的事项。",
     "home.platform_status": "平台状态",
     "home.platform_status_subtitle": "系统与智能服务就绪状态。",
+    "dashboard.default_title": "招聘仪表板",
+    "dashboard.default_subtitle": "分析候选人并查看招聘智能",
+    "dashboard.default_description": "上传职位描述和候选人简历以开始分析。",
 }

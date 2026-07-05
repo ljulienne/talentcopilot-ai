@@ -63,4 +63,7 @@ translations = {
     "home.ai_advisor_text": "TalentCopilot summarizes your portfolio and helps you decide where to focus first.",
     "home.platform_status": "Platform Status",
     "home.platform_status_subtitle": "System readiness and intelligence services.",
+    "dashboard.default_title": "Recruitment Dashboard",
+    "dashboard.default_subtitle": "Analyze candidates and review recruitment intelligence",
+    "dashboard.default_description": "Upload a job description and candidate CVs to start the analysis.",
 }
