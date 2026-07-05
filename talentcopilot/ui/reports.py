@@ -1,22 +1,22 @@
 
 import streamlit as st
 
+from talentcopilot.i18n import tr
+
 from talentcopilot.services.ranking_service import rank_candidates
 
 from talentcopilot.reports.pdf_report import generate_recruiter_report
 from talentcopilot.ui.components import section_title, metric_card, assistant_panel, card
+from talentcopilot.ui.design_system import render_page_header
 
 
 def render_reports():
-    st.markdown("""
-    <div class="tc-hero">
-        <h1>📄 Recruiter Reports</h1>
-        <h3>Generate a recruiter-ready PDF report</h3>
-        <p class="tc-muted">
-        Export the recruitment context, candidate ranking, recommendations, gaps and interview questions.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    render_page_header(
+        title=tr("reports.title"),
+        subtitle=tr("reports.subtitle"),
+        description=tr("reports.description"),
+        icon="📄",
+    )
 
     batch = st.session_state.get("analysis_batch")
     recruitment_context = st.session_state.get("recruitment_context")
@@ -40,8 +40,8 @@ def render_reports():
     top_candidate = results[0]["candidate"].name if results else "N/A"
 
     section_title(
-        "Report Summary",
-        "Preview the key information that will be included in the PDF."
+        tr("reports.summary"),
+        tr("reports.summary_subtitle")
     )
 
     col1, col2, col3 = st.columns(3)
@@ -80,7 +80,7 @@ def render_reports():
     pdf_buffer = generate_recruiter_report(batch, recruitment_context)
 
     st.download_button(
-        label="📄 Download Recruiter Report PDF",
+        label=tr("reports.download_pdf"),
         data=pdf_buffer,
         file_name="talentcopilot_recruiter_report.pdf",
         mime="application/pdf",

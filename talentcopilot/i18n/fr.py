@@ -66,4 +66,10 @@ translations = {
     "dashboard.default_title": "Tableau de bord recrutement",
     "dashboard.default_subtitle": "Analysez les candidats et consultez l’intelligence recrutement",
     "dashboard.default_description": "Importez une fiche de poste et des CV candidats pour lancer l’analyse.",
+    "reports.title": "Rapports recruteur",
+    "reports.subtitle": "Générez un rapport PDF prêt à partager",
+    "reports.description": "Exportez le contexte du recrutement, le classement des candidats, les recommandations, les écarts et les questions d’entretien.",
+    "reports.summary": "Résumé du rapport",
+    "reports.summary_subtitle": "Aperçu des informations clés incluses dans le PDF.",
+    "reports.download_pdf": "📄 Télécharger le rapport recruteur PDF",
 }

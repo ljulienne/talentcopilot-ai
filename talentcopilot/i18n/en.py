@@ -66,4 +66,10 @@ translations = {
     "dashboard.default_title": "Recruitment Dashboard",
     "dashboard.default_subtitle": "Analyze candidates and review recruitment intelligence",
     "dashboard.default_description": "Upload a job description and candidate CVs to start the analysis.",
+    "reports.title": "Recruiter Reports",
+    "reports.subtitle": "Generate a recruiter-ready PDF report",
+    "reports.description": "Export the recruitment context, candidate ranking, recommendations, gaps and interview questions.",
+    "reports.summary": "Report Summary",
+    "reports.summary_subtitle": "Preview the key information that will be included in the PDF.",
+    "reports.download_pdf": "📄 Download Recruiter Report PDF",
 }

@@ -66,4 +66,10 @@ translations = {
     "dashboard.default_title": "招聘仪表板",
     "dashboard.default_subtitle": "分析候选人并查看招聘智能",
     "dashboard.default_description": "上传职位描述和候选人简历以开始分析。",
+    "reports.title": "招聘报告",
+    "reports.subtitle": "生成可供招聘团队使用的 PDF 报告",
+    "reports.description": "导出招聘背景、候选人排名、推荐、差距和面试问题。",
+    "reports.summary": "报告摘要",
+    "reports.summary_subtitle": "预览 PDF 中包含的关键信息。",
+    "reports.download_pdf": "📄 下载招聘报告 PDF",
 }
