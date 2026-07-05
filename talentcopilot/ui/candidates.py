@@ -1,6 +1,8 @@
 
 import streamlit as st
 
+from talentcopilot.ui.cards import render_decision_header
+
 from talentcopilot.services.ranking_service import rank_candidates
 
 from talentcopilot.ui.components import section_title, metric_card, assistant_panel, candidate_card
@@ -64,6 +66,11 @@ def render_candidates():
             st.subheader(f"#{index}")
 
         with col2:
+            render_decision_header(
+                match_result=match,
+                rank=item.get("rank", index)
+            )
+
             candidate_card(candidate.name, match.overall_score, match.recommendation)
             weighted = item.get("weighted_ranking", {})
             official_score = weighted.get("weighted_ranking_score", match.overall_score)
