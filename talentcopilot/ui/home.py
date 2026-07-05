@@ -91,7 +91,7 @@ def render_home():
     insights = get_ai_insights()
     top_candidate = stats.get("top_candidate")
 
-    st.markdown("""
+    st.markdown(f"""
     <div class="tc-hero">
         <h1>👋 {tr('home.greeting')}</h1>
         <h3>{tr('home.command_center')}</h3>
