@@ -1,51 +1,61 @@
 
 from typing import Any, Dict, List
 
-from talentcopilot.engines.weighted_ranking_engine import enrich_with_weighted_ranking
+
+RANKING_MODE_OFFICIAL = "official_match_score"
 
 
-def get_candidate_score(candidate: Dict[str, Any]) -> float:
+def get_match_score(candidate_item: Dict[str, Any]) -> float:
     """
-    Official ranking rule:
-    use weighted_ranking.weighted_ranking_score when available.
-    Fallback to match_result.overall_score.
-    """
+    Official TalentCopilot ranking score.
 
-    weighted = candidate.get("weighted_ranking")
-    if isinstance(weighted, dict):
-        value = weighted.get("weighted_ranking_score")
-        if value is not None:
-            try:
-                return float(value)
-            except (TypeError, ValueError):
-                pass
-
-    match_result = candidate.get("match_result")
-    if match_result is not None:
-        value = getattr(match_result, "overall_score", None)
-        if value is not None:
-            try:
-                return float(value)
-            except (TypeError, ValueError):
-                pass
-
-    return 0.0
-
-
-def rank_candidates(candidates: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """
-    Rank candidates using the official weighted ranking score.
+    The official ranking is always based on match_result.overall_score.
+    Candidate Fit or Hiring Strategy scores must be handled separately.
     """
 
-    enriched_candidates = enrich_with_weighted_ranking(candidates)
+    match_result = candidate_item.get("match_result")
+
+    if match_result is None:
+        return 0.0
+
+    value = getattr(match_result, "overall_score", 0)
+
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def rank_candidates(
+    candidates: List[Dict[str, Any]],
+    ranking_mode: str = RANKING_MODE_OFFICIAL,
+) -> List[Dict[str, Any]]:
+    """
+    Rank candidates.
+
+    Default and official mode:
+    - official_match_score
+
+    Future modes may include:
+    - candidate_fit
+    - hiring_strategy
+    """
+
+    if ranking_mode != RANKING_MODE_OFFICIAL:
+        raise ValueError(
+            f"Unsupported ranking mode: {ranking_mode}. "
+            "Only official_match_score is currently supported."
+        )
 
     ranked_candidates = sorted(
-        enriched_candidates,
-        key=get_candidate_score,
+        candidates,
+        key=get_match_score,
         reverse=True,
     )
 
     for index, candidate in enumerate(ranked_candidates, start=1):
         candidate["rank"] = index
+        candidate["ranking_mode"] = RANKING_MODE_OFFICIAL
+        candidate["official_ranking_score"] = get_match_score(candidate)
 
     return ranked_candidates
