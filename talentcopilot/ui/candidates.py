@@ -4,7 +4,7 @@ import streamlit as st
 from talentcopilot.i18n import tr
 
 from talentcopilot.ui.cards import render_decision_header
-from talentcopilot.ui.design_system import render_risk_card, render_interview_focus_card
+from talentcopilot.ui.design_system import render_risk_card, render_interview_focus_card, render_page_header
 
 from talentcopilot.services.ranking_service import rank_candidates
 
@@ -12,15 +12,12 @@ from talentcopilot.ui.components import section_title, metric_card, assistant_pa
 
 
 def render_candidates():
-    st.markdown(f"""
-    <div class="tc-hero">
-        <h1>👥 {tr('candidates.title')}</h1>
-        <h3>{tr('candidates.subtitle')}</h3>
-        <p class="tc-muted">
-        {tr('candidates.subtitle')}
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    render_page_header(
+        title=tr("candidates.title"),
+        subtitle=tr("candidates.subtitle"),
+        description=tr("candidates.list_subtitle"),
+        icon="👥",
+    )
 
     batch = st.session_state.get("analysis_batch")
 
