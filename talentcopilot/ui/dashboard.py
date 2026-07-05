@@ -46,6 +46,16 @@ def _render_recruitment_context():
     context = st.session_state.get("recruitment_context")
 
     if not context:
+        st.markdown("""
+        <div class="tc-hero">
+            <h1>📊 Recruitment Dashboard</h1>
+            <h3>Analyze candidates and review recruitment intelligence</h3>
+            <p class="tc-muted">
+            Upload a job description and candidate CVs to start the analysis.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
         st.info("Tip: create a recruitment context first from **New Recruitment** for a richer report.")
         return
 
@@ -201,7 +211,7 @@ def render_dashboard():
         col_rank, col_card, col_conf, col_status = st.columns([1, 4, 2, 2])
 
         with col_rank:
-            st.subheader(f"#{item.get("rank", index)}")
+            st.subheader(f"#{item.get('rank', index)}")
 
         with col_card:
             candidate_card(candidate.name, match.overall_score, match.recommendation)
