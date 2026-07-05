@@ -46,7 +46,10 @@ def answer_recruiter_question(question: str, recruitment: Dict[str, Any] | None)
     if not q:
         return "Please enter a question about the current recruitment."
 
-    sorted_results = sorted(results, key=_score, reverse=True)
+    sorted_results = sorted(
+    results,
+    key=lambda item: item.get("rank", 9999)
+)
 
     if any(keyword in q for keyword in ["top", "best", "first", "highest", "ranked first"]):
         best = sorted_results[0]

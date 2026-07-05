@@ -78,7 +78,7 @@ def render_candidates():
             official_score = weighted.get("weighted_ranking_score", match.overall_score)
 
             st.caption(
-                f"Official Ranking Score: {official_score}% | "
+                f"Weighted Ranking Score: {official_score}% | "
                 f"Match Score: {match.overall_score}% | "
                 f"Confidence: {match.confidence_score}% | "
                 f"File: {item['file']}"

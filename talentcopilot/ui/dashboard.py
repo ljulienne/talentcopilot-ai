@@ -201,7 +201,7 @@ def render_dashboard():
         col_rank, col_card, col_conf, col_status = st.columns([1, 4, 2, 2])
 
         with col_rank:
-            st.subheader(f"#{index}")
+            st.subheader(f"#{item.get("rank", index)}")
 
         with col_card:
             candidate_card(candidate.name, match.overall_score, match.recommendation)
