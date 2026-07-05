@@ -1,5 +1,7 @@
 import streamlit as st
 
+from talentcopilot.engines.decision_builder import enrich_with_candidate_decisions
+
 from talentcopilot.engines.evidence_engine import enrich_with_evidence
 
 from talentcopilot.engines.candidate_intelligence_engine import enrich_with_candidate_intelligence
@@ -146,6 +148,7 @@ def render_home():
                 demo_batch["results"] = rank_candidates(demo_batch.get("results", []))
                 demo_batch["results"] = enrich_with_candidate_intelligence(demo_batch["results"])
                 demo_batch["results"] = enrich_with_evidence(demo_batch["results"])
+                demo_batch["results"] = enrich_with_candidate_decisions(demo_batch["results"])
                 st.session_state.analysis_batch = demo_batch
                 st.success("Demo loaded. Go to Dashboard, Candidates, Comparison or Reports.")
 
