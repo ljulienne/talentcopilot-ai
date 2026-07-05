@@ -1,5 +1,7 @@
 import streamlit as st
 
+from talentcopilot.i18n import tr
+
 from talentcopilot.engines.decision_builder import enrich_with_candidate_decisions
 
 from talentcopilot.engines.evidence_engine import enrich_with_evidence
@@ -73,7 +75,7 @@ def _render_platform_status(stats):
     status_items = [
         ("OpenAI", openai_ready),
         ("Talent Pool", talent_pool_ready),
-        ("Recruitments", recruitment_ready),
+        (tr("home.recruitments"), recruitment_ready),
         ("Semantic Search", True),
     ]
 
@@ -91,10 +93,10 @@ def render_home():
 
     st.markdown("""
     <div class="tc-hero">
-        <h1>👋 Good morning, Louis</h1>
-        <h3>AI Command Center</h3>
+        <h1>👋 {tr('home.greeting')}</h1>
+        <h3>{tr('home.command_center')}</h3>
         <p class="tc-muted">
-        Your enterprise AI workspace for recruitment intelligence, talent decisions and recruiter guidance.
+        {tr('home.subtitle')}
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -102,29 +104,29 @@ def render_home():
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        metric_card("Recruitments", stats.get("total_recruitments", 0), "Saved projects")
+        metric_card(tr("home.recruitments"), stats.get("total_recruitments", 0), tr("home.saved_projects"))
 
     with col2:
-        metric_card("Candidates", stats.get("total_candidates", 0), "Analyzed profiles")
+        metric_card(tr("home.candidates"), stats.get("total_candidates", 0), tr("home.analyzed_profiles"))
 
     with col3:
-        metric_card("Average Match", f"{stats.get('average_match', 0)}%", "Candidate pool")
+        metric_card(tr("home.average_match"), f"{stats.get('average_match', 0)}%", tr("home.candidate_pool"))
 
     with col4:
         if top_candidate:
             metric_card(
-                "Top Talent",
+                tr("home.top_talent"),
                 f"{top_candidate.get('score', 0)}%",
                 top_candidate.get("name", "Unknown"),
             )
         else:
-            metric_card("Top Talent", "-", "No candidate yet")
+            metric_card(tr("home.top_talent"), "-", tr("home.no_candidate"))
 
     st.divider()
 
     section_title(
-        "Today's AI Insights",
-        "What deserves your attention right now."
+        tr("home.ai_insights"),
+        tr("home.ai_insights_subtitle")
     )
 
     _render_ai_insights(insights)
@@ -135,14 +137,14 @@ def render_home():
 
     with col_left:
         section_title(
-            "Quick Actions",
-            "Start, test or continue your recruitment workflow."
+            tr("home.quick_actions"),
+            tr("home.quick_actions_subtitle")
         )
 
         col_a, col_b, col_c = st.columns(3)
 
         with col_a:
-            if st.button("🎬 Launch Demo", use_container_width=True):
+            if st.button(tr("home.launch_demo"), use_container_width=True):
                 st.session_state.recruitment_context = load_demo_recruitment_context()
                 demo_batch = load_demo_batch()
                 demo_batch["results"] = rank_candidates(demo_batch.get("results", []))
@@ -150,32 +152,32 @@ def render_home():
                 demo_batch["results"] = enrich_with_evidence(demo_batch["results"])
                 demo_batch["results"] = enrich_with_candidate_decisions(demo_batch["results"])
                 st.session_state.analysis_batch = demo_batch
-                st.success("Demo loaded. Go to Dashboard, Candidates, Comparison or Reports.")
+                st.success(tr("home.demo_loaded"))
 
         with col_b:
-            st.button("➕ New Recruitment", use_container_width=True)
+            st.button(tr("home.new_recruitment"), use_container_width=True)
 
         with col_c:
-            st.button("💬 Ask AI Advisor", use_container_width=True)
+            st.button(tr("home.ask_ai"), use_container_width=True)
 
         st.divider()
 
         section_title(
-            "Recent Recruitments",
-            "Resume your latest recruitment projects."
+            tr("home.recent_recruitments"),
+            tr("home.recent_recruitments_subtitle")
         )
 
         _render_recent_recruitments(stats.get("recent_recruitments", []))
 
     with col_right:
         assistant_panel(
-            "AI Recruitment Advisor",
-            "TalentCopilot summarizes your portfolio and helps you decide where to focus first."
+            tr("home.ai_advisor"),
+            tr("home.ai_advisor_text")
         )
 
         section_title(
-            "Platform Status",
-            "System readiness and intelligence services."
+            tr("home.platform_status"),
+            tr("home.platform_status_subtitle")
         )
 
         _render_platform_status(stats)
