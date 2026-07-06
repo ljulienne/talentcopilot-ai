@@ -1,1 +1,217 @@
-[]
+[
+  {
+    "id": "JOB001",
+    "organization_id": "ORG001",
+    "recruiter_id": "REC001",
+    "title": "Senior HRIS Project Manager",
+    "location": "Paris, France",
+    "employment_type": "Full-time",
+    "seniority": "Senior",
+    "department": "HR Technology",
+    "description": "Lead enterprise HRIS implementation projects across Europe, including integrations, change management and stakeholder governance.",
+    "required_skills": [
+      "HRIS",
+      "Project Management",
+      "Change Management",
+      "API Integration",
+      "Stakeholder Management"
+    ],
+    "preferred_skills": [
+      "Workday",
+      "SAP SuccessFactors",
+      "Power BI",
+      "Payroll Integration"
+    ],
+    "required_languages": [
+      "English",
+      "French"
+    ],
+    "preferred_languages": [
+      "Mandarin"
+    ],
+    "certifications": [
+      "PMP",
+      "HRIP"
+    ],
+    "min_years_experience": 8,
+    "hiring_strategy": "International HRIS"
+  },
+  {
+    "id": "JOB002",
+    "organization_id": "ORG001",
+    "recruiter_id": "REC002",
+    "title": "People Analytics Lead",
+    "location": "Remote Europe",
+    "employment_type": "Full-time",
+    "seniority": "Lead",
+    "department": "People Analytics",
+    "description": "Build workforce analytics capabilities, executive dashboards and predictive insights for HR leadership.",
+    "required_skills": [
+      "People Analytics",
+      "SQL",
+      "Power BI",
+      "Data Storytelling",
+      "Stakeholder Management"
+    ],
+    "preferred_skills": [
+      "Python",
+      "Snowflake",
+      "Machine Learning",
+      "Workforce Planning"
+    ],
+    "required_languages": [
+      "English"
+    ],
+    "preferred_languages": [
+      "French"
+    ],
+    "certifications": [
+      "Microsoft Power BI"
+    ],
+    "min_years_experience": 6,
+    "hiring_strategy": "Data & Analytics"
+  },
+  {
+    "id": "JOB003",
+    "organization_id": "ORG002",
+    "recruiter_id": "REC003",
+    "title": "SAP SuccessFactors Lead",
+    "location": "Toulouse, France",
+    "employment_type": "Full-time",
+    "seniority": "Lead",
+    "department": "HRIS",
+    "description": "Own SAP SuccessFactors configuration, roadmap and governance for a global aerospace workforce.",
+    "required_skills": [
+      "SAP SuccessFactors",
+      "HRIS",
+      "Employee Central",
+      "Project Management",
+      "Compliance"
+    ],
+    "preferred_skills": [
+      "Integration Center",
+      "Payroll Integration",
+      "Reporting",
+      "Change Management"
+    ],
+    "required_languages": [
+      "French",
+      "English"
+    ],
+    "preferred_languages": [],
+    "certifications": [
+      "SAP Certified"
+    ],
+    "min_years_experience": 7,
+    "hiring_strategy": "Technical HRIS"
+  },
+  {
+    "id": "JOB004",
+    "organization_id": "ORG003",
+    "recruiter_id": "REC004",
+    "title": "Global Talent Systems Manager",
+    "location": "Paris, France",
+    "employment_type": "Full-time",
+    "seniority": "Manager",
+    "department": "Global Talent",
+    "description": "Manage global talent platforms supporting performance, succession, learning and leadership development.",
+    "required_skills": [
+      "Talent Management",
+      "Learning Systems",
+      "Performance Management",
+      "Change Management",
+      "International Collaboration"
+    ],
+    "preferred_skills": [
+      "Cornerstone",
+      "Workday Talent",
+      "9 Box",
+      "Leadership Development"
+    ],
+    "required_languages": [
+      "English",
+      "French"
+    ],
+    "preferred_languages": [
+      "Mandarin"
+    ],
+    "certifications": [
+      "PHRi",
+      "SPHRi"
+    ],
+    "min_years_experience": 8,
+    "hiring_strategy": "Global Talent"
+  },
+  {
+    "id": "JOB005",
+    "organization_id": "ORG004",
+    "recruiter_id": "REC005",
+    "title": "HR Transformation Manager",
+    "location": "Lyon, France",
+    "employment_type": "Full-time",
+    "seniority": "Manager",
+    "department": "HR Transformation",
+    "description": "Lead HR transformation initiatives focused on process standardization, compliance and digital adoption.",
+    "required_skills": [
+      "HR Transformation",
+      "Change Management",
+      "Process Improvement",
+      "Compliance",
+      "Stakeholder Management"
+    ],
+    "preferred_skills": [
+      "HRIS",
+      "Lean Management",
+      "Power BI",
+      "Training"
+    ],
+    "required_languages": [
+      "French"
+    ],
+    "preferred_languages": [
+      "English"
+    ],
+    "certifications": [
+      "PMP"
+    ],
+    "min_years_experience": 7,
+    "hiring_strategy": "Transformation"
+  },
+  {
+    "id": "JOB006",
+    "organization_id": "ORG005",
+    "recruiter_id": "REC006",
+    "title": "Regional HRIS Product Owner",
+    "location": "Singapore",
+    "employment_type": "Full-time",
+    "seniority": "Senior",
+    "department": "HR Technology APAC",
+    "description": "Own the HRIS product roadmap for APAC, coordinating regional requirements, integrations and adoption.",
+    "required_skills": [
+      "HRIS Product Ownership",
+      "International Collaboration",
+      "API Integration",
+      "Change Management",
+      "Stakeholder Management"
+    ],
+    "preferred_skills": [
+      "Oracle HCM",
+      "Workday",
+      "Agile",
+      "Global Mobility"
+    ],
+    "required_languages": [
+      "English"
+    ],
+    "preferred_languages": [
+      "Mandarin",
+      "French"
+    ],
+    "certifications": [
+      "PMP",
+      "Oracle Certified"
+    ],
+    "min_years_experience": 8,
+    "hiring_strategy": "International Product Owner"
+  }
+]
