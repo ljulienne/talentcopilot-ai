@@ -94,7 +94,8 @@ def render_dashboard_v2():
                     with c2:
                         st.write(status)
                     with c3:
-                        st.metric("Confidence", confidence)
+                        st.caption("Confidence")
+                        st.markdown(f"**{confidence}**")
 
     with col_b:
         with st.container(border=True):
