@@ -10,6 +10,7 @@ from talentcopilot.ui.home import render_home
 from talentcopilot.ui.home_v2 import render_home_v2
 from talentcopilot.ui.dashboard import render_dashboard
 from talentcopilot.ui.comparison import render_candidate_comparison
+from talentcopilot.ui.comparison_v2 import render_comparison_v2
 from talentcopilot.ui.reports import render_reports
 from talentcopilot.ui.reports_v2 import render_reports_v2
 from talentcopilot.ui.settings import render_settings
@@ -67,7 +68,7 @@ pages = {
     tr("menu.candidates"): render_candidates_v2,
     tr("menu.talent_pool"): render_talent_pool,
     tr("menu.recruiter_copilot"): render_recruiter_copilot,
-    tr("menu.comparison"): "comparison",
+    tr("menu.comparison"): render_comparison_v2,
     tr("menu.reports"): render_reports_v2,
     tr("menu.settings"): render_settings,
 }
@@ -79,11 +80,7 @@ page = st.sidebar.radio(
 
 selected_page = pages[page]
 
-if selected_page == "comparison":
-    batch = st.session_state.get("analysis_batch")
-    results = batch["results"] if batch and batch.get("success") else []
-    render_page_shell(lambda: render_candidate_comparison(results))
-elif selected_page in {
+if selected_page in {
     render_dashboard_v2,
     render_decision_workspace,
     render_reports,
