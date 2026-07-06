@@ -5,13 +5,10 @@ from talentcopilot.ai.interview_intelligence import InterviewIntelligenceEngine
 from talentcopilot.ai.recommendation_engine import RecommendationEngine
 from talentcopilot.viewmodels.decision_workspace import DecisionWorkspaceBuilder
 
-from talentcopilot.ui.components.decision.header import render_decision_header
-from talentcopilot.ui.components.decision.timeline import render_decision_timeline
-from talentcopilot.ui.components.decision.summary import render_executive_summary
-from talentcopilot.ui.components.decision.metrics import render_decision_metrics
-from talentcopilot.ui.components.decision.recommendation import render_recommendation_panel
-from talentcopilot.ui.components.decision.interview import render_interview_panel
-from talentcopilot.ui.components.decision.actions import render_decision_actions
+from talentcopilot.ui.design_system.hero import render_hero
+from talentcopilot.ui.design_system.metrics import metric_card
+from talentcopilot.ui.design_system.cards import section_card, info_card
+from talentcopilot.ui.design_system.timeline import horizontal_timeline
 
 
 def _build_demo_view_model():
@@ -53,33 +50,115 @@ def _build_demo_view_model():
 
 
 def render_decision_workspace():
-    st.title("Decision Workspace")
-    st.caption("Evidence-based recruitment decision intelligence")
-
     view_model = _build_demo_view_model()
 
-    render_decision_header(view_model)
+    render_hero(
+        title="Decision Workspace",
+        subtitle="Evidence-based recruitment decision intelligence",
+        icon="🧠",
+        badge=view_model.recommendation,
+    )
 
-    st.divider()
+    col1, col2, col3, col4 = st.columns(4)
 
-    render_executive_summary(view_model)
+    with col1:
+        metric_card(
+            "Decision Confidence",
+            f"{view_model.decision_confidence}%",
+            "🎯",
+            "Confidence in the recommendation",
+            "#16A34A",
+        )
 
-    st.divider()
+    with col2:
+        metric_card(
+            "Decision Readiness",
+            f"{view_model.decision_readiness}%",
+            "🚀",
+            "Ready for next step",
+            "#2563EB",
+        )
 
-    render_decision_metrics(view_model)
+    with col3:
+        demonstrated = len([
+            s for s in view_model.reasoning_report.skill_assessment
+            if s.status == "demonstrated"
+        ])
+        metric_card(
+            "Demonstrated Skills",
+            str(demonstrated),
+            "✅",
+            "Supported by evidence",
+            "#7C3AED",
+        )
 
-    st.divider()
+    with col4:
+        risks = len(view_model.reasoning_report.risks)
+        metric_card(
+            "Decision Risks",
+            str(risks),
+            "⚠️",
+            "To validate before decision",
+            "#F59E0B",
+        )
 
-    render_decision_timeline(view_model)
+    st.markdown("")
 
-    st.divider()
+    left, right = st.columns([2, 1])
 
-    render_recommendation_panel(view_model)
+    with left:
+        section_card(
+            "Executive Summary",
+            "📌",
+            view_model.executive_summary,
+        )
 
-    st.divider()
+        st.markdown("### Decision Framework")
+        horizontal_timeline(view_model.timeline)
 
-    render_interview_panel(view_model)
+        st.markdown("### Evidence Explorer")
+        for evidence in view_model.reasoning_report.evidence_assessment[:4]:
+            info_card(
+                title=f"{evidence.strength.title()} evidence",
+                body=f"{evidence.text}<br><br><strong>Interpretation:</strong> {evidence.interpretation}",
+                icon="📎",
+                color="#2563EB",
+            )
 
-    st.divider()
+        st.markdown("### Interview Intelligence")
+        if view_model.interview_guide:
+            st.info(view_model.interview_guide.interview_focus)
 
-    render_decision_actions()
+            for question in view_model.interview_guide.questions[:3]:
+                with st.expander(question.question, expanded=False):
+                    st.markdown("**Objective**")
+                    st.write(question.objective)
+
+                    st.markdown("**Strong answer should include**")
+                    for item in question.strong_answer_should_include:
+                        st.write(f"- {item}")
+
+                    st.markdown("**Red flags**")
+                    for item in question.red_flags:
+                        st.write(f"- {item}")
+
+    with right:
+        section_card(
+            "AI Recommendation",
+            "✅",
+            view_model.reasoning_report.recommendation_rationale,
+        )
+
+        section_card(
+            "Challenge",
+            "⚖️",
+            view_model.recommendation_report.challenge,
+        )
+
+        st.markdown("### Actions")
+        st.button("Compare Candidate", use_container_width=True, disabled=True)
+        st.button("Generate Decision Report", use_container_width=True, disabled=True)
+        st.button("Ask Copilot", use_container_width=True, disabled=True)
+        st.button("Save to Talent Pool", use_container_width=True, disabled=True)
+
+        st.caption("Actions will be activated progressively.")
