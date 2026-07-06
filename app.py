@@ -4,6 +4,7 @@ from talentcopilot.i18n import tr, LANGUAGES
 
 from talentcopilot.config import APP_NAME, APP_VERSION
 from talentcopilot.ui.theme import apply_theme
+from talentcopilot.ui.premium_theme import apply_premium_ui, premium_sidebar_brand
 from talentcopilot.ui.home import render_home
 from talentcopilot.ui.dashboard import render_dashboard
 from talentcopilot.ui.comparison import render_candidate_comparison
@@ -19,6 +20,7 @@ from talentcopilot.ui.decision_workspace import render_decision_workspace
 
 st.set_page_config(page_title=APP_NAME, page_icon="🧠", layout="wide")
 apply_theme()
+apply_premium_ui()
 
 if "language" not in st.session_state:
     st.session_state.language = "English"
@@ -32,8 +34,7 @@ if "recruitment_context" not in st.session_state:
 if "current_recruitment" not in st.session_state:
     st.session_state.current_recruitment = None
 
-st.sidebar.markdown("## 🧠 TalentCopilot AI")
-st.sidebar.caption(f"Version {APP_VERSION} · Beta")
+premium_sidebar_brand(APP_VERSION)
 st.sidebar.markdown("---")
 
 selected_language = st.sidebar.selectbox(
