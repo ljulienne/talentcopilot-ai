@@ -1,1 +1,547 @@
-[]
+[
+  {
+    "id": "CAND001",
+    "persona_id": "PER001",
+    "first_name": "Claire",
+    "last_name": "Martin",
+    "name": "Claire Martin",
+    "country": "France",
+    "city": "Paris",
+    "years_experience": 5,
+    "current_title": "Global HRIS Leader",
+    "skills": [
+      "SK001",
+      "SK002",
+      "SK013",
+      "SK017",
+      "SK018"
+    ],
+    "languages": [
+      {
+        "language_id": "LANG001",
+        "level": "Native"
+      },
+      {
+        "language_id": "LANG002",
+        "level": "C1"
+      }
+    ],
+    "certifications": [
+      "CERT001",
+      "CERT002"
+    ],
+    "salary_expectation_eur": 60000,
+    "remote_preference": "Hybrid",
+    "mobility": "Regional",
+    "leadership_years": 0,
+    "summary": "Senior profile with global HRIS implementation experience, strong governance and international exposure.",
+    "risks": [
+      "May be less hands-on technically",
+      "Salary expectations may be high"
+    ],
+    "strengths": [
+      "HRIS",
+      "Project Management",
+      "Change Management",
+      "International Collaboration"
+    ]
+  },
+  {
+    "id": "CAND002",
+    "persona_id": "PER002",
+    "first_name": "Li",
+    "last_name": "Wei",
+    "name": "Li Wei",
+    "country": "Singapore",
+    "city": "Singapore",
+    "years_experience": 6,
+    "current_title": "Technical HRIS Specialist",
+    "skills": [
+      "SK004",
+      "SK011",
+      "SK015",
+      "SK018",
+      "SK019"
+    ],
+    "languages": [
+      {
+        "language_id": "LANG003",
+        "level": "Native"
+      },
+      {
+        "language_id": "LANG002",
+        "level": "C2"
+      }
+    ],
+    "certifications": [
+      "CERT001",
+      "CERT008"
+    ],
+    "salary_expectation_eur": 66500,
+    "remote_preference": "Remote",
+    "mobility": "International",
+    "leadership_years": 0,
+    "summary": "Deep technical specialist focused on configuration, integrations and HRIS platform optimization.",
+    "risks": [
+      "Limited leadership scope",
+      "May need support with business change management"
+    ],
+    "strengths": [
+      "SAP SuccessFactors",
+      "Workday",
+      "Oracle HCM",
+      "API Integration"
+    ]
+  },
+  {
+    "id": "CAND003",
+    "persona_id": "PER003",
+    "first_name": "Michael",
+    "last_name": "Brown",
+    "name": "Michael Brown",
+    "country": "United Kingdom",
+    "city": "London",
+    "years_experience": 7,
+    "current_title": "People Analytics Expert",
+    "skills": [
+      "SK020",
+      "SK021",
+      "SK022",
+      "SK024",
+      "SK026"
+    ],
+    "languages": [
+      {
+        "language_id": "LANG002",
+        "level": "Native"
+      }
+    ],
+    "certifications": [
+      "CERT006"
+    ],
+    "salary_expectation_eur": 73000,
+    "remote_preference": "Hybrid",
+    "mobility": "Regional",
+    "leadership_years": 1,
+    "summary": "Data-driven HR professional with strong analytics, dashboards and workforce planning expertise.",
+    "risks": [
+      "May lack full HRIS implementation experience",
+      "May be less experienced in stakeholder governance"
+    ],
+    "strengths": [
+      "People Analytics",
+      "SQL",
+      "Power BI",
+      "Data Storytelling"
+    ]
+  },
+  {
+    "id": "CAND004",
+    "persona_id": "PER004",
+    "first_name": "Sofia",
+    "last_name": "Rossi",
+    "name": "Sofia Rossi",
+    "country": "Italy",
+    "city": "Milan",
+    "years_experience": 8,
+    "current_title": "HR Transformation Manager",
+    "skills": [
+      "SK010",
+      "SK037",
+      "SK038",
+      "SK040"
+    ],
+    "languages": [
+      {
+        "language_id": "LANG006",
+        "level": "Native"
+      },
+      {
+        "language_id": "LANG002",
+        "level": "C1"
+      }
+    ],
+    "certifications": [],
+    "salary_expectation_eur": 79500,
+    "remote_preference": "Remote",
+    "mobility": "Regional",
+    "leadership_years": 2,
+    "summary": "Business transformation profile focused on process redesign, change adoption and HR operating model improvements.",
+    "risks": [
+      "May lack deep system configuration expertise",
+      "Technical integrations should be validated"
+    ],
+    "strengths": [
+      "HR Transformation",
+      "Change Management",
+      "Process Improvement",
+      "Stakeholder Management"
+    ]
+  },
+  {
+    "id": "CAND005",
+    "persona_id": "PER005",
+    "first_name": "David",
+    "last_name": "Smith",
+    "name": "David Smith",
+    "country": "United States",
+    "city": "New York",
+    "years_experience": 9,
+    "current_title": "Payroll & Time Expert",
+    "skills": [
+      "SK003",
+      "SK005",
+      "SK012",
+      "SK013"
+    ],
+    "languages": [
+      {
+        "language_id": "LANG002",
+        "level": "Native"
+      }
+    ],
+    "certifications": [
+      "CERT007"
+    ],
+    "salary_expectation_eur": 86000,
+    "remote_preference": "Hybrid",
+    "mobility": "Regional",
+    "leadership_years": 3,
+    "summary": "Specialist in payroll, time and attendance, HR operations and payroll-related integrations.",
+    "risks": [
+      "Limited talent management exposure",
+      "May not fit broad HRIS leadership roles"
+    ],
+    "strengths": [
+      "Payroll Integration",
+      "Compliance",
+      "Reporting",
+      "Process Improvement"
+    ]
+  },
+  {
+    "id": "CAND006",
+    "persona_id": "PER006",
+    "first_name": "Emma",
+    "last_name": "Wang",
+    "name": "Emma Wang",
+    "country": "China",
+    "city": "Shanghai",
+    "years_experience": 10,
+    "current_title": "International Talent Systems Manager",
+    "skills": [
+      "SK029",
+      "SK030",
+      "SK031",
+      "SK032",
+      "SK033"
+    ],
+    "languages": [
+      {
+        "language_id": "LANG003",
+        "level": "Native"
+      },
+      {
+        "language_id": "LANG002",
+        "level": "C1"
+      },
+      {
+        "language_id": "LANG001",
+        "level": "B2"
+      }
+    ],
+    "certifications": [
+      "CERT003",
+      "CERT004"
+    ],
+    "salary_expectation_eur": 92500,
+    "remote_preference": "Remote",
+    "mobility": "International",
+    "leadership_years": 4,
+    "summary": "Talent-focused HRIS profile specialized in performance, learning, succession and leadership development systems.",
+    "risks": [
+      "Less exposed to payroll or core HR operations",
+      "Data analytics depth may vary"
+    ],
+    "strengths": [
+      "Talent Management",
+      "Learning Systems",
+      "Performance Management",
+      "International Collaboration"
+    ]
+  },
+  {
+    "id": "CAND007",
+    "persona_id": "PER007",
+    "first_name": "Julien",
+    "last_name": "Moreau",
+    "name": "Julien Moreau",
+    "country": "France",
+    "city": "Lyon",
+    "years_experience": 11,
+    "current_title": "High Potential HR Generalist",
+    "skills": [
+      "SK035",
+      "SK036",
+      "SK017",
+      "SK016"
+    ],
+    "languages": [
+      {
+        "language_id": "LANG001",
+        "level": "Native"
+      },
+      {
+        "language_id": "LANG002",
+        "level": "B2"
+      }
+    ],
+    "certifications": [
+      "CERT001"
+    ],
+    "salary_expectation_eur": 99000,
+    "remote_preference": "Hybrid",
+    "mobility": "Regional",
+    "leadership_years": 5,
+    "summary": "Promising HR professional with broad HR exposure and strong learning agility, but limited enterprise HRIS ownership.",
+    "risks": [
+      "Limited years of experience",
+      "Enterprise HRIS exposure not yet proven"
+    ],
+    "strengths": [
+      "Stakeholder Management",
+      "Communication",
+      "Change Management"
+    ]
+  },
+  {
+    "id": "CAND008",
+    "persona_id": "PER008",
+    "first_name": "Anna",
+    "last_name": "Schneider",
+    "name": "Anna Schneider",
+    "country": "Germany",
+    "city": "Berlin",
+    "years_experience": 12,
+    "current_title": "Executive HR Technology Director",
+    "skills": [
+      "SK003",
+      "SK006",
+      "SK034",
+      "SK039"
+    ],
+    "languages": [
+      {
+        "language_id": "LANG005",
+        "level": "Native"
+      },
+      {
+        "language_id": "LANG002",
+        "level": "C1"
+      }
+    ],
+    "certifications": [
+      "CERT007"
+    ],
+    "salary_expectation_eur": 105500,
+    "remote_preference": "Remote",
+    "mobility": "Regional",
+    "leadership_years": 6,
+    "summary": "Strategic senior leader with HR technology roadmap ownership, vendor governance and global transformation exposure.",
+    "risks": [
+      "May be overqualified for operational roles",
+      "Hands-on configuration skills may be outdated"
+    ],
+    "strengths": [
+      "HRIS Product Ownership",
+      "Leadership Development",
+      "Stakeholder Management",
+      "HR Transformation"
+    ]
+  },
+  {
+    "id": "CAND009",
+    "persona_id": "PER009",
+    "first_name": "Carlos",
+    "last_name": "Mendes",
+    "name": "Carlos Mendes",
+    "country": "Portugal",
+    "city": "Lisbon",
+    "years_experience": 13,
+    "current_title": "APAC HRIS Product Owner",
+    "skills": [
+      "SK015",
+      "SK014",
+      "SK016",
+      "SK018"
+    ],
+    "languages": [
+      {
+        "language_id": "LANG007",
+        "level": "Native"
+      },
+      {
+        "language_id": "LANG002",
+        "level": "C1"
+      },
+      {
+        "language_id": "LANG001",
+        "level": "B2"
+      }
+    ],
+    "certifications": [
+      "CERT001"
+    ],
+    "salary_expectation_eur": 112000,
+    "remote_preference": "Hybrid",
+    "mobility": "International",
+    "leadership_years": 7,
+    "summary": "Regional HRIS product owner with APAC experience, multilingual communication and platform roadmap ownership.",
+    "risks": [
+      "European labor law exposure may be limited",
+      "French language level may vary"
+    ],
+    "strengths": [
+      "HRIS Product Ownership",
+      "International Collaboration",
+      "Oracle HCM",
+      "Global Mobility"
+    ]
+  },
+  {
+    "id": "CAND010",
+    "persona_id": "PER010",
+    "first_name": "Mei",
+    "last_name": "Zhang",
+    "name": "Mei Zhang",
+    "country": "China",
+    "city": "Shenzhen",
+    "years_experience": 14,
+    "current_title": "Data-Heavy but HR-Light Candidate",
+    "skills": [
+      "SK024",
+      "SK025",
+      "SK028",
+      "SK020"
+    ],
+    "languages": [
+      {
+        "language_id": "LANG003",
+        "level": "Native"
+      },
+      {
+        "language_id": "LANG002",
+        "level": "C1"
+      }
+    ],
+    "certifications": [
+      "CERT006",
+      "CERT009"
+    ],
+    "salary_expectation_eur": 118500,
+    "remote_preference": "Remote",
+    "mobility": "Regional",
+    "leadership_years": 8,
+    "summary": "Excellent technical data profile with limited HR domain experience.",
+    "risks": [
+      "Limited HR process understanding",
+      "Needs validation on HR stakeholder management"
+    ],
+    "strengths": [
+      "Python",
+      "SQL",
+      "Snowflake",
+      "Machine Learning"
+    ]
+  },
+  {
+    "id": "CAND011",
+    "persona_id": "PER011",
+    "first_name": "Thomas",
+    "last_name": "Leroy",
+    "name": "Thomas Leroy",
+    "country": "France",
+    "city": "Toulouse",
+    "years_experience": 15,
+    "current_title": "Strong Match with Stability Risk",
+    "skills": [
+      "SK001",
+      "SK010",
+      "SK013",
+      "SK040"
+    ],
+    "languages": [
+      {
+        "language_id": "LANG001",
+        "level": "Native"
+      },
+      {
+        "language_id": "LANG002",
+        "level": "C1"
+      }
+    ],
+    "certifications": [
+      "CERT002"
+    ],
+    "salary_expectation_eur": 125000,
+    "remote_preference": "Hybrid",
+    "mobility": "Regional",
+    "leadership_years": 9,
+    "summary": "Candidate with strong skills and high match, but frequent job changes or unclear long-term stability.",
+    "risks": [
+      "Frequent job changes",
+      "Retention risk should be discussed"
+    ],
+    "strengths": [
+      "HRIS",
+      "Project Management",
+      "Power BI",
+      "Change Management"
+    ]
+  },
+  {
+    "id": "CAND012",
+    "persona_id": "PER012",
+    "first_name": "Aisha",
+    "last_name": "Khan",
+    "name": "Aisha Khan",
+    "country": "United Arab Emirates",
+    "city": "Dubai",
+    "years_experience": 16,
+    "current_title": "Multilingual International Profile",
+    "skills": [
+      "SK018",
+      "SK019",
+      "SK016",
+      "SK017"
+    ],
+    "languages": [
+      {
+        "language_id": "LANG002",
+        "level": "C2"
+      },
+      {
+        "language_id": "LANG004",
+        "level": "B2"
+      }
+    ],
+    "certifications": [
+      "CERT005"
+    ],
+    "salary_expectation_eur": 131500,
+    "remote_preference": "Remote",
+    "mobility": "International",
+    "leadership_years": 10,
+    "summary": "Strong international communicator with multiple languages and cross-cultural project exposure.",
+    "risks": [
+      "Technical depth may be uneven",
+      "Needs validation on system ownership"
+    ],
+    "strengths": [
+      "International Collaboration",
+      "Global Mobility",
+      "Stakeholder Management",
+      "Change Management"
+    ]
+  }
+]

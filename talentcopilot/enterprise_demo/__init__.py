@@ -1,1 +1,2 @@
 from .repository import EnterpriseDemoRepository
+from .candidate_factory import EnterpriseCandidateFactory
