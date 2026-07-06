@@ -72,12 +72,9 @@ def divider():
     st.divider()
 
 
-def footer():
+def footer(version: str = ""):
     st.markdown("---")
-    st.caption("TalentCopilot-AI · AI Recruitment Decision Intelligence")
-
-
-try:
-    from talentcopilot.ui.components.reasoning_cards import render_reasoning_report
-except Exception:
-    pass
+    label = "TalentCopilot-AI · AI Recruitment Decision Intelligence"
+    if version:
+        label = f"{label} · {version}"
+    st.caption(label)
