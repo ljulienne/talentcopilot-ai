@@ -1,128 +1,129 @@
-
-from dataclasses import dataclass, field
-
-
-@dataclass
-class DemoRequirement:
-    name: str
-    importance: str = "High"
-    expected_level: str = "Advanced"
-
-
-@dataclass
-class DemoCapability:
-    name: str
-    detected_level: str = "Advanced"
-    confidence: int = 90
-    evidence: list = field(default_factory=list)
+from talentcopilot.core.models import (
+    Candidate,
+    CandidateCapability,
+    Evidence,
+    Gap,
+    InterviewQuestion,
+    Job,
+    JobRequirement,
+    MatchDetail,
+    MatchResult,
+)
 
 
-@dataclass
-class DemoEvidence:
-    text: str
+def _capability(name, level="Advanced", confidence=90):
+    return CandidateCapability(
+        name=name,
+        category="Demo",
+        detected_level=level,
+        confidence=confidence,
+        evidence=[
+            Evidence(
+                text=f"Demonstrated experience in {name}.",
+                source="Demo CV",
+                linked_competency=name,
+                confidence=confidence,
+            )
+        ],
+    )
 
 
-@dataclass
-class DemoMatchDetail:
-    requirement: DemoRequirement
-    score: int
-    explanation: str
-    capability: DemoCapability | None = None
-
-
-@dataclass
-class DemoGap:
-    competency: str
-    severity: str
-    explanation: str
-    recommendation: str
-
-
-@dataclass
-class DemoQuestion:
-    priority: str
-    linked_competency: str
-    question: str
-    purpose: str
-
-
-@dataclass
-class DemoCandidate:
-    name: str
-    current_role: str
-    capabilities: list
-
-
-@dataclass
-class DemoJob:
-    title: str
-
-
-@dataclass
-class DemoMatchResult:
-    overall_score: int
-    confidence_score: int
-    recommendation: str
-    executive_summary: str
-    match_details: list
-    gaps: list
-    interview_questions: list
-    job: DemoJob
+def _requirement(name, importance="High", expected_level="Advanced", weight=10.0):
+    return JobRequirement(
+        name=name,
+        category="Demo",
+        importance=importance,
+        expected_level=expected_level,
+        weight=weight,
+    )
 
 
 def _candidate(name, role, score, confidence, recommendation, strengths, gaps, languages):
     capabilities = [
-        DemoCapability(s, "Advanced", 90, [DemoEvidence(f"Demonstrated experience in {s}.")])
-        for s in strengths + languages
+        _capability(skill, "Advanced", 90)
+        for skill in strengths + languages
     ]
 
-    match_details = [
-        DemoMatchDetail(
-            requirement=DemoRequirement(s),
-            score=90 if i < 2 else 82,
-            explanation=f"{name} shows strong evidence of {s}.",
-            capability=DemoCapability(s, "Advanced", 90)
+    candidate = Candidate(
+        name=name,
+        current_role=role,
+        experiences=[f"Enterprise experience related to {role}."],
+        certifications=[],
+        languages=languages,
+        capabilities=capabilities,
+    )
+
+    job = Job(
+        title="HRIS Project Manager",
+        description="Demo HRIS project manager role.",
+        requirements=[_requirement(skill) for skill in strengths],
+    )
+
+    match_details = []
+
+    for index, skill in enumerate(strengths):
+        requirement = _requirement(skill)
+        capability = _capability(skill, "Advanced", 90)
+
+        match_details.append(
+            MatchDetail(
+                requirement=requirement,
+                capability=capability,
+                score=90 if index < 2 else 82,
+                confidence=90,
+                explanation=f"{name} shows strong evidence of {skill}.",
+            )
         )
-        for i, s in enumerate(strengths)
-    ]
 
     demo_gaps = [
-        DemoGap(
-            competency=g,
+        Gap(
+            competency=gap,
             severity="Medium",
-            explanation=f"{g} is not strongly demonstrated in the CV.",
-            recommendation=f"Explore {g} during the interview."
+            explanation=f"{gap} is not strongly demonstrated in the CV.",
+            recommendation=f"Explore {gap} during the interview.",
         )
-        for g in gaps
+        for gap in gaps
     ]
 
     questions = [
-        DemoQuestion(
+        InterviewQuestion(
             priority="High",
             linked_competency=strengths[0],
             question=f"Can you describe a project where you used {strengths[0]} in a complex HR environment?",
-            purpose="Validate real hands-on experience."
+            purpose="Validate real hands-on experience.",
         )
     ]
 
+    match_result = MatchResult(
+        candidate=candidate,
+        job=job,
+        overall_score=score,
+        confidence_score=confidence,
+        recommendation=recommendation,
+        executive_summary=f"{name} is a strong demo profile with experience in {', '.join(strengths[:3])}.",
+        match_details=match_details,
+        gaps=demo_gaps,
+        interview_questions=questions,
+    )
+
     return {
         "file": f"{name.replace(' ', '_')}_CV.pdf",
-        "candidate": DemoCandidate(name, role, capabilities),
-        "match_result": DemoMatchResult(
-            overall_score=score,
-            confidence_score=confidence,
-            recommendation=recommendation,
-            executive_summary=f"{name} is a strong demo profile with experience in {', '.join(strengths[:3])}.",
-            match_details=match_details,
-            gaps=demo_gaps,
-            interview_questions=questions,
-            job=DemoJob("HRIS Project Manager")
-        )
+        "candidate": candidate,
+        "match_result": match_result,
     }
 
 
 def load_demo_batch():
-    job = DemoJob("HRIS Project Manager")
+    job = Job(
+        title="HRIS Project Manager",
+        description="Demo HRIS Project Manager recruitment.",
+        requirements=[
+            _requirement("HRIS"),
+            _requirement("Project Management"),
+            _requirement("API Integration"),
+            _requirement("Change Management"),
+        ],
+    )
 
     results = [
         _candidate(
@@ -133,7 +134,7 @@ def load_demo_batch():
             "Strong Shortlist",
             ["HRIS", "Project Management", "API Integration", "Change Management"],
             ["Oracle HCM"],
-            ["French", "English"]
+            ["French", "English"],
         ),
         _candidate(
             "Bob Chen",
@@ -141,9 +142,9 @@ def load_demo_batch():
             89,
             93,
             "Interview",
-            ["HR Analytics", "Power BI", "SQL", "Stakeholder Management"],
+            ["People Analytics", "Power BI", "SQL", "Stakeholder Management"],
             ["Payroll"],
-            ["English", "Mandarin"]
+            ["English", "Mandarin"],
         ),
         _candidate(
             "Claire Dubois",
@@ -153,7 +154,7 @@ def load_demo_batch():
             "Interview",
             ["HRIS", "Talent Management", "Change Management"],
             ["API Integration"],
-            ["French", "English"]
+            ["French", "English"],
         ),
         _candidate(
             "David Smith",
@@ -161,9 +162,9 @@ def load_demo_batch():
             78,
             88,
             "Keep in Pipeline",
-            ["Payroll", "Time & Attendance", "HR Reporting"],
+            ["Payroll Integration", "Time & Attendance", "Reporting"],
             ["Change Management", "API Integration"],
-            ["English"]
+            ["English"],
         ),
         _candidate(
             "Emma Wang",
@@ -173,15 +174,15 @@ def load_demo_batch():
             "Interview",
             ["Project Management", "Stakeholder Management", "International Collaboration"],
             ["Power BI"],
-            ["French", "English", "Mandarin"]
-        )
+            ["French", "English", "Mandarin"],
+        ),
     ]
 
     return {
         "success": True,
         "job": job,
         "results": results,
-        "errors": []
+        "errors": [],
     }
 
 
@@ -194,5 +195,5 @@ def load_demo_recruitment_context():
         "recruitment_type": "Permanent",
         "language": "Auto Detect",
         "max_candidates": 50,
-        "created_at": "demo"
+        "created_at": "demo",
     }
