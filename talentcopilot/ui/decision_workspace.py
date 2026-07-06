@@ -5,12 +5,6 @@ from talentcopilot.ai.interview_intelligence import InterviewIntelligenceEngine
 from talentcopilot.ai.recommendation_engine import RecommendationEngine
 from talentcopilot.viewmodels.decision_workspace import DecisionWorkspaceBuilder
 
-from talentcopilot.ui.design_system.hero import render_hero
-from talentcopilot.ui.design_system.metrics import metric_card
-from talentcopilot.ui.design_system.cards import section_card, info_card, inject_card_styles
-from talentcopilot.ui.design_system.timeline import horizontal_timeline
-from talentcopilot.ui.design_system.evidence import evidence_card
-
 
 def _build_demo_view_model():
     candidate = {
@@ -50,87 +44,68 @@ def _build_demo_view_model():
     )
 
 
+def _render_metric(label, value, help_text=None):
+    with st.container(border=True):
+        st.metric(label, value)
+        if help_text:
+            st.caption(help_text)
+
+
 def render_decision_workspace():
     view_model = _build_demo_view_model()
 
-    inject_card_styles()
-
-    render_hero(
-        title="Decision Workspace",
-        subtitle="Evidence-based recruitment decision intelligence",
-        icon="🧠",
-        badge=view_model.recommendation,
-    )
+    with st.container(border=True):
+        st.caption("Decision Intelligence Workspace")
+        st.title(f"🧠 {view_model.candidate_name}")
+        st.subheader(view_model.role_title)
+        st.success(view_model.recommendation)
 
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        metric_card(
-            "Decision Confidence",
-            f"{view_model.decision_confidence}%",
-            "🎯",
-            "Confidence in the recommendation",
-            "#16A34A",
-        )
+        _render_metric("Decision Confidence", f"{view_model.decision_confidence}%", "Confidence in the recommendation")
 
     with col2:
-        metric_card(
-            "Decision Readiness",
-            f"{view_model.decision_readiness}%",
-            "🚀",
-            "Ready for next step",
-            "#2563EB",
-        )
+        _render_metric("Decision Readiness", f"{view_model.decision_readiness}%", "Ready for next recruiting step")
 
     with col3:
         demonstrated = len([
             s for s in view_model.reasoning_report.skill_assessment
             if s.status == "demonstrated"
         ])
-        metric_card(
-            "Demonstrated Skills",
-            str(demonstrated),
-            "✅",
-            "Supported by evidence",
-            "#7C3AED",
-        )
+        _render_metric("Demonstrated Skills", demonstrated, "Supported by evidence")
 
     with col4:
-        risks = len(view_model.reasoning_report.risks)
-        metric_card(
-            "Decision Risks",
-            str(risks),
-            "⚠️",
-            "To validate before decision",
-            "#F59E0B",
-        )
-
-    st.markdown("")
+        _render_metric("Decision Risks", len(view_model.reasoning_report.risks), "To validate before decision")
 
     left, right = st.columns([2, 1])
 
     with left:
-        section_card(
-            "Executive Summary",
-            "📌",
-            view_model.executive_summary,
-        )
+        with st.container(border=True):
+            st.subheader("📌 Executive Summary")
+            st.write(view_model.executive_summary)
 
-        st.markdown("### Decision Framework")
-        horizontal_timeline(view_model.timeline)
+        with st.container(border=True):
+            st.subheader("🧭 Decision Framework")
+            tabs = st.tabs([step.name for step in view_model.timeline])
+            for tab, step in zip(tabs, view_model.timeline):
+                with tab:
+                    if step.status == "completed":
+                        st.success("Completed")
+                    else:
+                        st.warning("Requires attention")
+                    st.write(step.description)
 
-        st.markdown("### Evidence Explorer")
-        for evidence in view_model.reasoning_report.evidence_assessment[:4]:
-            evidence_card(
-                text=evidence.text,
-                interpretation=evidence.interpretation,
-                strength=evidence.strength,
-                confidence_score=evidence.confidence_score,
-            )
+        with st.container(border=True):
+            st.subheader("📎 Evidence Explorer")
+            for evidence in view_model.reasoning_report.evidence_assessment[:4]:
+                with st.expander(f"{evidence.strength.title()} evidence · {int(evidence.confidence_score * 100)}%", expanded=False):
+                    st.write(f"“{evidence.text}”")
+                    st.info(evidence.interpretation)
 
-        st.markdown("### Interview Intelligence")
-        if view_model.interview_guide:
-            st.info(view_model.interview_guide.interview_focus)
+        with st.container(border=True):
+            st.subheader("🎯 Interview Intelligence")
+            st.write(view_model.interview_guide.interview_focus)
 
             for question in view_model.interview_guide.questions[:3]:
                 with st.expander(question.question, expanded=False):
@@ -146,22 +121,18 @@ def render_decision_workspace():
                         st.write(f"- {item}")
 
     with right:
-        section_card(
-            "AI Recommendation",
-            "✅",
-            view_model.reasoning_report.recommendation_rationale,
-        )
+        with st.container(border=True):
+            st.subheader("✅ AI Recommendation")
+            st.write(view_model.reasoning_report.recommendation_rationale)
 
-        section_card(
-            "Challenge",
-            "⚖️",
-            view_model.recommendation_report.challenge,
-        )
+        with st.container(border=True):
+            st.subheader("⚖️ Challenge")
+            st.warning(view_model.recommendation_report.challenge)
 
-        st.markdown("### Actions")
-        st.button("Compare Candidate", use_container_width=True, disabled=True)
-        st.button("Generate Decision Report", use_container_width=True, disabled=True)
-        st.button("Ask Copilot", use_container_width=True, disabled=True)
-        st.button("Save to Talent Pool", use_container_width=True, disabled=True)
-
-        st.caption("Actions will be activated progressively.")
+        with st.container(border=True):
+            st.subheader("🚀 Actions")
+            st.button("Compare Candidate", use_container_width=True, disabled=True)
+            st.button("Generate Decision Report", use_container_width=True, disabled=True)
+            st.button("Ask Copilot", use_container_width=True, disabled=True)
+            st.button("Save to Talent Pool", use_container_width=True, disabled=True)
+            st.caption("Actions will be activated progressively.")
