@@ -3,25 +3,22 @@ import streamlit as st
 
 
 def horizontal_timeline(steps) -> None:
-    html_steps = ""
+    items = []
 
     for index, step in enumerate(steps, start=1):
         icon = "✓" if step.status == "completed" else "!"
         color = "#16A34A" if step.status == "completed" else "#F59E0B"
 
-        html_steps += f"""
-        <div class="tc-timeline-step">
-            <div class="tc-timeline-number" style="background:{color};">{icon}</div>
-            <div class="tc-timeline-content">
-                <div class="tc-timeline-index">Step {index}</div>
-                <div class="tc-timeline-title">{html.escape(step.name)}</div>
-                <div class="tc-timeline-desc">{html.escape(step.description)}</div>
-            </div>
-        </div>
-        """
+        items.append(
+            f'<div class="tc-timeline-step">'
+            f'<div class="tc-timeline-number" style="background:{color};">{icon}</div>'
+            f'<div class="tc-timeline-index">Step {index}</div>'
+            f'<div class="tc-timeline-title">{html.escape(step.name)}</div>'
+            f'<div class="tc-timeline-desc">{html.escape(step.description)}</div>'
+            f'</div>'
+        )
 
-    st.markdown(
-        f"""
+    html_content = f"""
 <style>
 .tc-timeline {{
     display: flex;
@@ -74,10 +71,7 @@ def horizontal_timeline(steps) -> None:
     margin-top: 8px;
 }}
 </style>
+<div class="tc-timeline">{''.join(items)}</div>
+"""
 
-<div class="tc-timeline">
-    {html_steps}
-</div>
-""",
-        unsafe_allow_html=True,
-    )
+    st.markdown(html_content, unsafe_allow_html=True)
