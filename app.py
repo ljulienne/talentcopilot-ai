@@ -63,7 +63,7 @@ pages = {
     tr("menu.open_recruitment"): render_open_recruitment,
     tr("menu.dashboard"): render_dashboard,
     "Decision Workspace": render_decision_workspace,
-    tr("menu.candidates"): render_candidates,
+    tr("menu.candidates"): render_candidates_v2,
     tr("menu.talent_pool"): render_talent_pool,
     tr("menu.recruiter_copilot"): render_recruiter_copilot,
     tr("menu.comparison"): "comparison",
