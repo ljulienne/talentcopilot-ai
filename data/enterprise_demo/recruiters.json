@@ -1,1 +1,100 @@
-[]
+[
+  {
+    "id": "REC001",
+    "organization_id": "ORG001",
+    "first_name": "Sarah",
+    "last_name": "Johnson",
+    "title": "Senior Recruiter",
+    "email": "sarah.johnson@technova.demo",
+    "languages": [
+      "English",
+      "French"
+    ],
+    "specialties": [
+      "HRIS",
+      "Leadership",
+      "International Recruitment"
+    ]
+  },
+  {
+    "id": "REC002",
+    "organization_id": "ORG001",
+    "first_name": "David",
+    "last_name": "Chen",
+    "title": "HR Director",
+    "email": "david.chen@technova.demo",
+    "languages": [
+      "English",
+      "Mandarin"
+    ],
+    "specialties": [
+      "HR Transformation",
+      "Executive Hiring"
+    ]
+  },
+  {
+    "id": "REC003",
+    "organization_id": "ORG002",
+    "first_name": "Marie",
+    "last_name": "Dupont",
+    "title": "Talent Acquisition Lead",
+    "email": "marie.dupont@aerosphere.demo",
+    "languages": [
+      "French",
+      "English"
+    ],
+    "specialties": [
+      "Engineering",
+      "HRIS",
+      "Project Management"
+    ]
+  },
+  {
+    "id": "REC004",
+    "organization_id": "ORG003",
+    "first_name": "Carlos",
+    "last_name": "Mendes",
+    "title": "Global HRIS Director",
+    "email": "carlos.mendes@luxemaison.demo",
+    "languages": [
+      "English",
+      "Portuguese",
+      "French"
+    ],
+    "specialties": [
+      "Global HRIS",
+      "People Analytics"
+    ]
+  },
+  {
+    "id": "REC005",
+    "organization_id": "ORG004",
+    "first_name": "Emma",
+    "last_name": "Wilson",
+    "title": "Recruitment Manager",
+    "email": "emma.wilson@medcore.demo",
+    "languages": [
+      "English"
+    ],
+    "specialties": [
+      "Healthcare",
+      "Compliance"
+    ]
+  },
+  {
+    "id": "REC006",
+    "organization_id": "ORG005",
+    "first_name": "Li",
+    "last_name": "Wei",
+    "title": "Regional Talent Partner",
+    "email": "li.wei@greengrid.demo",
+    "languages": [
+      "Mandarin",
+      "English"
+    ],
+    "specialties": [
+      "APAC Recruitment",
+      "Global Mobility"
+    ]
+  }
+]
