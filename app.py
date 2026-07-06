@@ -11,6 +11,7 @@ from talentcopilot.ui.home_v2 import render_home_v2
 from talentcopilot.ui.dashboard import render_dashboard
 from talentcopilot.ui.comparison import render_candidate_comparison
 from talentcopilot.ui.reports import render_reports
+from talentcopilot.ui.reports_v2 import render_reports_v2
 from talentcopilot.ui.settings import render_settings
 from talentcopilot.ui.candidates import render_candidates
 from talentcopilot.ui.components import footer
@@ -66,7 +67,7 @@ pages = {
     tr("menu.talent_pool"): render_talent_pool,
     tr("menu.recruiter_copilot"): render_recruiter_copilot,
     tr("menu.comparison"): "comparison",
-    tr("menu.reports"): render_reports,
+    tr("menu.reports"): render_reports_v2,
     tr("menu.settings"): render_settings,
 }
 
