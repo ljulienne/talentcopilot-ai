@@ -1,1 +1,202 @@
-[]
+[
+  {
+    "id": "SK001",
+    "name": "HRIS",
+    "category": "HRIS"
+  },
+  {
+    "id": "SK002",
+    "name": "Workday",
+    "category": "HRIS"
+  },
+  {
+    "id": "SK003",
+    "name": "SAP SuccessFactors",
+    "category": "HRIS"
+  },
+  {
+    "id": "SK004",
+    "name": "Oracle HCM",
+    "category": "HRIS"
+  },
+  {
+    "id": "SK005",
+    "name": "Employee Central",
+    "category": "HRIS"
+  },
+  {
+    "id": "SK006",
+    "name": "Talentsoft",
+    "category": "HRIS"
+  },
+  {
+    "id": "SK007",
+    "name": "Cornerstone",
+    "category": "HRIS"
+  },
+  {
+    "id": "SK008",
+    "name": "UKG",
+    "category": "HRIS"
+  },
+  {
+    "id": "SK009",
+    "name": "Dayforce",
+    "category": "HRIS"
+  },
+  {
+    "id": "SK010",
+    "name": "Payroll Integration",
+    "category": "HRIS"
+  },
+  {
+    "id": "SK011",
+    "name": "API Integration",
+    "category": "Technical"
+  },
+  {
+    "id": "SK012",
+    "name": "Integration Center",
+    "category": "Technical"
+  },
+  {
+    "id": "SK013",
+    "name": "Project Management",
+    "category": "Project"
+  },
+  {
+    "id": "SK014",
+    "name": "Agile",
+    "category": "Project"
+  },
+  {
+    "id": "SK015",
+    "name": "HRIS Product Ownership",
+    "category": "Product"
+  },
+  {
+    "id": "SK016",
+    "name": "Stakeholder Management",
+    "category": "Leadership"
+  },
+  {
+    "id": "SK017",
+    "name": "Change Management",
+    "category": "Transformation"
+  },
+  {
+    "id": "SK018",
+    "name": "International Collaboration",
+    "category": "International"
+  },
+  {
+    "id": "SK019",
+    "name": "Global Mobility",
+    "category": "International"
+  },
+  {
+    "id": "SK020",
+    "name": "People Analytics",
+    "category": "Data"
+  },
+  {
+    "id": "SK021",
+    "name": "SQL",
+    "category": "Data"
+  },
+  {
+    "id": "SK022",
+    "name": "Power BI",
+    "category": "Data"
+  },
+  {
+    "id": "SK023",
+    "name": "Tableau",
+    "category": "Data"
+  },
+  {
+    "id": "SK024",
+    "name": "Python",
+    "category": "Data"
+  },
+  {
+    "id": "SK025",
+    "name": "Snowflake",
+    "category": "Data"
+  },
+  {
+    "id": "SK026",
+    "name": "Data Storytelling",
+    "category": "Data"
+  },
+  {
+    "id": "SK027",
+    "name": "Workforce Planning",
+    "category": "Data"
+  },
+  {
+    "id": "SK028",
+    "name": "Machine Learning",
+    "category": "AI"
+  },
+  {
+    "id": "SK029",
+    "name": "Talent Management",
+    "category": "Talent"
+  },
+  {
+    "id": "SK030",
+    "name": "Learning Systems",
+    "category": "Talent"
+  },
+  {
+    "id": "SK031",
+    "name": "Performance Management",
+    "category": "Talent"
+  },
+  {
+    "id": "SK032",
+    "name": "9 Box",
+    "category": "Talent"
+  },
+  {
+    "id": "SK033",
+    "name": "Leadership Development",
+    "category": "Talent"
+  },
+  {
+    "id": "SK034",
+    "name": "Workday Talent",
+    "category": "Talent"
+  },
+  {
+    "id": "SK035",
+    "name": "HR Transformation",
+    "category": "Transformation"
+  },
+  {
+    "id": "SK036",
+    "name": "Process Improvement",
+    "category": "Transformation"
+  },
+  {
+    "id": "SK037",
+    "name": "Compliance",
+    "category": "Operations"
+  },
+  {
+    "id": "SK038",
+    "name": "Lean Management",
+    "category": "Operations"
+  },
+  {
+    "id": "SK039",
+    "name": "Training",
+    "category": "Talent"
+  },
+  {
+    "id": "SK040",
+    "name": "Reporting",
+    "category": "Data"
+  }
+]
