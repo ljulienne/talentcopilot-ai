@@ -14,6 +14,7 @@ from talentcopilot.ui.reports import render_reports
 from talentcopilot.ui.reports_v2 import render_reports_v2
 from talentcopilot.ui.settings import render_settings
 from talentcopilot.ui.candidates import render_candidates
+from talentcopilot.ui.candidates_v2 import render_candidates_v2
 from talentcopilot.ui.components import footer
 from talentcopilot.ui.recruitment_wizard import render_new_recruitment
 from talentcopilot.ui.open_recruitment import render_open_recruitment
