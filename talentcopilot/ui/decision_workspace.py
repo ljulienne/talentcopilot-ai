@@ -7,7 +7,7 @@ from talentcopilot.viewmodels.decision_workspace import DecisionWorkspaceBuilder
 
 from talentcopilot.ui.design_system.hero import render_hero
 from talentcopilot.ui.design_system.metrics import metric_card
-from talentcopilot.ui.design_system.cards import section_card, info_card
+from talentcopilot.ui.design_system.cards import section_card, info_card, inject_card_styles
 from talentcopilot.ui.design_system.timeline import horizontal_timeline
 
 
@@ -51,6 +51,8 @@ def _build_demo_view_model():
 
 def render_decision_workspace():
     view_model = _build_demo_view_model()
+
+    inject_card_styles()
 
     render_hero(
         title="Decision Workspace",
