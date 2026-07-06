@@ -17,6 +17,8 @@ from talentcopilot.ui.open_recruitment import render_open_recruitment
 from talentcopilot.ui.talent_pool import render_talent_pool
 from talentcopilot.ui.recruiter_copilot import render_recruiter_copilot
 from talentcopilot.ui.decision_workspace import render_decision_workspace
+from talentcopilot.ui.app_layout import render_page_shell
+from talentcopilot.ui.dashboard_v2 import render_dashboard_v2
 
 st.set_page_config(page_title=APP_NAME, page_icon="🧠", layout="wide")
 apply_theme()
@@ -77,6 +79,7 @@ st.sidebar.markdown("---")
 
 pages = {
     tr("menu.home"): render_home,
+    "Decision Center": render_dashboard_v2,
     tr("menu.new_recruitment"): render_new_recruitment,
     tr("menu.open_recruitment"): render_open_recruitment,
     tr("menu.dashboard"): render_dashboard,
@@ -99,7 +102,16 @@ selected_page = pages[page]
 if selected_page == "comparison":
     batch = st.session_state.get("analysis_batch")
     results = batch["results"] if batch and batch.get("success") else []
-    render_candidate_comparison(results)
+    render_page_shell(lambda: render_candidate_comparison(results))
+elif selected_page in {
+    render_dashboard_v2,
+    render_decision_workspace,
+    render_reports,
+    render_candidates,
+    render_talent_pool,
+    render_recruiter_copilot,
+}:
+    render_page_shell(selected_page)
 else:
     selected_page()
 
