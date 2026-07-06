@@ -1,0 +1,69 @@
+[
+  {
+    "organization_id": "org-technova",
+    "name": "TechNova Solutions",
+    "industry": "SaaS / Software",
+    "employee_count": 8000,
+    "headquarters": "Paris, France",
+    "regions": [
+      "Europe",
+      "North America"
+    ],
+    "culture": "Fast-growing product organization with strong focus on HR technology, automation and scalable global processes.",
+    "primary_color": "#2563EB"
+  },
+  {
+    "organization_id": "org-aerosphere",
+    "name": "AeroSphere Industries",
+    "industry": "Aerospace & Defense",
+    "employee_count": 25000,
+    "headquarters": "Toulouse, France",
+    "regions": [
+      "Europe",
+      "North America",
+      "APAC"
+    ],
+    "culture": "Engineering-driven organization with complex compliance, global workforce planning and highly structured HR operations.",
+    "primary_color": "#0F766E"
+  },
+  {
+    "organization_id": "org-luxemaison",
+    "name": "LuxeMaison Group",
+    "industry": "Luxury Retail",
+    "employee_count": 40000,
+    "headquarters": "Paris, France",
+    "regions": [
+      "Europe",
+      "APAC",
+      "Middle East",
+      "North America"
+    ],
+    "culture": "Premium global brand environment focused on talent experience, leadership development and international mobility.",
+    "primary_color": "#7C3AED"
+  },
+  {
+    "organization_id": "org-medcore",
+    "name": "MedCore Health",
+    "industry": "Healthcare",
+    "employee_count": 15000,
+    "headquarters": "Lyon, France",
+    "regions": [
+      "Europe"
+    ],
+    "culture": "Mission-driven healthcare organization requiring reliable HR operations, compliance and workforce analytics.",
+    "primary_color": "#DC2626"
+  },
+  {
+    "organization_id": "org-greengrid",
+    "name": "GreenGrid Energy",
+    "industry": "Renewable Energy",
+    "employee_count": 12000,
+    "headquarters": "Singapore",
+    "regions": [
+      "APAC",
+      "Europe"
+    ],
+    "culture": "International energy group scaling rapidly across APAC and Europe with strong needs in HR transformation and skills planning.",
+    "primary_color": "#16A34A"
+  }
+]

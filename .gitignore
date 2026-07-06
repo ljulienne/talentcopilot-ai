@@ -3,3 +3,9 @@ data/
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+
+
+# Keep generated data ignored, but version enterprise demo dataset
+data/*
+!data/enterprise_demo/
+!data/enterprise_demo/**
