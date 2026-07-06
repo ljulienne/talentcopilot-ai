@@ -8,15 +8,10 @@ def render_hero(
     badge: str | None = None,
 ) -> None:
     badge_html = ""
-
     if badge:
-        badge_html = f"""
-        <div class="tc-badge">
-            {badge}
-        </div>
-        """
+        badge_html = f'<div class="tc-badge">{badge}</div>'
 
-    st.markdown(f"""
+    html = f"""
 <style>
 .tc-hero {{
     padding: 32px;
@@ -48,11 +43,12 @@ def render_hero(
     font-weight: 600;
 }}
 </style>
-
 <div class="tc-hero">
-    <div style="font-size:52px">{icon}</div>
-    <div class="tc-title">{title}</div>
-    <div class="tc-subtitle">{subtitle}</div>
-    {badge_html}
+<div style="font-size:52px">{icon}</div>
+<div class="tc-title">{title}</div>
+<div class="tc-subtitle">{subtitle}</div>
+{badge_html}
 </div>
-""", unsafe_allow_html=True)
+"""
+
+    st.markdown(html, unsafe_allow_html=True)
