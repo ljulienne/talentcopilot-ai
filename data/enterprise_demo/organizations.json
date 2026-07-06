@@ -1,69 +1,68 @@
 [
   {
-    "organization_id": "org-technova",
+    "id": "ORG001",
     "name": "TechNova Solutions",
-    "industry": "SaaS / Software",
-    "employee_count": 8000,
+    "industry": "Technology",
     "headquarters": "Paris, France",
+    "employees": 8200,
     "regions": [
       "Europe",
       "North America"
     ],
-    "culture": "Fast-growing product organization with strong focus on HR technology, automation and scalable global processes.",
-    "primary_color": "#2563EB"
+    "primary_color": "#2563EB",
+    "description": "Fast-growing SaaS company specialized in enterprise HR platforms."
   },
   {
-    "organization_id": "org-aerosphere",
+    "id": "ORG002",
     "name": "AeroSphere Industries",
-    "industry": "Aerospace & Defense",
-    "employee_count": 25000,
+    "industry": "Aerospace",
     "headquarters": "Toulouse, France",
+    "employees": 24500,
     "regions": [
       "Europe",
       "North America",
-      "APAC"
+      "Asia"
     ],
-    "culture": "Engineering-driven organization with complex compliance, global workforce planning and highly structured HR operations.",
-    "primary_color": "#0F766E"
+    "primary_color": "#0F766E",
+    "description": "Global aerospace manufacturer with complex HR operations."
   },
   {
-    "organization_id": "org-luxemaison",
+    "id": "ORG003",
     "name": "LuxeMaison Group",
-    "industry": "Luxury Retail",
-    "employee_count": 40000,
+    "industry": "Luxury",
     "headquarters": "Paris, France",
+    "employees": 41000,
     "regions": [
       "Europe",
-      "APAC",
-      "Middle East",
-      "North America"
+      "Asia",
+      "Middle East"
     ],
-    "culture": "Premium global brand environment focused on talent experience, leadership development and international mobility.",
-    "primary_color": "#7C3AED"
+    "primary_color": "#7C3AED",
+    "description": "Luxury retail group focused on talent mobility and leadership."
   },
   {
-    "organization_id": "org-medcore",
+    "id": "ORG004",
     "name": "MedCore Health",
     "industry": "Healthcare",
-    "employee_count": 15000,
     "headquarters": "Lyon, France",
+    "employees": 15600,
     "regions": [
       "Europe"
     ],
-    "culture": "Mission-driven healthcare organization requiring reliable HR operations, compliance and workforce analytics.",
-    "primary_color": "#DC2626"
+    "primary_color": "#DC2626",
+    "description": "Healthcare organization focused on compliance and workforce planning."
   },
   {
-    "organization_id": "org-greengrid",
+    "id": "ORG005",
     "name": "GreenGrid Energy",
     "industry": "Renewable Energy",
-    "employee_count": 12000,
     "headquarters": "Singapore",
+    "employees": 12800,
     "regions": [
-      "APAC",
+      "Asia",
       "Europe"
     ],
-    "culture": "International energy group scaling rapidly across APAC and Europe with strong needs in HR transformation and skills planning.",
-    "primary_color": "#16A34A"
+    "primary_color": "#16A34A",
+    "description": "International renewable energy company undergoing HR transformation."
   }
 ]
