@@ -55,7 +55,7 @@ def render_candidates_v2():
     with left:
         st.subheader("🧠 Candidate decision list")
 
-        for candidate in candidates:
+        for index, candidate in enumerate(candidates):
             with st.container(border=True):
                 c1, c2, c3 = st.columns([2, 1, 1])
 
@@ -78,8 +78,8 @@ def render_candidates_v2():
                 with c3:
                     st.caption("Confidence")
                     st.markdown(f"## {candidate['confidence']}")
-                    st.button("Open Workspace", use_container_width=True, disabled=True)
-                    st.button("Compare", use_container_width=True, disabled=True)
+                    st.button("Open Workspace", use_container_width=True, disabled=True, key=f"open_workspace_{index}")
+                    st.button("Compare", use_container_width=True, disabled=True, key=f"compare_candidate_{index}")
 
     with right:
         with st.container(border=True):
