@@ -2,3 +2,4 @@ from .repository import EnterpriseDemoRepository
 from .candidate_factory import EnterpriseCandidateFactory
 from .recruitment_factory import EnterpriseRecruitmentFactory
 from .simulation_engine import EnterpriseSimulationEngine
+from .demo_engine import EnterpriseDemoEngine, launch_enterprise_demo
