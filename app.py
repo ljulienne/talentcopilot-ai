@@ -55,14 +55,24 @@ if context:
     st.sidebar.caption(context.get("company", ""))
     st.sidebar.markdown("---")
 
-st.sidebar.markdown("**Workflow**")
-st.sidebar.caption("1. New Recruitment")
-st.sidebar.caption("2. Open Recruitment")
-st.sidebar.caption("3. Dashboard Analysis")
-st.sidebar.caption("4. Talent Review")
-st.sidebar.caption("5. Recruiter Copilot")
-st.sidebar.caption("6. Candidate Comparison")
-st.sidebar.caption("7. Recruiter Report")
+st.sidebar.markdown("### 🚀 Decision Workflow")
+
+with st.sidebar.container(border=True):
+    st.markdown("**1 · Create**")
+    st.caption("New Recruitment")
+
+    st.markdown("**2 · Analyze**")
+    st.caption("Dashboard Analysis")
+
+    st.markdown("**3 · Decide**")
+    st.caption("Decision Workspace")
+
+    st.markdown("**4 · Validate**")
+    st.caption("Interview & Copilot")
+
+    st.markdown("**5 · Report**")
+    st.caption("Decision Report")
+
 st.sidebar.markdown("---")
 
 pages = {
