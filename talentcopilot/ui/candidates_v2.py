@@ -50,6 +50,13 @@ def render_candidates_v2():
         },
     ]
 
+    # Always display candidates from highest to lowest confidence
+    candidates = sorted(
+        candidates,
+        key=lambda c: int(c["confidence"].replace("%", "")),
+        reverse=True,
+    )
+
     left, right = st.columns([2, 1], gap="large")
 
     with left:
