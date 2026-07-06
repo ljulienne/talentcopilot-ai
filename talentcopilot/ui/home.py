@@ -14,6 +14,7 @@ from talentcopilot.analytics.recruitment_statistics import (
 )
 from talentcopilot.ai.openai_recruiter import is_openai_available
 from talentcopilot.services.ranking_service import rank_candidates
+from talentcopilot.enterprise_demo import launch_enterprise_demo
 from talentcopilot.demo.demo_data import (
     load_demo_batch,
     load_demo_recruitment_context,
@@ -139,7 +140,7 @@ def render_home():
             tr("home.quick_actions_subtitle")
         )
 
-        col_a, col_b, col_c = st.columns(3)
+        col_a, col_b, col_c, col_d = st.columns(4)
 
         with col_a:
             if st.button(tr("home.launch_demo"), use_container_width=True):
@@ -153,9 +154,35 @@ def render_home():
                 st.success(tr("home.demo_loaded"))
 
         with col_b:
-            st.button(tr("home.new_recruitment"), use_container_width=True)
+            if st.button("🏢 Launch Enterprise Demo", use_container_width=True):
+                enterprise_batch = launch_enterprise_demo(
+                    organization_id="ORG001",
+                    job_id="JOB001",
+                    scenario="balanced",
+                    candidate_count=12,
+                )
+
+                context = enterprise_batch.get("enterprise_context", {})
+                organization = context.get("organization", {}) or {}
+
+                st.session_state.recruitment_context = {
+                    "job_title": enterprise_batch["job"].title,
+                    "company": organization.get("name", "Enterprise Demo"),
+                    "department": "HR Technology",
+                    "location": organization.get("headquarters", ""),
+                    "recruitment_type": "Enterprise Demo",
+                    "language": "Auto Detect",
+                    "max_candidates": 50,
+                    "created_at": "enterprise_demo",
+                }
+
+                st.session_state.analysis_batch = enterprise_batch
+                st.success("Enterprise demo loaded. Go to Dashboard, Candidates, Comparison or Reports.")
 
         with col_c:
+            st.button(tr("home.new_recruitment"), use_container_width=True)
+
+        with col_d:
             st.button(tr("home.ask_ai"), use_container_width=True)
 
         st.divider()
