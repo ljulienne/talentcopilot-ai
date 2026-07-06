@@ -9,6 +9,7 @@ from talentcopilot.ui.design_system.hero import render_hero
 from talentcopilot.ui.design_system.metrics import metric_card
 from talentcopilot.ui.design_system.cards import section_card, info_card, inject_card_styles
 from talentcopilot.ui.design_system.timeline import horizontal_timeline
+from talentcopilot.ui.design_system.evidence import evidence_card
 
 
 def _build_demo_view_model():
@@ -120,11 +121,11 @@ def render_decision_workspace():
 
         st.markdown("### Evidence Explorer")
         for evidence in view_model.reasoning_report.evidence_assessment[:4]:
-            info_card(
-                title=f"{evidence.strength.title()} evidence",
-                body=f"{evidence.text}<br><br><strong>Interpretation:</strong> {evidence.interpretation}",
-                icon="📎",
-                color="#2563EB",
+            evidence_card(
+                text=evidence.text,
+                interpretation=evidence.interpretation,
+                strength=evidence.strength,
+                confidence_score=evidence.confidence_score,
             )
 
         st.markdown("### Interview Intelligence")
