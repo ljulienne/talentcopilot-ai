@@ -7,6 +7,7 @@ from talentcopilot.ui.theme import apply_theme
 from talentcopilot.ui.premium_theme import apply_premium_ui, premium_sidebar_brand
 from talentcopilot.ui.sidebar import render_sidebar_brand, render_sidebar_context, render_sidebar_workflow
 from talentcopilot.ui.home import render_home
+from talentcopilot.ui.home_v2 import render_home_v2
 from talentcopilot.ui.dashboard import render_dashboard
 from talentcopilot.ui.comparison import render_candidate_comparison
 from talentcopilot.ui.reports import render_reports
@@ -55,7 +56,7 @@ render_sidebar_context(context)
 render_sidebar_workflow()
 
 pages = {
-    tr("menu.home"): render_home,
+    tr("menu.home"): render_home_v2,
     "Decision Center": render_dashboard_v2,
     tr("menu.new_recruitment"): render_new_recruitment,
     tr("menu.open_recruitment"): render_open_recruitment,
