@@ -14,6 +14,23 @@ def card(title: str, body: str = "", icon: str = "📌"):
             st.write(body)
 
 
+def candidate_card(candidate, score=None, rank=None):
+    name = candidate.get("name", "Unknown candidate") if isinstance(candidate, dict) else str(candidate)
+
+    with st.container():
+        title = f"{rank}. {name}" if rank else name
+        st.markdown(f"### 👤 {title}")
+
+        if score is not None:
+            st.metric("Score", score)
+
+        if isinstance(candidate, dict):
+            if candidate.get("summary"):
+                st.write(candidate["summary"])
+            if candidate.get("skills"):
+                st.caption("Skills: " + ", ".join(candidate["skills"]))
+
+
 def metric_card(label: str, value, delta=None, help_text: str = ""):
     st.metric(label=label, value=value, delta=delta, help=help_text or None)
 
@@ -33,12 +50,11 @@ def status_badge(label: str, status: str = "info"):
 
 
 def insight_card(title: str, body: str = "", confidence: str = ""):
-    with st.container():
-        st.markdown(f"### {title}")
-        if body:
-            st.write(body)
-        if confidence:
-            st.caption(f"Confidence: {confidence}")
+    st.markdown(f"### {title}")
+    if body:
+        st.write(body)
+    if confidence:
+        st.caption(f"Confidence: {confidence}")
 
 
 def recommendation_card(title: str, body: str = "", level: str = "info"):
