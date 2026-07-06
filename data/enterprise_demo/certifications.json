@@ -1,1 +1,82 @@
-[]
+[
+  {
+    "id": "CERT001",
+    "code": "PMP",
+    "name": "Project Management Professional",
+    "category": "Project Management",
+    "description": "Globally recognized project management certification.",
+    "active": true
+  },
+  {
+    "id": "CERT002",
+    "code": "HRIP",
+    "name": "Human Resources Information Professional",
+    "category": "HRIS",
+    "description": "Professional certification in HR Information Systems.",
+    "active": true
+  },
+  {
+    "id": "CERT003",
+    "code": "PHRI",
+    "name": "Professional in Human Resources - International",
+    "category": "HR",
+    "description": "International HR certification.",
+    "active": true
+  },
+  {
+    "id": "CERT004",
+    "code": "SPHRI",
+    "name": "Senior Professional in Human Resources - International",
+    "category": "HR",
+    "description": "Senior international HR certification.",
+    "active": true
+  },
+  {
+    "id": "CERT005",
+    "code": "GPHR",
+    "name": "Global Professional in Human Resources",
+    "category": "HR",
+    "description": "Global HR leadership certification.",
+    "active": true
+  },
+  {
+    "id": "CERT006",
+    "code": "POWER_BI",
+    "name": "Microsoft Certified: Power BI Data Analyst Associate",
+    "category": "Analytics",
+    "description": "Microsoft Power BI certification.",
+    "active": true
+  },
+  {
+    "id": "CERT007",
+    "code": "SAP",
+    "name": "SAP SuccessFactors Certified Professional",
+    "category": "HRIS",
+    "description": "SAP SuccessFactors certification.",
+    "active": true
+  },
+  {
+    "id": "CERT008",
+    "code": "ORACLE_HCM",
+    "name": "Oracle HCM Cloud Certified",
+    "category": "HRIS",
+    "description": "Oracle HCM Cloud certification.",
+    "active": true
+  },
+  {
+    "id": "CERT009",
+    "code": "AWS_CP",
+    "name": "AWS Certified Cloud Practitioner",
+    "category": "Cloud",
+    "description": "AWS foundational cloud certification.",
+    "active": true
+  },
+  {
+    "id": "CERT010",
+    "code": "AZ900",
+    "name": "Microsoft Azure Fundamentals",
+    "category": "Cloud",
+    "description": "Azure foundational certification.",
+    "active": true
+  }
+]
