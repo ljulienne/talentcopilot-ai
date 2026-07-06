@@ -20,6 +20,7 @@ def load_enterprise_demo():
         "recruiters": _load_json("recruiters.json", []),
         "jobs": _load_json("jobs.json", []),
         "candidates": _load_json("candidates.json", []),
+        "candidate_personas": _load_json("candidate_personas.json", []),
         "applications": _load_json("applications.json", []),
         "skills": _load_json("skills.json", []),
         "certifications": _load_json("certifications.json", []),
