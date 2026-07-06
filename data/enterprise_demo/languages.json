@@ -1,1 +1,130 @@
-[]
+[
+  {
+    "id": "LANG001",
+    "code": "FR",
+    "name": "French",
+    "native_name": "Français",
+    "cefr": [
+      "A1",
+      "A2",
+      "B1",
+      "B2",
+      "C1",
+      "C2",
+      "Native"
+    ],
+    "active": true
+  },
+  {
+    "id": "LANG002",
+    "code": "EN",
+    "name": "English",
+    "native_name": "English",
+    "cefr": [
+      "A1",
+      "A2",
+      "B1",
+      "B2",
+      "C1",
+      "C2",
+      "Native"
+    ],
+    "active": true
+  },
+  {
+    "id": "LANG003",
+    "code": "ZH",
+    "name": "Mandarin Chinese",
+    "native_name": "普通话",
+    "cefr": [
+      "A1",
+      "A2",
+      "B1",
+      "B2",
+      "C1",
+      "C2",
+      "Native"
+    ],
+    "active": true
+  },
+  {
+    "id": "LANG004",
+    "code": "ES",
+    "name": "Spanish",
+    "native_name": "Español",
+    "cefr": [
+      "A1",
+      "A2",
+      "B1",
+      "B2",
+      "C1",
+      "C2",
+      "Native"
+    ],
+    "active": true
+  },
+  {
+    "id": "LANG005",
+    "code": "DE",
+    "name": "German",
+    "native_name": "Deutsch",
+    "cefr": [
+      "A1",
+      "A2",
+      "B1",
+      "B2",
+      "C1",
+      "C2",
+      "Native"
+    ],
+    "active": true
+  },
+  {
+    "id": "LANG006",
+    "code": "IT",
+    "name": "Italian",
+    "native_name": "Italiano",
+    "cefr": [
+      "A1",
+      "A2",
+      "B1",
+      "B2",
+      "C1",
+      "C2",
+      "Native"
+    ],
+    "active": true
+  },
+  {
+    "id": "LANG007",
+    "code": "PT",
+    "name": "Portuguese",
+    "native_name": "Português",
+    "cefr": [
+      "A1",
+      "A2",
+      "B1",
+      "B2",
+      "C1",
+      "C2",
+      "Native"
+    ],
+    "active": true
+  },
+  {
+    "id": "LANG008",
+    "code": "JA",
+    "name": "Japanese",
+    "native_name": "日本語",
+    "cefr": [
+      "A1",
+      "A2",
+      "B1",
+      "B2",
+      "C1",
+      "C2",
+      "Native"
+    ],
+    "active": true
+  }
+]
