@@ -5,6 +5,7 @@ from talentcopilot.i18n import tr, LANGUAGES
 from talentcopilot.config import APP_NAME, APP_VERSION
 from talentcopilot.ui.theme import apply_theme
 from talentcopilot.ui.premium_theme import apply_premium_ui, premium_sidebar_brand
+from talentcopilot.ui.sidebar import render_sidebar_brand, render_sidebar_context, render_sidebar_workflow
 from talentcopilot.ui.home import render_home
 from talentcopilot.ui.dashboard import render_dashboard
 from talentcopilot.ui.comparison import render_candidate_comparison
@@ -36,8 +37,7 @@ if "recruitment_context" not in st.session_state:
 if "current_recruitment" not in st.session_state:
     st.session_state.current_recruitment = None
 
-premium_sidebar_brand(APP_VERSION)
-st.sidebar.markdown("---")
+render_sidebar_brand(APP_VERSION)
 
 selected_language = st.sidebar.selectbox(
     "🌍 Language",
@@ -51,31 +51,8 @@ st.sidebar.markdown("---")
 
 context = st.session_state.get("recruitment_context")
 
-if context:
-    st.sidebar.markdown("**Current Recruitment**")
-    st.sidebar.caption(context.get("job_title", "Untitled recruitment"))
-    st.sidebar.caption(context.get("company", ""))
-    st.sidebar.markdown("---")
-
-st.sidebar.markdown("### 🚀 Decision Workflow")
-
-with st.sidebar.container(border=True):
-    st.markdown("**1 · Create**")
-    st.caption("New Recruitment")
-
-    st.markdown("**2 · Analyze**")
-    st.caption("Dashboard Analysis")
-
-    st.markdown("**3 · Decide**")
-    st.caption("Decision Workspace")
-
-    st.markdown("**4 · Validate**")
-    st.caption("Interview & Copilot")
-
-    st.markdown("**5 · Report**")
-    st.caption("Decision Report")
-
-st.sidebar.markdown("---")
+render_sidebar_context(context)
+render_sidebar_workflow()
 
 pages = {
     tr("menu.home"): render_home,
