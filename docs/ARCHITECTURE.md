@@ -1,24 +1,41 @@
-# Architecture
+# TalentCopilot-AI Architecture
 
-TalentCopilot is built around a modular architecture.
+TalentCopilot-AI is an AI Recruitment Decision Intelligence platform.
 
-## Main flow
+## Design principles
 
-Job Description PDF
-→ PDF Parser
-→ Job Builder
-→ Talent Knowledge Base
-→ Candidate CV PDFs
-→ Candidate Builder
-→ Matching Engine
-→ Recruiter Dashboard
+- Evidence First
+- Explain Everything
+- Human-in-the-loop
+- Generic by Design
+- Decision support, not automated hiring
 
-## Key components
+## AI flow
 
-- Streamlit UI
-- PDF Parser
-- AI Provider
-- Talent Knowledge Base
-- Matching Engine
-- Capability Engine
-- Decision Engine
+CV / candidate data
+→ Evidence
+→ Reasoning
+→ Interview Intelligence
+→ Recommendation
+→ Comparison
+→ Reporting
+
+## Engine responsibilities
+
+### Evidence Engine
+Extracts what the CV or candidate profile actually says.
+
+### Reasoning Engine
+Interprets evidence, identifies strengths, risks, uncertainty, and missing information.
+
+### Interview Intelligence Engine
+Generates interview questions to validate evidence, assumptions, gaps, and risks.
+
+### Recommendation Engine
+Explains which candidate should be prioritized and why, including trade-offs, decision risks, and alternative scenarios.
+
+### Comparison Engine
+Compares multiple candidates using evidence quality, demonstrated skills, risks, uncertainty, and role fit.
+
+### Reporting Engine
+Turns intelligence outputs into recruiter-facing reports.
