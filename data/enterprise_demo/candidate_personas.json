@@ -1,0 +1,181 @@
+[
+  {
+    "id": "PER001",
+    "name": "Global HRIS Leader",
+    "description": "Senior profile with global HRIS implementation experience, strong governance and international exposure.",
+    "typical_strengths": [
+      "HRIS",
+      "Project Management",
+      "Change Management",
+      "International Collaboration"
+    ],
+    "typical_risks": [
+      "May be less hands-on technically",
+      "Salary expectations may be high"
+    ]
+  },
+  {
+    "id": "PER002",
+    "name": "Technical HRIS Specialist",
+    "description": "Deep technical specialist focused on configuration, integrations and HRIS platform optimization.",
+    "typical_strengths": [
+      "SAP SuccessFactors",
+      "Workday",
+      "Oracle HCM",
+      "API Integration"
+    ],
+    "typical_risks": [
+      "Limited leadership scope",
+      "May need support with business change management"
+    ]
+  },
+  {
+    "id": "PER003",
+    "name": "People Analytics Expert",
+    "description": "Data-driven HR professional with strong analytics, dashboards and workforce planning expertise.",
+    "typical_strengths": [
+      "People Analytics",
+      "SQL",
+      "Power BI",
+      "Data Storytelling"
+    ],
+    "typical_risks": [
+      "May lack full HRIS implementation experience",
+      "May be less experienced in stakeholder governance"
+    ]
+  },
+  {
+    "id": "PER004",
+    "name": "HR Transformation Manager",
+    "description": "Business transformation profile focused on process redesign, change adoption and HR operating model improvements.",
+    "typical_strengths": [
+      "HR Transformation",
+      "Change Management",
+      "Process Improvement",
+      "Stakeholder Management"
+    ],
+    "typical_risks": [
+      "May lack deep system configuration expertise",
+      "Technical integrations should be validated"
+    ]
+  },
+  {
+    "id": "PER005",
+    "name": "Payroll & Time Expert",
+    "description": "Specialist in payroll, time and attendance, HR operations and payroll-related integrations.",
+    "typical_strengths": [
+      "Payroll Integration",
+      "Compliance",
+      "Reporting",
+      "Process Improvement"
+    ],
+    "typical_risks": [
+      "Limited talent management exposure",
+      "May not fit broad HRIS leadership roles"
+    ]
+  },
+  {
+    "id": "PER006",
+    "name": "International Talent Systems Manager",
+    "description": "Talent-focused HRIS profile specialized in performance, learning, succession and leadership development systems.",
+    "typical_strengths": [
+      "Talent Management",
+      "Learning Systems",
+      "Performance Management",
+      "International Collaboration"
+    ],
+    "typical_risks": [
+      "Less exposed to payroll or core HR operations",
+      "Data analytics depth may vary"
+    ]
+  },
+  {
+    "id": "PER007",
+    "name": "High Potential HR Generalist",
+    "description": "Promising HR professional with broad HR exposure and strong learning agility, but limited enterprise HRIS ownership.",
+    "typical_strengths": [
+      "Stakeholder Management",
+      "Communication",
+      "Change Management"
+    ],
+    "typical_risks": [
+      "Limited years of experience",
+      "Enterprise HRIS exposure not yet proven"
+    ]
+  },
+  {
+    "id": "PER008",
+    "name": "Executive HR Technology Director",
+    "description": "Strategic senior leader with HR technology roadmap ownership, vendor governance and global transformation exposure.",
+    "typical_strengths": [
+      "HRIS Product Ownership",
+      "Leadership Development",
+      "Stakeholder Management",
+      "HR Transformation"
+    ],
+    "typical_risks": [
+      "May be overqualified for operational roles",
+      "Hands-on configuration skills may be outdated"
+    ]
+  },
+  {
+    "id": "PER009",
+    "name": "APAC HRIS Product Owner",
+    "description": "Regional HRIS product owner with APAC experience, multilingual communication and platform roadmap ownership.",
+    "typical_strengths": [
+      "HRIS Product Ownership",
+      "International Collaboration",
+      "Oracle HCM",
+      "Global Mobility"
+    ],
+    "typical_risks": [
+      "European labor law exposure may be limited",
+      "French language level may vary"
+    ]
+  },
+  {
+    "id": "PER010",
+    "name": "Data-Heavy but HR-Light Candidate",
+    "description": "Excellent technical data profile with limited HR domain experience.",
+    "typical_strengths": [
+      "Python",
+      "SQL",
+      "Snowflake",
+      "Machine Learning"
+    ],
+    "typical_risks": [
+      "Limited HR process understanding",
+      "Needs validation on HR stakeholder management"
+    ]
+  },
+  {
+    "id": "PER011",
+    "name": "Strong Match with Stability Risk",
+    "description": "Candidate with strong skills and high match, but frequent job changes or unclear long-term stability.",
+    "typical_strengths": [
+      "HRIS",
+      "Project Management",
+      "Power BI",
+      "Change Management"
+    ],
+    "typical_risks": [
+      "Frequent job changes",
+      "Retention risk should be discussed"
+    ]
+  },
+  {
+    "id": "PER012",
+    "name": "Multilingual International Profile",
+    "description": "Strong international communicator with multiple languages and cross-cultural project exposure.",
+    "typical_strengths": [
+      "International Collaboration",
+      "Global Mobility",
+      "Stakeholder Management",
+      "Change Management"
+    ],
+    "typical_risks": [
+      "Technical depth may be uneven",
+      "Needs validation on system ownership"
+    ]
+  }
+]

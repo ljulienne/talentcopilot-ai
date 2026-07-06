@@ -1,0 +1,74 @@
+[
+  {
+    "id": "TD001",
+    "code": "HRIS_EXPERTISE",
+    "name": "HRIS Expertise",
+    "description": "Depth of HRIS platform knowledge and implementation experience."
+  },
+  {
+    "id": "TD002",
+    "code": "LEADERSHIP",
+    "name": "Leadership",
+    "description": "Ability to lead teams, projects and strategic initiatives."
+  },
+  {
+    "id": "TD003",
+    "code": "CHANGE_MANAGEMENT",
+    "name": "Change Management",
+    "description": "Capability to drive organizational transformation."
+  },
+  {
+    "id": "TD004",
+    "code": "PEOPLE_ANALYTICS",
+    "name": "People Analytics",
+    "description": "Ability to transform HR data into business insights."
+  },
+  {
+    "id": "TD005",
+    "code": "TECHNICAL_DEPTH",
+    "name": "Technical Depth",
+    "description": "Technical capability across integrations, APIs and HR technology."
+  },
+  {
+    "id": "TD006",
+    "code": "BUSINESS_PARTNERSHIP",
+    "name": "Business Partnership",
+    "description": "Ability to influence stakeholders and business leaders."
+  },
+  {
+    "id": "TD007",
+    "code": "INTERNATIONAL",
+    "name": "International Readiness",
+    "description": "Experience working across cultures, countries and languages."
+  },
+  {
+    "id": "TD008",
+    "code": "COMMUNICATION",
+    "name": "Communication",
+    "description": "Communication, presentation and collaboration skills."
+  },
+  {
+    "id": "TD009",
+    "code": "AI_DIGITAL",
+    "name": "AI & Digital Mindset",
+    "description": "Adoption of AI, automation and digital transformation."
+  },
+  {
+    "id": "TD010",
+    "code": "TALENT",
+    "name": "Talent Management",
+    "description": "Knowledge of learning, performance and succession processes."
+  },
+  {
+    "id": "TD011",
+    "code": "LEARNING_AGILITY",
+    "name": "Learning Agility",
+    "description": "Ability to learn, adapt and grow."
+  },
+  {
+    "id": "TD012",
+    "code": "EXECUTIVE_POTENTIAL",
+    "name": "Executive Potential",
+    "description": "Potential to operate at executive leadership level."
+  }
+]
