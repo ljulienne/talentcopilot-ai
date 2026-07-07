@@ -77,7 +77,7 @@ pages = {
     "Session Health": render_session_health,
 }
 
-page = st.sidebar.radio(
+page_label = st.sidebar.radio(
     tr("navigation"),
     list(pages.keys())
 )
@@ -92,7 +92,7 @@ if selected_page in {
     render_talent_pool,
     render_recruiter_copilot,
 }:
-    render_page_shell(selected_page)
+    render_page_shell(selected_page if isinstance(selected_page, str) else selected_page.__name__.replace('render_', '').replace('_', ' ').title())
 else:
     selected_page()
 
