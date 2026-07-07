@@ -15,19 +15,40 @@ def _safe_score(value: Any) -> float:
         return 0.0
 
 
+def _as_dict(value: Any) -> Dict[str, Any]:
+    if isinstance(value, dict):
+        return value
+
+    if hasattr(value, "__dict__"):
+        return dict(value.__dict__)
+
+    return {}
+
+
 def candidate_from_result(result: Dict[str, Any]) -> CandidateProfile:
-    candidate_data = result.get("candidate") or result.get("candidate_data") or result
+    result = _as_dict(result)
+
+    candidate_data = (
+        result.get("candidate")
+        or result.get("candidate_data")
+        or result.get("profile")
+        or {}
+    )
+
+    candidate_data = _as_dict(candidate_data)
 
     name = (
         candidate_data.get("name")
         or candidate_data.get("full_name")
         or result.get("name")
+        or result.get("candidate_name")
         or "Unknown candidate"
     )
 
     score = _safe_score(
         result.get("score")
         or result.get("match_score")
+        or result.get("overall_score")
         or candidate_data.get("score")
         or candidate_data.get("match_score")
     )
@@ -38,11 +59,7 @@ def candidate_from_result(result: Dict[str, Any]) -> CandidateProfile:
         or score
     )
 
-    skills = (
-        candidate_data.get("skills")
-        or result.get("skills")
-        or []
-    )
+    skills = candidate_data.get("skills") or result.get("skills") or []
 
     if isinstance(skills, str):
         skills = [skills]
@@ -50,16 +67,22 @@ def candidate_from_result(result: Dict[str, Any]) -> CandidateProfile:
     risks = result.get("risks") or candidate_data.get("risks") or []
     evidence = result.get("evidence") or candidate_data.get("evidence") or []
 
+    if not isinstance(risks, list):
+        risks = [str(risks)]
+
+    if not isinstance(evidence, list):
+        evidence = [str(evidence)]
+
     return CandidateProfile(
-        name=name,
-        role=candidate_data.get("role") or candidate_data.get("title") or "",
+        name=str(name),
+        role=candidate_data.get("role") or candidate_data.get("title") or result.get("role") or "",
         summary=result.get("summary") or candidate_data.get("summary") or "",
         skills=skills,
         score=score,
         decision_confidence=confidence,
         recommendation=result.get("recommendation") or "Review required",
-        risks=risks if isinstance(risks, list) else [str(risks)],
-        evidence=evidence if isinstance(evidence, list) else [str(evidence)],
+        risks=risks,
+        evidence=evidence,
         raw=result,
     )
 
@@ -86,7 +109,6 @@ def session_from_state(
     results = [
         AnalysisResult(candidate=candidate_from_result(item), rank=index + 1)
         for index, item in enumerate(batch_results)
-        if isinstance(item, dict)
     ]
 
     return RecruitmentSession(job=job, results=results)
