@@ -203,6 +203,46 @@ def render_decision_workspace():
             st.subheader("🎯 Interview Intelligence")
             st.write(view_model.interview_guide.interview_focus)
 
+            competency_arguments = getattr(view_model.reasoning_report, "competency_arguments", [])
+
+            if competency_arguments:
+                st.markdown("### Priority validation questions")
+
+                for index, argument in enumerate(competency_arguments[:5], start=1):
+                    with st.expander(
+                        f"{index}. {argument.competency} · {argument.conclusion}",
+                        expanded=index == 1,
+                    ):
+                        st.markdown("**Why this matters**")
+                        st.write(argument.rationale)
+
+                        st.markdown("**What to validate**")
+                        if argument.limitations:
+                            for limitation in argument.limitations:
+                                st.warning(limitation)
+                        else:
+                            st.success("This competency is supported by relatively clear evidence.")
+
+                        st.markdown("**Questions to ask**")
+                        for question in argument.interview_validation:
+                            st.write(f"- {question}")
+
+                        st.markdown("**Strong answer should include**")
+                        if argument.evidence:
+                            st.write("- A concrete example matching the evidence already detected.")
+                            st.write("- The candidate's exact role, ownership, and decision-making scope.")
+                            st.write("- Measurable impact, scale, stakeholders, or constraints.")
+                        else:
+                            st.write("- A specific example not currently visible in the CV.")
+                            st.write("- Clear explanation of scope, responsibility, and results.")
+
+                        st.markdown("**Red flags**")
+                        st.write("- Vague answer without concrete ownership.")
+                        st.write("- No measurable result or unclear impact.")
+                        st.write("- Difficulty distinguishing personal contribution from team contribution.")
+
+            st.markdown("### Additional AI-generated questions")
+
             for question in view_model.interview_guide.questions[:3]:
                 with st.expander(question.question, expanded=False):
                     st.markdown("**Objective**")
