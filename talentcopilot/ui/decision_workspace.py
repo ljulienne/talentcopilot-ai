@@ -4,9 +4,49 @@ from talentcopilot.ai.reasoning_engine import ReasoningEngine
 from talentcopilot.ai.interview_intelligence import InterviewIntelligenceEngine
 from talentcopilot.ai.recommendation_engine import RecommendationEngine
 from talentcopilot.viewmodels.decision_workspace import DecisionWorkspaceBuilder
+from talentcopilot.services.session_manager import get_current_session
+
+
+def _build_view_model_from_candidate(candidate, job_title):
+    candidate_payload = {
+        "name": candidate.name,
+        "skills": candidate.skills,
+        "years_experience": 0,
+        "achievements": candidate.evidence,
+    }
+
+    job_payload = {
+        "title": job_title,
+        "required_skills": candidate.skills[:3],
+        "preferred_skills": candidate.skills[3:6],
+        "years_experience": 0,
+    }
+
+    evidence_payload = [{"text": item} for item in candidate.evidence]
+
+    reasoning_report = ReasoningEngine().build_report(
+        candidate=candidate_payload,
+        job=job_payload,
+        evidence=evidence_payload,
+        match_result={"score": candidate.decision_confidence or candidate.score},
+    )
+
+    interview_guide = InterviewIntelligenceEngine().build_guide(reasoning_report)
+    recommendation_report = RecommendationEngine().build_recommendation([reasoning_report])
+
+    return DecisionWorkspaceBuilder().build(
+        reasoning_report=reasoning_report,
+        interview_guide=interview_guide,
+        recommendation_report=recommendation_report,
+    )
 
 
 def _build_demo_view_model():
+    from talentcopilot.ai.reasoning_engine import ReasoningEngine
+    from talentcopilot.ai.interview_intelligence import InterviewIntelligenceEngine
+    from talentcopilot.ai.recommendation_engine import RecommendationEngine
+    from talentcopilot.viewmodels.decision_workspace import DecisionWorkspaceBuilder
+
     candidate = {
         "name": "Alice Martin",
         "skills": ["Project Management", "Stakeholder Management", "Change Management"],
@@ -52,10 +92,21 @@ def _render_metric(label, value, help_text=None):
 
 
 def render_decision_workspace():
-    view_model = _build_demo_view_model()
+    session = get_current_session()
+    live_candidate = session.best_candidate
+
+    if live_candidate:
+        view_model = _build_view_model_from_candidate(
+            candidate=live_candidate,
+            job_title=session.job.title,
+        )
+        data_mode = "Live analysis"
+    else:
+        view_model = _build_demo_view_model()
+        data_mode = "Demo mode"
 
     with st.container(border=True):
-        st.caption("Decision Intelligence Workspace")
+        st.caption(f"Decision Intelligence Workspace · {data_mode}")
         st.title(f"🧠 {view_model.candidate_name}")
         st.subheader(view_model.role_title)
         st.success(view_model.recommendation)
@@ -98,10 +149,18 @@ def render_decision_workspace():
 
         with st.container(border=True):
             st.subheader("📎 Evidence Explorer")
-            for evidence in view_model.reasoning_report.evidence_assessment[:4]:
-                with st.expander(f"{evidence.strength.title()} evidence · {int(evidence.confidence_score * 100)}%", expanded=False):
-                    st.write(f"“{evidence.text}”")
-                    st.info(evidence.interpretation)
+            evidence_items = view_model.reasoning_report.evidence_assessment
+
+            if evidence_items:
+                for evidence in evidence_items[:4]:
+                    with st.expander(
+                        f"{evidence.strength.title()} evidence · {int(evidence.confidence_score * 100)}%",
+                        expanded=False,
+                    ):
+                        st.write(f"“{evidence.text}”")
+                        st.info(evidence.interpretation)
+            else:
+                st.info("No detailed evidence available yet.")
 
         with st.container(border=True):
             st.subheader("🎯 Interview Intelligence")
