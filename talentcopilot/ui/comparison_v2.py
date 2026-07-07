@@ -1,7 +1,12 @@
 import streamlit as st
 
+from talentcopilot.services.session_manager import get_current_session
+
 
 def render_comparison_v2():
+    session = get_current_session()
+    ranked = session.ranked_results
+
     with st.container(border=True):
         st.caption("Decision Comparison")
         st.title("⚖️ Candidate Comparison")
@@ -10,16 +15,25 @@ def render_comparison_v2():
             "risks, uncertainty, and interview priorities."
         )
 
+    if len(ranked) < 2:
+        with st.container(border=True):
+            st.subheader("Not enough candidates to compare")
+            st.info("Run an analysis with at least two candidates to activate comparison.")
+        return
+
+    top_candidates = ranked[:3]
+
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric("Candidates Compared", "3")
+        st.metric("Candidates Compared", len(top_candidates))
     with col2:
-        st.metric("Top Confidence", "91%")
+        st.metric("Top Confidence", f"{int(top_candidates[0].candidate.decision_confidence)}%")
     with col3:
-        st.metric("Main Trade-offs", "4")
+        st.metric("Main Trade-offs", max(1, len(top_candidates) - 1))
     with col4:
-        st.metric("Risks to Validate", "6")
+        total_risks = sum(len(r.candidate.risks) for r in top_candidates)
+        st.metric("Risks to Validate", total_risks)
 
     st.divider()
 
@@ -28,58 +42,66 @@ def render_comparison_v2():
     with left:
         with st.container(border=True):
             st.subheader("🏆 Recommendation")
-            st.success("Alice Martin is currently the strongest candidate to prioritize.")
+            best = top_candidates[0].candidate
+            second = top_candidates[1].candidate
+
+            st.success(f"{best.name} is currently the strongest candidate to prioritize.")
             st.write(
-                "Alice shows the best balance of demonstrated skills, evidence quality, "
-                "manageable risk, and interview readiness."
+                f"{best.name} shows the strongest decision profile based on available "
+                f"confidence, recommendation status, and current analysis. "
+                f"{second.name} remains a relevant alternative depending on hiring priorities."
             )
 
         with st.container(border=True):
             st.subheader("📊 Decision matrix")
 
-            rows = [
-                ("Evidence Quality", "High", "Medium", "Medium"),
-                ("Demonstrated Skills", "High", "Medium", "High"),
-                ("Business Impact", "Strong", "Limited", "Moderate"),
-                ("Risk Level", "Medium", "High", "Medium"),
-                ("Interview Readiness", "High", "Medium", "High"),
-            ]
+            table = {
+                "Candidate": [],
+                "Decision Confidence": [],
+                "Recommendation": [],
+                "Skills": [],
+                "Risks": [],
+            }
 
-            st.table(
-                {
-                    "Dimension": [r[0] for r in rows],
-                    "Alice Martin": [r[1] for r in rows],
-                    "Bob Lee": [r[2] for r in rows],
-                    "Maria Garcia": [r[3] for r in rows],
-                }
-            )
+            for result in top_candidates:
+                candidate = result.candidate
+                table["Candidate"].append(candidate.name)
+                table["Decision Confidence"].append(f"{int(candidate.decision_confidence)}%")
+                table["Recommendation"].append(candidate.recommendation)
+                table["Skills"].append(", ".join(candidate.skills[:4]) if candidate.skills else "Not documented")
+                table["Risks"].append(candidate.risks[0] if candidate.risks else "No major risk documented")
+
+            st.table(table)
 
         with st.container(border=True):
             st.subheader("🔁 Trade-offs")
             st.info(
-                "Alice is stronger for immediate readiness. Bob may be interesting if "
-                "the organization values technical potential and can invest in onboarding."
+                f"{best.name} appears stronger for immediate prioritization based on the current data."
             )
             st.warning(
-                "Maria appears operationally strong but requires validation of leadership scope."
+                f"{second.name} could become a stronger option if the organization values "
+                "potential, adaptability, or if missing evidence is validated."
             )
 
     with right:
         with st.container(border=True):
             st.subheader("🥇 Ranking")
-            st.write("1. **Alice Martin** · 91%")
-            st.write("2. **Maria Garcia** · 82%")
-            st.write("3. **Bob Lee** · 74%")
+            for index, result in enumerate(top_candidates, start=1):
+                candidate = result.candidate
+                st.write(f"{index}. **{candidate.name}** · {int(candidate.decision_confidence)}%")
 
         with st.container(border=True):
             st.subheader("🎯 Interview focus")
-            st.write("**Alice**: validate budget ownership.")
-            st.write("**Maria**: clarify team scope.")
-            st.write("**Bob**: validate business stakeholder exposure.")
+            for result in top_candidates:
+                candidate = result.candidate
+                if candidate.risks:
+                    st.write(f"**{candidate.name}**: validate {candidate.risks[0]}")
+                else:
+                    st.write(f"**{candidate.name}**: confirm evidence depth and role motivation.")
 
         with st.container(border=True):
             st.subheader("⚖️ Challenge")
             st.warning(
                 "The recommendation could change if the hiring priority shifts from "
-                "immediate readiness to long-term potential."
+                "immediate readiness to long-term potential, cost, or learning agility."
             )
