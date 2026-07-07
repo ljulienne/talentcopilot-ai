@@ -20,6 +20,7 @@ from talentcopilot.ui.components import footer
 from talentcopilot.ui.recruitment_wizard import render_new_recruitment
 from talentcopilot.ui.open_recruitment import render_open_recruitment
 from talentcopilot.ui.talent_pool import render_talent_pool
+from talentcopilot.ui.talent_pool_v2 import render_talent_pool_v2
 from talentcopilot.ui.recruiter_copilot import render_recruiter_copilot
 from talentcopilot.ui.decision_workspace import render_decision_workspace
 from talentcopilot.ui.app_layout import render_page_shell
