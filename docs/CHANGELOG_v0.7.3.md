@@ -1,18 +1,19 @@
 # Changelog — v0.7.3
 
 ## Added
-- Demo session factory.
-- Streamlit-aware SessionStore.
-- Session-driven Home page.
+
+- Demo recruitment session factory.
+- Streamlit session bridge.
+- Session-driven UI components.
 - Session-driven Decision Center.
 - Session-driven Candidates page.
-- Session-driven Talent Pool page.
-- Session-driven Recruiter Copilot page.
 - Session-driven Comparison page.
+- Session-driven Recruiter Copilot page.
 - Session-driven Reports page.
-- Session-driven Decision Workspace.
+- Tests for demo session, UI bridge and pages.
 
 ## Improved
-- UI pages now share the same active `RecruitmentSession`.
-- Demo flow is more coherent.
-- Version updated to v0.7.3.
+
+- Pages now use shared RecruitmentSession data.
+- Demo workflow is easier to validate.
+- Product coherence improves across enterprise pages.

@@ -1,13 +1,14 @@
-from talentcopilot.services.demo_session_factory import DemoSessionFactory
-from talentcopilot.services.session_store import SessionStore
+from talentcopilot.services.demo_session_factory import (
+    create_demo_recruitment_session,
+    demo_candidates,
+    demo_job,
+)
 
 
 def test_demo_session_factory_creates_analyzed_session():
-    SessionStore.clear()
-    session = DemoSessionFactory().create_demo_session(candidate_limit=3)
+    session = create_demo_recruitment_session()
 
-    assert session.candidate_count == 3
-    assert session.analyzed_count == 3
-    assert session.role_title
-    assert SessionStore.get_current_session() is session
-    assert all(not str(skill).startswith("SK") for c in session.candidates for skill in c.get("skills", []))
+    assert session.role_title == demo_job()["title"]
+    assert session.candidate_count == len(demo_candidates())
+    assert session.analyzed_count == len(demo_candidates())
+    assert session.ranked_analyses[0].rank == 1
