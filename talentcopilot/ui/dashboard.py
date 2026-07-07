@@ -168,7 +168,28 @@ def render_dashboard():
         st.error("No candidate could be analyzed.")
         return
 
-    scores = [item["match_result"].overall_score for item in results]
+    def _get_score(item):
+        match_result = item.get("match_result") if isinstance(item, dict) else None
+
+        if hasattr(match_result, "overall_score"):
+            return match_result.overall_score
+
+        if isinstance(match_result, dict):
+            return (
+                match_result.get("overall_score")
+                or match_result.get("score")
+                or match_result.get("match_score")
+                or 0
+            )
+
+        return (
+            item.get("score")
+            or item.get("match_score")
+            or item.get("overall_score")
+            or 0
+        ) if isinstance(item, dict) else 0
+
+    scores = [_get_score(item) for item in results]
     avg_score = round(sum(scores) / len(scores))
 
     strong = sum(1 for item in results if item["match_result"].overall_score >= 85)
