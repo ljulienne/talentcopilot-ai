@@ -3,21 +3,10 @@ import streamlit as st
 from talentcopilot.services.session_manager import get_current_session
 
 
-def _priority_item(kind: str, title: str, detail: str):
-    if kind == "success":
-        st.success(f"**{title}**\n\n{detail}")
-    elif kind == "warning":
-        st.warning(f"**{title}**\n\n{detail}")
-    else:
-        st.info(f"**{title}**\n\n{detail}")
-
-
 def render_dashboard_v2():
     session = get_current_session()
-
-    total_candidates = session.total_candidates
-    avg_confidence = session.average_confidence
-    best_candidate = session.best_candidate
+    ranked = session.ranked_results
+    best = session.best_candidate
 
     with st.container(border=True):
         st.caption("AI Recruitment Decision Intelligence")
@@ -27,54 +16,67 @@ def render_dashboard_v2():
             "and move faster from evidence to hiring decisions."
         )
 
+    total = session.total_candidates
+    avg = session.average_confidence
+    interview_ready = len([r for r in ranked if r.candidate.decision_confidence >= 80])
+    validation_needed = len([r for r in ranked if r.candidate.decision_confidence < 80])
+
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric("Open Recruitments", "3", "+1")
+        st.metric("Candidates Analysed", total)
     with col2:
-        st.metric("Candidates Analysed", total_candidates)
+        st.metric("Interview Ready", interview_ready)
     with col3:
-        st.metric("Interview Ready", "9", "+3")
+        st.metric("Need Validation", validation_needed)
     with col4:
-        st.metric("Avg Confidence", f"{avg_confidence}%")
+        st.metric("Avg Confidence", f"{avg}%")
 
     st.divider()
+
+    if not ranked:
+        with st.container(border=True):
+            st.subheader("No live analysis yet")
+            st.info("Create or open a recruitment, upload CVs, and run the analysis to populate the Decision Center.")
+        return
 
     left, middle, right = st.columns([1.4, 1.4, 1], gap="large")
 
     with left:
         with st.container(border=True):
             st.subheader("🚀 Today's priorities")
-            _priority_item(
-                "success",
-                "3 candidates ready for interview",
-                "Strong evidence and sufficient decision readiness detected.",
-            )
-            _priority_item(
-                "warning",
-                "2 profiles require validation",
-                "Missing information should be clarified before recommendation.",
-            )
-            _priority_item(
-                "info",
-                "1 report waiting to be generated",
-                "A decision report can be prepared for the hiring manager.",
-            )
+
+            if best:
+                st.success(f"**Review top candidate**\n\nStart with {best.name} for {session.job.title}.")
+
+            if validation_needed:
+                st.warning(f"**Validate uncertain profiles**\n\n{validation_needed} candidate(s) require additional validation.")
+
+            st.info("**Prepare interviews**\n\nUse Interview Intelligence before moving candidates forward.")
 
     with middle:
         with st.container(border=True):
             st.subheader("🧭 Recruitment pipeline")
-            st.progress(0.72, text="72% of active candidates analysed")
-            st.write("**New** · 12 candidates")
-            st.write("**Analysed** · 48 candidates")
-            st.write("**Shortlisted** · 9 candidates")
-            st.write("**Interview** · 4 candidates")
-            st.write("**Decision** · 2 candidates")
+
+            analysed_ratio = min(1.0, total / max(total, 1))
+            st.progress(analysed_ratio, text=f"{total} candidate(s) analysed")
+
+            st.write(f"**Analysed** · {total}")
+            st.write(f"**Interview Ready** · {interview_ready}")
+            st.write(f"**Need Validation** · {validation_needed}")
+            st.write(f"**Top Candidate** · {best.name if best else 'None'}")
 
     with right:
         with st.container(border=True):
+            st.subheader("📌 Current focus")
+            st.write(session.job.title)
+            if session.job.company:
+                st.caption(session.job.company)
+            if best:
+                st.caption(f"Top candidate: {best.name}")
+
+        with st.container(border=True):
             st.subheader("⚡ Quick actions")
-            st.button("New Recruitment", use_container_width=True, disabled=True)
             st.button("Open Decision Workspace", use_container_width=True, disabled=True)
             st.button("Compare Candidates", use_container_width=True, disabled=True)
             st.button("Generate Report", use_container_width=True, disabled=True)
@@ -87,27 +89,29 @@ def render_dashboard_v2():
         with st.container(border=True):
             st.subheader("🧠 Recent Decision Workspaces")
 
-            candidates = [
-                ("Alice Martin", "Transformation Lead", "Strong candidate", "91%"),
-                ("Bob Lee", "Data Analyst", "Targeted validation", "74%"),
-                ("Maria Garcia", "Restaurant Manager", "Interview ready", "82%"),
-            ]
+            for index, result in enumerate(ranked[:5], start=1):
+                candidate = result.candidate
+                confidence = candidate.decision_confidence or candidate.score
 
-            for name, role, status, confidence in candidates:
                 with st.container(border=True):
                     c1, c2, c3 = st.columns([2, 2, 1])
                     with c1:
-                        st.markdown(f"**{name}**")
-                        st.caption(role)
+                        st.markdown(f"**{index}. {candidate.name}**")
+                        st.caption(candidate.role or session.job.title)
                     with c2:
-                        st.write(status)
+                        st.write(candidate.recommendation)
                     with c3:
                         st.caption("Confidence")
-                        st.markdown(f"**{confidence}**")
+                        st.markdown(f"**{int(confidence)}%**")
 
     with col_b:
         with st.container(border=True):
             st.subheader("🤖 AI suggestions")
-            st.info("Start with candidates that have high confidence and low uncertainty.")
-            st.warning("Validate missing evidence before sharing a recommendation.")
-            st.success("Use Interview Intelligence before moving shortlisted candidates forward.")
+
+            if best:
+                st.info(f"Start with {best.name}: highest current decision confidence.")
+
+            if validation_needed:
+                st.warning("Review candidates below 80% confidence before shortlisting.")
+
+            st.success("Generate interview questions before final decision.")
