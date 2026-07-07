@@ -77,23 +77,25 @@ pages = {
     "Session Health": render_session_health,
 }
 
+
 page_label = st.sidebar.radio(
     tr("navigation"),
     list(pages.keys())
 )
 
-selected_page = pages[page]
+selected_page = pages[page_label]
 
-if selected_page in {
-    render_dashboard_v2,
-    render_decision_workspace,
-    render_reports,
-    render_candidates,
-    render_talent_pool,
-    render_recruiter_copilot,
-}:
-    render_page_shell(selected_page if isinstance(selected_page, str) else selected_page.__name__.replace('render_', '').replace('_', ' ').title())
-else:
-    selected_page()
+# Clean page shell title
+try:
+    render_page_shell(page_label)
+except TypeError:
+    render_page_shell(title=page_label)
 
-footer(APP_VERSION)
+# Render selected page
+selected_page()
+
+# Footer
+try:
+    footer()
+except Exception:
+    pass
