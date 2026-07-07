@@ -1,5 +1,7 @@
 import streamlit as st
 
+from talentcopilot.services.session_manager import get_current_session
+
 
 def _priority_item(kind: str, title: str, detail: str):
     if kind == "success":
@@ -11,6 +13,12 @@ def _priority_item(kind: str, title: str, detail: str):
 
 
 def render_dashboard_v2():
+    session = get_current_session()
+
+    total_candidates = session.total_candidates
+    avg_confidence = session.average_confidence
+    best_candidate = session.best_candidate
+
     with st.container(border=True):
         st.caption("AI Recruitment Decision Intelligence")
         st.title("📊 Decision Center")
@@ -24,11 +32,11 @@ def render_dashboard_v2():
     with col1:
         st.metric("Open Recruitments", "3", "+1")
     with col2:
-        st.metric("Candidates Analysed", "48", "+12")
+        st.metric("Candidates Analysed", total_candidates)
     with col3:
         st.metric("Interview Ready", "9", "+3")
     with col4:
-        st.metric("Avg Confidence", "86%", "+4%")
+        st.metric("Avg Confidence", f"{avg_confidence}%")
 
     st.divider()
 
