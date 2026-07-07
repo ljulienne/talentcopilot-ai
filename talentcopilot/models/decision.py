@@ -1,6 +1,7 @@
+
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Optional
+from typing import List
 
 
 class HiringRecommendation(str, Enum):
@@ -24,29 +25,11 @@ class HumanValidationLevel(str, Enum):
 
 
 @dataclass
-class DecisionSignal:
-    name: str
-    score: float
-    weight: float
-    explanation: str
-
-    @property
-    def weighted_score(self) -> float:
-        return round(self.score * self.weight, 2)
-
-
-@dataclass
 class DecisionConcern:
     title: str
     severity: str
     explanation: str
     mitigation: str = ""
-
-
-@dataclass
-class DecisionStrength:
-    title: str
-    explanation: str
 
 
 @dataclass
@@ -58,20 +41,6 @@ class DecisionReport:
     confidence: DecisionConfidence
     human_validation: HumanValidationLevel
     executive_summary: str
-    signals: List[DecisionSignal] = field(default_factory=list)
-    strengths: List[DecisionStrength] = field(default_factory=list)
     concerns: List[DecisionConcern] = field(default_factory=list)
     interview_focus: List[str] = field(default_factory=list)
     missing_information: List[str] = field(default_factory=list)
-    next_steps: List[str] = field(default_factory=list)
-
-    @property
-    def is_positive_recommendation(self) -> bool:
-        return self.recommendation in {
-            HiringRecommendation.STRONG_HIRE,
-            HiringRecommendation.HIRE,
-        }
-
-    @property
-    def concern_count(self) -> int:
-        return len(self.concerns)
