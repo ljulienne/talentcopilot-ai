@@ -15,6 +15,21 @@ def _safe_score(value: Any) -> float:
         return 0.0
 
 
+def _extract_score_from_match_result(match_result: Any) -> float:
+    if hasattr(match_result, "overall_score"):
+        return _safe_score(match_result.overall_score)
+
+    if isinstance(match_result, dict):
+        return _safe_score(
+            match_result.get("overall_score")
+            or match_result.get("score")
+            or match_result.get("match_score")
+            or match_result.get("final_score")
+        )
+
+    return 0.0
+
+
 def _as_dict(value: Any) -> Dict[str, Any]:
     if isinstance(value, dict):
         return value
@@ -45,17 +60,21 @@ def candidate_from_result(result: Dict[str, Any]) -> CandidateProfile:
         or "Unknown candidate"
     )
 
+    match_result_score = _extract_score_from_match_result(result.get("match_result"))
+
     score = _safe_score(
         result.get("score")
         or result.get("match_score")
         or result.get("overall_score")
         or candidate_data.get("score")
         or candidate_data.get("match_score")
+        or match_result_score
     )
 
     confidence = _safe_score(
         result.get("decision_confidence")
         or result.get("confidence")
+        or result.get("decision_score")
         or score
     )
 
