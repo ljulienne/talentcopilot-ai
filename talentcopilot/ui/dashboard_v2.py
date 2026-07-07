@@ -1,32 +1,30 @@
+from talentcopilot.ui.enterprise_components import capability_grid, context_panel, hero, metric_row, safe_render
+
+
+@safe_render
 def render_dashboard_v2(*args, **kwargs):
-    try:
-        import streamlit as st
+    import streamlit as st
 
-        st.title("Decision Center")
-        st.caption("Monitor decision-ready recruitment signals.")
+    hero(
+        "Decision Center",
+        "Monitor the main signals that support recruiter decisions.",
+        "Decision Intelligence",
+    )
 
-        cols = st.columns(4)
-        for col, label, value in zip(cols, ['Status', 'AI', 'Evidence', 'Decision'], ['Ready', 'Enabled', 'Tracked', 'Supported']):
-            col.metric(label, value)
+    metric_row([
+        ("Decision Score", "Ready"),
+        ("Confidence", "Tracked"),
+        ("Evidence Quality", "Visible"),
+        ("Risk", "Controlled"),
+    ])
 
-        st.markdown("---")
-        st.subheader("Decision Center workspace")
-        st.write("This page provides a stable decision center interface for TalentCopilot without temporary v2 labels.")
+    st.subheader("Decision signals")
+    capability_grid([
+        ("Match signal", "Role alignment based on skills and requirements."),
+        ("Evidence quality", "Strength and specificity of supporting evidence."),
+        ("Risk profile", "Detected gaps, weak evidence or validation needs."),
+        ("Human validation", "Guidance on when recruiter review is required."),
+    ])
 
-        with st.expander("Available capabilities"):
-            for item in ['Stable rendering', 'Recruitment context', 'Decision support', 'Future advanced UI']:
-                st.write(f"- {item}")
-
-        context = st.session_state.get("recruitment_context", None)
-        if context:
-            st.success("Active recruitment context detected.")
-        else:
-            st.info("No active recruitment context yet.")
-
-    except Exception as exc:
-        try:
-            import streamlit as st
-            st.warning("This page could not render completely.")
-            st.caption(str(exc))
-        except Exception:
-            return
+    st.subheader("Current context")
+    context_panel()

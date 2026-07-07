@@ -1,37 +1,29 @@
+from talentcopilot.ui.enterprise_components import capability_grid, context_panel, hero, metric_row, safe_render
+
+
+@safe_render
 def render_decision_workspace(*args, **kwargs):
-    try:
-        import streamlit as st
+    import streamlit as st
 
-        st.title("Decision Workspace")
-        st.caption("Central workspace for explainable hiring decisions.")
+    hero(
+        "Decision Workspace",
+        "Central workspace for explainable, human-in-the-loop hiring decisions.",
+        "Decision Workspace",
+    )
 
-        cols = st.columns(4)
-        labels = ['Match', 'Confidence', 'Risk', 'Decision']
-        for col, label in zip(cols, labels):
-            col.metric(label, "Ready")
+    metric_row([
+        ("Match", "Integrated"),
+        ("Governance", "Enabled"),
+        ("Decision Engine", "Ready"),
+        ("Copilot", "Connected"),
+    ])
 
-        st.markdown("---")
-        st.subheader("Workspace")
-        st.write(
-            "This page is operational and ready for deeper integration with the TalentCopilot AI engines. "
-            "It replaces the temporary empty fallback page with a stable functional interface."
-        )
+    st.subheader("Decision workflow")
+    capability_grid([
+        ("AI Decision Card", "Consolidate recommendation, confidence and risk."),
+        ("Governance review", "Inspect uncertainty, evidence quality and validation needs."),
+        ("Recruiter action", "Move from analysis to next-step guidance."),
+        ("Auditability", "Keep decisions explainable and reviewable."),
+    ])
 
-        with st.expander("What this page supports"):
-            for label in labels:
-                st.write(f"- {label}")
-
-        context = st.session_state.get("recruitment_context", None)
-        if context:
-            st.success("Active recruitment context detected.")
-            st.write(context)
-        else:
-            st.info("No active recruitment context yet. You can continue using the navigation menu.")
-
-    except Exception as exc:
-        try:
-            import streamlit as st
-            st.warning("This page could not render completely.")
-            st.caption(str(exc))
-        except Exception:
-            return
+    context_panel()

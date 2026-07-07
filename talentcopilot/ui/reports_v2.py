@@ -1,32 +1,29 @@
+from talentcopilot.ui.enterprise_components import capability_grid, context_panel, hero, metric_row, safe_render
+
+
+@safe_render
 def render_reports_v2(*args, **kwargs):
-    try:
-        import streamlit as st
+    import streamlit as st
 
-        st.title("Reports")
-        st.caption("Explainable reports for recruiter and stakeholder review.")
+    hero(
+        "Reports",
+        "Prepare explainable recruitment reports for recruiters and stakeholders.",
+        "Reporting",
+    )
 
-        cols = st.columns(4)
-        for col, label, value in zip(cols, ['Status', 'AI', 'Evidence', 'Decision'], ['Ready', 'Enabled', 'Tracked', 'Supported']):
-            col.metric(label, value)
+    metric_row([
+        ("Executive Summary", "Ready"),
+        ("Evidence", "Included"),
+        ("Risks", "Explained"),
+        ("Export", "Prepared"),
+    ])
 
-        st.markdown("---")
-        st.subheader("Reports workspace")
-        st.write("This page provides a stable reports interface for TalentCopilot without temporary v2 labels.")
+    st.subheader("Report sections")
+    capability_grid([
+        ("Candidate decision card", "Summarize recommendation, score and confidence."),
+        ("Evidence report", "Show why the AI reached its conclusion."),
+        ("Risk and uncertainty", "Make limitations explicit."),
+        ("Interview guide", "Convert analysis into recruiter-ready questions."),
+    ])
 
-        with st.expander("Available capabilities"):
-            for item in ['Stable rendering', 'Recruitment context', 'Decision support', 'Future advanced UI']:
-                st.write(f"- {item}")
-
-        context = st.session_state.get("recruitment_context", None)
-        if context:
-            st.success("Active recruitment context detected.")
-        else:
-            st.info("No active recruitment context yet.")
-
-    except Exception as exc:
-        try:
-            import streamlit as st
-            st.warning("This page could not render completely.")
-            st.caption(str(exc))
-        except Exception:
-            return
+    context_panel()

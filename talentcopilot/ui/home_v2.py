@@ -1,32 +1,37 @@
+from talentcopilot.ui.enterprise_components import capability_grid, context_panel, hero, metric_row, workflow_steps, safe_render
+
+
+@safe_render
 def render_home_v2(*args, **kwargs):
-    try:
-        import streamlit as st
+    import streamlit as st
 
-        st.title("Home")
-        st.caption("TalentCopilot-AI recruitment intelligence workspace.")
+    hero(
+        "TalentCopilot-AI",
+        "An explainable AI recruitment intelligence platform for evidence-based hiring decisions.",
+        "Home",
+    )
 
-        cols = st.columns(4)
-        for col, label, value in zip(cols, ['Status', 'AI', 'Evidence', 'Decision'], ['Ready', 'Enabled', 'Tracked', 'Supported']):
-            col.metric(label, value)
+    metric_row([
+        ("Platform", "v0.6"),
+        ("AI Layer", "Explainable"),
+        ("Decision", "Human-in-loop"),
+        ("Workflow", "Ready"),
+    ])
 
-        st.markdown("---")
-        st.subheader("Home workspace")
-        st.write("This page provides a stable home interface for TalentCopilot without temporary v2 labels.")
+    st.subheader("What TalentCopilot does")
+    capability_grid([
+        ("Analyze candidates", "Assess profiles against role requirements with structured signals."),
+        ("Explain evidence", "Highlight why a candidate appears aligned or risky."),
+        ("Support decisions", "Combine match, confidence, risk and uncertainty."),
+        ("Guide recruiters", "Prepare next actions and interview focus points."),
+    ])
 
-        with st.expander("Available capabilities"):
-            for item in ['Stable rendering', 'Recruitment context', 'Decision support', 'Future advanced UI']:
-                st.write(f"- {item}")
+    st.subheader("Recommended workflow")
+    workflow_steps([
+        "Create or open a recruitment context.",
+        "Review candidates and talent pool profiles.",
+        "Use Decision Workspace to inspect evidence and risks.",
+        "Use Recruiter Copilot to prepare next steps.",
+    ])
 
-        context = st.session_state.get("recruitment_context", None)
-        if context:
-            st.success("Active recruitment context detected.")
-        else:
-            st.info("No active recruitment context yet.")
-
-    except Exception as exc:
-        try:
-            import streamlit as st
-            st.warning("This page could not render completely.")
-            st.caption(str(exc))
-        except Exception:
-            return
+    context_panel()
