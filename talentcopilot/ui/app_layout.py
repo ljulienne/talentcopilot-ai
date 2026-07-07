@@ -1,4 +1,3 @@
-
 def render_page_shell(title=None, subtitle=None, *args, **kwargs):
     try:
         import streamlit as st
