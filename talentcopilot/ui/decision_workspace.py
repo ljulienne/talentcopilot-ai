@@ -163,6 +163,43 @@ def render_decision_workspace():
                 st.info("No detailed evidence available yet.")
 
         with st.container(border=True):
+            st.subheader("🧠 Competency Reasoning")
+
+            arguments = getattr(view_model.reasoning_report, "competency_arguments", [])
+
+            if arguments:
+                for argument in arguments:
+                    with st.expander(
+                        f"{argument.competency} · {argument.conclusion} · {argument.confidence_score}%",
+                        expanded=False,
+                    ):
+                        st.markdown("**Conclusion**")
+                        st.write(argument.conclusion)
+
+                        st.markdown("**Rationale**")
+                        st.write(argument.rationale)
+
+                        st.markdown("**Evidence**")
+                        if argument.evidence:
+                            for item in argument.evidence:
+                                st.write(f"- {item}")
+                        else:
+                            st.caption("No direct evidence found.")
+
+                        st.markdown("**Limitations**")
+                        if argument.limitations:
+                            for item in argument.limitations:
+                                st.warning(item)
+                        else:
+                            st.success("No major limitation detected for this competency.")
+
+                        st.markdown("**Interview validation**")
+                        for question in argument.interview_validation:
+                            st.write(f"- {question}")
+            else:
+                st.info("No competency reasoning available yet.")
+
+        with st.container(border=True):
             st.subheader("🎯 Interview Intelligence")
             st.write(view_model.interview_guide.interview_focus)
 
