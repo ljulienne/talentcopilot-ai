@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+from talentcopilot.ai.evidence_intelligence import EvidenceIntelligenceEngine
+
 
 EVIDENCE_STRENGTH_SCORE = {
     "strong": 0.95,
@@ -128,19 +130,53 @@ class ReasoningEngine:
     def _assess_evidence(self, evidence: List[Dict[str, Any]]) -> List[EvidenceAssessment]:
         assessments = []
 
+        evidence_texts = []
+        raw_items = []
+
         for item in evidence:
             text = str(item.get("text") or item.get("evidence") or "").strip()
             if not text:
                 continue
 
-            strength = item.get("strength") or self._infer_evidence_strength(text)
-            confidence_score = EVIDENCE_STRENGTH_SCORE.get(strength, 0.25)
+            evidence_texts.append(text)
+            raw_items.append(item)
+
+        intelligence_report = EvidenceIntelligenceEngine().analyze(evidence_texts)
+        intelligence_by_text = {
+            item.text: item for item in intelligence_report.evidence_items
+        }
+
+        for item, text in zip(raw_items, evidence_texts):
+            structured = intelligence_by_text.get(text)
+
+            if structured and structured.quality:
+                quality_score = structured.quality.score
+
+                if quality_score >= 85:
+                    strength = "strong"
+                elif quality_score >= 70:
+                    strength = "strong"
+                elif quality_score >= 50:
+                    strength = "moderate"
+                else:
+                    strength = "weak"
+
+                confidence_score = quality_score / 100
+                interpretation = (
+                    f"{structured.explanation} "
+                    f"Inferred competencies: {', '.join(structured.inferred_competencies) or 'not explicit'}. "
+                    f"Limitations: {'; '.join(structured.limitations) or 'none detected'}."
+                )
+            else:
+                strength = item.get("strength") or self._infer_evidence_strength(text)
+                confidence_score = EVIDENCE_STRENGTH_SCORE.get(strength, 0.25)
+                interpretation = self._interpret_evidence(text, strength)
 
             assessments.append(
                 EvidenceAssessment(
                     text=text,
                     strength=strength,
-                    interpretation=self._interpret_evidence(text, strength),
+                    interpretation=interpretation,
                     confidence_score=confidence_score,
                 )
             )
