@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from talentcopilot.ai.evidence_intelligence import EvidenceIntelligenceEngine
+from talentcopilot.ai.competency_reasoning import CompetencyReasoningEngine, CompetencyArgument
 
 
 EVIDENCE_STRENGTH_SCORE = {
@@ -53,6 +54,7 @@ class CandidateReasoningReport:
     evidence_assessment: List[EvidenceAssessment] = field(default_factory=list)
     skill_assessment: List[SkillAssessment] = field(default_factory=list)
     missing_information: List[str] = field(default_factory=list)
+    competency_arguments: List[CompetencyArgument] = field(default_factory=list)
 
 
 class ReasoningEngine:
@@ -81,6 +83,7 @@ class ReasoningEngine:
         evidence_assessment = self._assess_evidence(evidence)
         skill_assessment = self._assess_skills(candidate, job, evidence_assessment)
         missing_information = self._identify_missing_information(candidate, job, evidence_assessment)
+        competency_arguments = self._build_competency_arguments(job, evidence_assessment)
 
         strengths = self._build_strengths(candidate, job, evidence_assessment, skill_assessment)
         risks = self._build_risks(candidate, job, skill_assessment)
@@ -109,6 +112,7 @@ class ReasoningEngine:
             risks=risks,
             uncertainties=uncertainties,
             missing_information=missing_information,
+            competency_arguments=competency_arguments,
         )
 
         return CandidateReasoningReport(
@@ -125,7 +129,33 @@ class ReasoningEngine:
             evidence_assessment=evidence_assessment,
             skill_assessment=skill_assessment,
             missing_information=missing_information,
+            competency_arguments=competency_arguments,
         )
+
+
+    def _build_competency_arguments(
+        self,
+        job: Dict[str, Any],
+        evidence_assessment: List[EvidenceAssessment],
+    ) -> List[CompetencyArgument]:
+        target_competencies = []
+
+        for skill in job.get("required_skills", []) + job.get("preferred_skills", []):
+            skill = str(skill)
+            if skill not in target_competencies:
+                target_competencies.append(skill)
+
+        if not target_competencies:
+            return []
+
+        evidence_texts = [item.text for item in evidence_assessment]
+
+        report = CompetencyReasoningEngine().analyze(
+            evidence_texts=evidence_texts,
+            target_competencies=target_competencies,
+        )
+
+        return report.arguments
 
     def _assess_evidence(self, evidence: List[Dict[str, Any]]) -> List[EvidenceAssessment]:
         assessments = []
@@ -631,6 +661,7 @@ class ReasoningEngine:
         risks: List[ReasoningInsight],
         uncertainties: List[ReasoningInsight],
         missing_information: List[str],
+        competency_arguments: List[CompetencyArgument] | None = None,
     ) -> str:
         missing_text = ""
         if missing_information:
