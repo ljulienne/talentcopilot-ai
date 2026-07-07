@@ -23,6 +23,7 @@ from talentcopilot.ui.talent_pool import render_talent_pool
 from talentcopilot.ui.talent_pool_v2 import render_talent_pool_v2
 from talentcopilot.ui.recruiter_copilot import render_recruiter_copilot
 from talentcopilot.ui.recruiter_copilot_v2 import render_recruiter_copilot_v2
+from talentcopilot.ui.session_health import render_session_health
 from talentcopilot.ui.decision_workspace import render_decision_workspace
 from talentcopilot.ui.app_layout import render_page_shell
 from talentcopilot.ui.dashboard_v2 import render_dashboard_v2
@@ -73,6 +74,7 @@ pages = {
     tr("menu.comparison"): render_comparison_v2,
     tr("menu.reports"): render_reports_v2,
     tr("menu.settings"): render_settings,
+    "Session Health": render_session_health,
 }
 
 page = st.sidebar.radio(
