@@ -62,17 +62,17 @@ render_sidebar_context(context)
 render_sidebar_workflow()
 
 pages = {
-    tr("menu.home"): render_home_v2,
+    "Home": render_home_v2,
     "Decision Center": render_dashboard_v2,
     tr("menu.new_recruitment"): render_new_recruitment,
     tr("menu.open_recruitment"): render_open_recruitment,
     tr("menu.dashboard"): render_dashboard,
     "Decision Workspace": render_decision_workspace,
-    tr("menu.candidates"): render_candidates_v2,
-    tr("menu.talent_pool"): render_talent_pool_v2,
-    tr("menu.recruiter_copilot"): render_recruiter_copilot_v2,
-    tr("menu.comparison"): render_comparison_v2,
-    tr("menu.reports"): render_reports_v2,
+    "Candidates": render_candidates_v2,
+    "Talent Pool": render_talent_pool_v2,
+    "Recruiter Copilot": render_recruiter_copilot_v2,
+    "Comparison": render_comparison_v2,
+    "Reports": render_reports_v2,
     tr("menu.settings"): render_settings,
     "Session Health": render_session_health,
 }

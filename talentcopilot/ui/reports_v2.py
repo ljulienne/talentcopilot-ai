@@ -2,31 +2,26 @@ def render_reports_v2(*args, **kwargs):
     try:
         import streamlit as st
 
-        st.title("Reports v2")
-        st.caption("Explainable AI reports for recruiter and stakeholder review.")
+        st.title("Reports")
+        st.caption("Explainable reports for recruiter and stakeholder review.")
 
         cols = st.columns(4)
-        labels = ['Executive summary', 'Decision card', 'Interview guide', 'PDF export']
-        for col, label in zip(cols, labels):
-            col.metric(label, "Ready")
+        for col, label, value in zip(cols, ['Status', 'AI', 'Evidence', 'Decision'], ['Ready', 'Enabled', 'Tracked', 'Supported']):
+            col.metric(label, value)
 
         st.markdown("---")
-        st.subheader("Workspace")
-        st.write(
-            "This page is operational and ready for deeper integration with the TalentCopilot AI engines. "
-            "It replaces the temporary empty fallback page with a stable functional interface."
-        )
+        st.subheader("Reports workspace")
+        st.write("This page provides a stable reports interface for TalentCopilot without temporary v2 labels.")
 
-        with st.expander("What this page supports"):
-            for label in labels:
-                st.write(f"- {label}")
+        with st.expander("Available capabilities"):
+            for item in ['Stable rendering', 'Recruitment context', 'Decision support', 'Future advanced UI']:
+                st.write(f"- {item}")
 
         context = st.session_state.get("recruitment_context", None)
         if context:
             st.success("Active recruitment context detected.")
-            st.write(context)
         else:
-            st.info("No active recruitment context yet. You can continue using the navigation menu.")
+            st.info("No active recruitment context yet.")
 
     except Exception as exc:
         try:
