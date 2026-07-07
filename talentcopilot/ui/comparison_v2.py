@@ -1,29 +1,28 @@
-from talentcopilot.ui.enterprise_components import capability_grid, context_panel, hero, metric_row, safe_render
+from talentcopilot.ui.enterprise_components import context_panel, hero, metric_row, ranked_candidate_table, safe_render
 
 
 @safe_render
 def render_comparison_v2(*args, **kwargs):
     import streamlit as st
+    from talentcopilot.services.session_store import SessionStore
 
-    hero(
-        "Comparison",
-        "Compare candidates using decision-ready signals rather than only raw scores.",
-        "Candidate Comparison",
-    )
+    hero("Comparison", "Compare candidates using ranked session analyses.", "Candidate Comparison")
+    session = SessionStore.get_current_session()
+    if not session:
+        context_panel()
+        return
 
-    metric_row([
-        ("Candidates", "Comparable"),
-        ("Fit", "Weighted"),
-        ("Evidence", "Contrasted"),
-        ("Decision", "Supported"),
-    ])
+    metric_row([("Role", session.role_title), ("Candidates", str(session.candidate_count)), ("Analyzed", str(session.analyzed_count)), ("Shortlist", str(len([a for a in session.analyses if a.match_score >= 70])))])
+    ranked_candidate_table(session)
 
-    st.subheader("Comparison dimensions")
-    capability_grid([
-        ("Role fit", "Compare alignment with core requirements."),
-        ("Evidence depth", "Compare quality and quantity of supporting evidence."),
-        ("Risk profile", "Identify which candidate needs more validation."),
-        ("Interview priority", "Prepare differentiated interview focus points."),
-    ])
-
-    context_panel()
+    st.subheader("Top candidate details")
+    for analysis in session.ranked_analyses[:3]:
+        decision = analysis.decision_report
+        with st.expander(f"#{analysis.rank} {analysis.candidate_name}"):
+            st.write(f"Match score: **{analysis.match_score:.0f}%**")
+            if decision:
+                st.write(decision.executive_summary)
+                if decision.strengths:
+                    st.success("Strengths: " + ", ".join([s.title for s in decision.strengths[:3]]))
+                if decision.concerns:
+                    st.warning("Concerns: " + ", ".join([c.title for c in decision.concerns[:3]]))
