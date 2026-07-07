@@ -85,12 +85,6 @@ page_label = st.sidebar.radio(
 
 selected_page = pages[page_label]
 
-# Clean page shell title
-try:
-    render_page_shell(page_label)
-except TypeError:
-    render_page_shell(title=page_label)
-
 # Render selected page
 selected_page()
 
