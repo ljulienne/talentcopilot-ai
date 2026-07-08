@@ -25,9 +25,10 @@ def test_candidate_decision_profile_builds():
     assert profile.evidence_graph.nodes
     assert profile.decision_trace.steps
     assert profile.is_ready_for_decision_core()
-    assert profile.metadata["profile_version"] == "dic-v2.0-alpha-c"
+    assert profile.metadata["profile_version"] == "dic-v2.0-alpha-d"
     assert profile.fit_score is not None
-    assert "fit_score" in profile.metadata
+    assert profile.risk_level is not None
+    assert "risk_score" in profile.metadata
 
 
 def test_candidate_decision_profile_build_many():
