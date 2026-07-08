@@ -1,0 +1,41 @@
+{
+  "facts": {
+    "candidate_name": "Vincent Blakoe",
+    "headline": "Extracted candidate profile",
+    "current_title": null,
+    "current_company": null,
+    "email": null,
+    "phone": null,
+    "location": null,
+    "years_experience": 13,
+    "skills": [
+      "HRIS",
+      "Project Management",
+      "Leadership"
+    ],
+    "technologies": [],
+    "certifications": [
+      "SPHR"
+    ],
+    "education": [],
+    "languages": [],
+    "industries": [],
+    "achievements": [
+      "Structured extraction demo"
+    ],
+    "responsibilities": [],
+    "countries": [],
+    "expected_salary": null
+  },
+  "insights": {
+    "seniority": "Senior",
+    "leadership_signals": [],
+    "transformation_signals": [],
+    "international_signals": [],
+    "risk_notes": [],
+    "missing_information": []
+  },
+  "extraction_confidence": 0.8,
+  "source_summary": "Mock extraction",
+  "extraction_status": "OK"
+}
