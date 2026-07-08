@@ -3,32 +3,18 @@ from talentcopilot.decision_core.candidate_decision_profile_service import Candi
 from talentcopilot.decision_core.fit_intelligence_models import RoleRequirements
 
 
-def test_candidate_decision_profile_builds_with_confidence():
-    candidate = {
-        "name": "Alice Martin",
-        "skills": ["Project Management"],
-        "years_experience": 8,
-    }
-    role = RoleRequirements(
-        role_title="Transformation Lead",
-        required_skills=["Project Management"],
-        minimum_years_experience=5,
-    )
-
+def test_candidate_decision_profile_builds_with_recommendation():
     profile = CandidateDecisionProfileService().build_from_candidate_dict(
-        candidate,
+        {"name": "Alice Martin", "skills": ["Project Management"], "years_experience": 8},
         "Transformation Lead",
-        role,
+        RoleRequirements("Transformation Lead", required_skills=["Project Management"], minimum_years_experience=5),
         BudgetContext(target_salary=85000, maximum_salary=100000),
-        CandidateCompensation(expected_salary=120000),
+        CandidateCompensation(expected_salary=90000),
     )
 
-    assert profile.metadata["profile_version"] == "dic-v2.0-alpha-f"
-    assert profile.fit_score is not None
-    assert profile.risk_level is not None
-    assert profile.confidence_score is not None
-    assert "confidence_score" in profile.metadata
-    assert "decision_quality" in profile.metadata
+    assert profile.metadata["profile_version"] == "dic-v2.0-alpha-g"
+    assert profile.recommendation is not None
+    assert "recommendation_rationale" in profile.metadata
 
 
 def test_candidate_decision_profile_build_many():

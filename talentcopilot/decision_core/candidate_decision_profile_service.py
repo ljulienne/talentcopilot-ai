@@ -9,6 +9,7 @@ from talentcopilot.decision_core.evidence_intelligence_engine import EvidenceInt
 from talentcopilot.decision_core.fit_intelligence_engine import FitIntelligenceEngine
 from talentcopilot.decision_core.fit_intelligence_models import RoleRequirements
 from talentcopilot.decision_core.models import CandidateDecisionProfile
+from talentcopilot.decision_core.recommendation_intelligence_engine import RecommendationIntelligenceEngine
 from talentcopilot.decision_core.risk_intelligence_engine import RiskIntelligenceEngine
 
 
@@ -29,13 +30,7 @@ class CandidateDecisionProfileService:
         evidence_report = evidence_engine.evaluate(graph)
         evidence_engine.add_trace_step(trace, graph, evidence_report)
 
-        role = role_requirements or RoleRequirements(
-            role_title=role_title,
-            required_skills=[],
-            preferred_skills=[],
-            minimum_years_experience=0,
-        )
-
+        role = role_requirements or RoleRequirements(role_title=role_title)
         fit_engine = FitIntelligenceEngine()
         fit_report = fit_engine.evaluate(graph, role, evidence_report)
         fit_engine.add_trace_step(trace, graph, fit_report)
@@ -51,18 +46,22 @@ class CandidateDecisionProfileService:
             budget_engine.add_trace_step(trace, graph, budget_report)
 
         confidence_engine = ConfidenceIntelligenceEngine()
-        confidence_report = confidence_engine.evaluate(
+        confidence_report = confidence_engine.evaluate(graph, evidence_report, fit_report, risk_report, trace, budget_report)
+        confidence_engine.add_trace_step(trace, graph, confidence_report)
+
+        recommendation_engine = RecommendationIntelligenceEngine()
+        recommendation_report = recommendation_engine.evaluate(
             graph,
             evidence_report,
             fit_report,
             risk_report,
-            trace,
+            confidence_report,
             budget_report,
         )
-        confidence_engine.add_trace_step(trace, graph, confidence_report)
+        recommendation_engine.add_trace_step(trace, graph, recommendation_report)
 
         metadata = {
-            "profile_version": "dic-v2.0-alpha-f",
+            "profile_version": "dic-v2.0-alpha-g",
             "evidence_status": evidence_report.status,
             "evidence_quality_score": str(evidence_report.evidence_quality_score),
             "evidence_readiness_score": str(evidence_report.evidence_readiness_score),
@@ -75,6 +74,9 @@ class CandidateDecisionProfileService:
             "confidence_score": str(confidence_report.confidence_score),
             "confidence_level": confidence_report.confidence_level,
             "decision_quality": confidence_report.decision_quality,
+            "recommendation": recommendation_report.recommendation,
+            "recommendation_category": recommendation_report.category,
+            "recommendation_rationale": recommendation_report.rationale,
         }
 
         if budget_report:
@@ -85,7 +87,7 @@ class CandidateDecisionProfileService:
                 "salary_gap": str(budget_report.salary_gap),
             })
 
-        profile = CandidateDecisionProfile(
+        return CandidateDecisionProfile(
             profile_id=self._id("profile", name, role_title),
             candidate_name=name,
             role_title=role_title,
@@ -94,11 +96,9 @@ class CandidateDecisionProfileService:
             fit_score=fit_report.fit_score,
             confidence_score=confidence_report.confidence_score,
             risk_level=risk_report.risk_level,
-            recommendation=None,
+            recommendation=recommendation_report.recommendation,
             metadata=metadata,
         )
-
-        return profile
 
     def build_many(
         self,

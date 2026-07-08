@@ -3,7 +3,7 @@ from talentcopilot.decision_core.candidate_decision_profile_service import Candi
 from talentcopilot.decision_core.fit_intelligence_models import RoleRequirements
 
 
-def test_decision_trace_contains_confidence_step():
+def test_decision_trace_contains_recommendation_step():
     profile = CandidateDecisionProfileService().build_from_candidate_dict(
         {"name": "Alice Martin", "skills": ["Leadership"]},
         "Transformation Lead",
@@ -20,3 +20,4 @@ def test_decision_trace_contains_confidence_step():
     assert "EVALUATE_HIRING_RISK" in actions
     assert "EVALUATE_BUDGET_FEASIBILITY" in actions
     assert "EVALUATE_ANALYSIS_CONFIDENCE" in actions
+    assert "GENERATE_FINAL_RECOMMENDATION" in actions
