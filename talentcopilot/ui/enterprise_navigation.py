@@ -31,6 +31,7 @@ def get_enterprise_navigation() -> Dict[str, EnterpriseSection]:
             EnterprisePage("Job Intelligence", "talentcopilot.ui.job_intelligence", "render_job_intelligence", "▤"),
         ]),
         "analysis": EnterpriseSection("Analysis", "Candidate analysis.", [
+            EnterprisePage("Hybrid Decision Board", "talentcopilot.ui.hybrid_decision_board", "render_hybrid_decision_board", "▦"),
             EnterprisePage("Hybrid Intelligence", "talentcopilot.ui.hybrid_intelligence", "render_hybrid_intelligence", "✧"),
             EnterprisePage("Real Matching", "talentcopilot.ui.real_matching", "render_real_matching", "◆"),
             EnterprisePage("Real Ranking", "talentcopilot.ui.real_ranking", "render_real_ranking", "▲"),
