@@ -72,9 +72,10 @@ def get_enterprise_navigation() -> Dict[str, EnterpriseSection]:
         ),
         "administration": EnterpriseSection(
             "Administration",
-            "Demo, release health, settings and design system.",
+            "Demo, release health, settings, design system and architecture.",
             [
                 EnterprisePage("Enterprise Demo Final", "talentcopilot.ui.enterprise_demo_final", "render_enterprise_demo_final", "▶", "Run the Release 1.1 demo."),
+                EnterprisePage("Blueprint Overview", "talentcopilot.ui.blueprint_overview", "render_blueprint_overview", "▣", "Review product architecture foundation."),
                 EnterprisePage("Release 1.1 Summary", "talentcopilot.ui.release_1_1_summary", "render_release_1_1_summary", "★", "Review Release 1.1 status."),
                 EnterprisePage("Release Readiness", "talentcopilot.ui.release_readiness", "render_release_readiness", "✓", "Validate release health."),
                 EnterprisePage("Session Health", "talentcopilot.ui.session_health", "render_session_health", "◌", "Check session quality."),
