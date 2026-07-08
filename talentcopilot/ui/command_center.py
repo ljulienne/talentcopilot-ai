@@ -1,3 +1,4 @@
+from talentcopilot.services.command_center_service import CommandCenterService
 from talentcopilot.services.demo_session_factory import create_demo_recruitment_session
 from talentcopilot.services.streamlit_session_bridge import (
     clear_streamlit_session,
@@ -12,88 +13,88 @@ from talentcopilot.ui.design_system.components import (
     next_action_card,
     section_title,
 )
+from talentcopilot.ui.design_system.theme import apply_enterprise_theme
 
 
-def _best_candidate(session):
-    if session and getattr(session, "ranked_analyses", None):
-        return session.ranked_analyses[0].candidate_name
-    return "No active session"
+def _health_block(health):
+    import streamlit as st
+
+    st.markdown('<div class="tc-card">', unsafe_allow_html=True)
+    st.subheader("Recruitment Health")
+    st.metric("Overall Health", f"{health.overall_score}%")
+    st.progress(max(0, min(100, health.overall_score)) / 100)
+
+    c1, c2 = st.columns(2)
+    c1.metric("Evidence Coverage", f"{health.evidence_coverage}%")
+    c2.metric("Interview Readiness", f"{health.interview_readiness}%")
+
+    c3, c4 = st.columns(2)
+    c3.metric("Decision Confidence", f"{health.decision_confidence}%")
+    c4.metric("Bias Risk", health.bias_risk)
+
+    st.caption(f"Data completeness: {health.data_completeness}%")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
+def _workflow_tracker():
+    import streamlit as st
+
+    steps = ["Job Definition", "Candidate Analysis", "Comparison", "Decision", "Interview", "Offer", "Reporting"]
+    st.markdown("### Recruitment Workflow")
+    cols = st.columns(len(steps))
+    for index, step in enumerate(steps):
+        with cols[index]:
+            if index <= 3:
+                st.success(step)
+            else:
+                st.caption(step)
 
 
 def render_command_center():
     import streamlit as st
 
+    apply_enterprise_theme()
+
     session = get_streamlit_session()
+    report = CommandCenterService().build(session)
 
     enterprise_hero(
         "Recruitment Command Center",
-        "Your daily cockpit for explainable AI-assisted hiring decisions.",
+        "Your daily cockpit for explainable, evidence-based hiring decisions.",
         "Better Hiring Decisions. Explained.",
     )
 
-    col1, col2, col3 = st.columns([1, 1, 2])
+    col1, col2, col3 = st.columns([1.2, 1, 2.2])
     with col1:
         if st.button("Load Enterprise Demo"):
             session = create_demo_recruitment_session()
             set_streamlit_session(session)
             st.success("Enterprise demo loaded.")
+            report = CommandCenterService().build(session)
     with col2:
         if st.button("Clear Demo"):
             clear_streamlit_session()
             session = None
+            report = CommandCenterService().build(None)
             st.info("Demo cleared.")
     with col3:
-        if session:
-            st.caption(f"Active recruitment: {session.role_title} · {session.session_id}")
-        else:
-            st.caption("No active recruitment loaded.")
+        st.caption(f"Active recruitment: {report.role_title}")
 
-    metric_grid([
-        ("Active Recruitments", "1" if session else "0", "Demo-ready"),
-        ("Candidates", str(session.candidate_count) if session else "0", "Analyzed" if session else "Load demo"),
-        ("Pending Decisions", "1" if session else "0", "Human review"),
-        ("Best Match", _best_candidate(session), "AI ranking"),
-    ])
+    metric_grid([(m.label, m.value, m.delta) for m in report.metrics])
 
-    left, right = st.columns([1.15, 0.85])
+    _workflow_tracker()
+
+    left, right = st.columns([1.2, 0.8])
 
     with left:
-        section_title("Today's AI Priorities", "Recommended actions based on the active recruitment session.")
-        if session:
-            insight_card(
-                "Review the top-ranked candidate",
-                f"{_best_candidate(session)} is currently the strongest profile. Review evidence before progressing.",
-                "AI Priority",
-            )
-            insight_card(
-                "Prepare Hiring Manager interview",
-                "Use the Recruiter Copilot to generate targeted questions and validation points.",
-                "Next Step",
-            )
-            insight_card(
-                "Generate executive summary",
-                "A recruitment report can be prepared from the active session.",
-                "Report Ready",
-            )
-        else:
-            insight_card(
-                "Load the Enterprise Demo",
-                "Start with a complete scenario to explore the full recruitment decision workflow.",
-                "Demo Mode",
-            )
+        section_title("Today's AI Priorities", "Recommended actions for the current recruitment.")
+        for priority in report.priorities:
+            insight_card(priority.title, priority.description, priority.badge)
+
+        section_title("Recent Activity", "What happened recently in the recruitment workflow.")
+        for activity in report.activities:
+            activity_item(activity.time, activity.title, activity.detail)
 
     with right:
-        section_title("Recent Activity", "AI and recruitment workflow events.")
-        if session:
-            activity_item("09:41", "Recruitment session loaded", session.role_title)
-            activity_item("09:42", "Candidates analyzed", f"{session.analyzed_count} analysis result(s)")
-            activity_item("09:43", "Ranking updated", f"Best match: {_best_candidate(session)}")
-            activity_item("09:44", "Report preview ready", "Executive reporting can be generated")
-        else:
-            activity_item("Now", "No active session", "Load the Enterprise Demo to start")
-
-    next_action_card(
-        "Continue the recruitment workflow",
-        "Move from the Command Center to Candidate Workspace or Decision Center to continue the review.",
-        "Open next workspace",
-    )
+        _health_block(report.health)
+        next_action_card(report.next_action_title, report.next_action_body, "Continue")
