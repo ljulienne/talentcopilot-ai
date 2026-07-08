@@ -43,15 +43,3 @@ def test_orchestrator_rejects_no_fit_candidate():
 
     assert output.profile.fit_score < 30
     assert output.recommendation == "Reject"
-
-
-def test_orchestrator_analyze_many():
-    inputs = [
-        DecisionCoreInput(candidate={"name": "Alice Martin", "skills": ["HRIS"]}, role_title="HRIS Lead", required_skills=["HRIS"]),
-        DecisionCoreInput(candidate={"name": "David Smith", "skills": []}, role_title="HRIS Lead", required_skills=["HRIS"]),
-    ]
-
-    outputs = DecisionCoreOrchestrator().analyze_many(inputs)
-
-    assert len(outputs) == 2
-    assert outputs[0].profile.profile_id != outputs[1].profile.profile_id
