@@ -65,3 +65,21 @@ def demo_candidates() -> List[Dict]:
 
 def create_demo_recruitment_session():
     return EnterprisePipeline().run(demo_job(), demo_candidates())
+
+
+class DemoSessionFactory:
+    @staticmethod
+    def demo_job():
+        return demo_job()
+
+    @staticmethod
+    def demo_candidates():
+        return demo_candidates()
+
+    @staticmethod
+    def create_demo_recruitment_session():
+        return create_demo_recruitment_session()
+
+    @staticmethod
+    def create_session():
+        return create_demo_recruitment_session()
