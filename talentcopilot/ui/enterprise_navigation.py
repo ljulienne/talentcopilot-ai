@@ -63,6 +63,7 @@ def get_enterprise_navigation() -> Dict[str, EnterpriseSection]:
             "Health, settings and design system.",
             [
                 EnterprisePage("Session Health", "talentcopilot.ui.session_health", "render_session_health", "◌", "Check session quality."),
+                EnterprisePage("Release Readiness", "talentcopilot.ui.release_readiness", "render_release_readiness", "✓", "Validate release health."),
                 EnterprisePage("Settings", "talentcopilot.ui.settings", "render_settings", "⚙", "Configure the app."),
                 EnterprisePage("UI Showcase", "talentcopilot.ui.ui_showcase", "render_ui_showcase", "◧", "View TalentCopilot Design System components."),
             ],
