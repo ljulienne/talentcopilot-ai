@@ -6,6 +6,7 @@ from talentcopilot.decision_core.confidence_intelligence_engine import Confidenc
 from talentcopilot.decision_core.decision_trace_service import DecisionTraceService
 from talentcopilot.decision_core.evidence_graph_builder import EvidenceGraphBuilder
 from talentcopilot.decision_core.evidence_intelligence_engine import EvidenceIntelligenceEngine
+from talentcopilot.decision_core.executive_intelligence_engine import ExecutiveIntelligenceEngine
 from talentcopilot.decision_core.fit_intelligence_engine import FitIntelligenceEngine
 from talentcopilot.decision_core.fit_intelligence_models import RoleRequirements
 from talentcopilot.decision_core.models import CandidateDecisionProfile
@@ -60,8 +61,21 @@ class CandidateDecisionProfileService:
         )
         recommendation_engine.add_trace_step(trace, graph, recommendation_report)
 
+        executive_engine = ExecutiveIntelligenceEngine()
+        executive_report = executive_engine.evaluate(
+            graph,
+            role_title,
+            evidence_report,
+            fit_report,
+            risk_report,
+            confidence_report,
+            recommendation_report,
+            budget_report,
+        )
+        executive_engine.add_trace_step(trace, graph, executive_report)
+
         metadata = {
-            "profile_version": "dic-v2.0-alpha-g",
+            "profile_version": "dic-v2.0-alpha-h",
             "evidence_status": evidence_report.status,
             "evidence_quality_score": str(evidence_report.evidence_quality_score),
             "evidence_readiness_score": str(evidence_report.evidence_readiness_score),
@@ -77,6 +91,8 @@ class CandidateDecisionProfileService:
             "recommendation": recommendation_report.recommendation,
             "recommendation_category": recommendation_report.category,
             "recommendation_rationale": recommendation_report.rationale,
+            "executive_summary": executive_report.executive_summary.summary,
+            "recruiter_summary": executive_report.recruiter_summary.summary,
         }
 
         if budget_report:

@@ -3,7 +3,7 @@ from talentcopilot.decision_core.candidate_decision_profile_service import Candi
 from talentcopilot.decision_core.fit_intelligence_models import RoleRequirements
 
 
-def test_candidate_decision_profile_builds_with_recommendation():
+def test_candidate_decision_profile_builds_with_executive_summary():
     profile = CandidateDecisionProfileService().build_from_candidate_dict(
         {"name": "Alice Martin", "skills": ["Project Management"], "years_experience": 8},
         "Transformation Lead",
@@ -12,8 +12,9 @@ def test_candidate_decision_profile_builds_with_recommendation():
         CandidateCompensation(expected_salary=90000),
     )
 
-    assert profile.metadata["profile_version"] == "dic-v2.0-alpha-g"
+    assert profile.metadata["profile_version"] == "dic-v2.0-alpha-h"
     assert profile.recommendation is not None
+    assert "executive_summary" in profile.metadata
     assert "recommendation_rationale" in profile.metadata
 
 
