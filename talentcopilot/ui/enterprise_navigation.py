@@ -56,6 +56,7 @@ def get_enterprise_navigation() -> Dict[str, EnterpriseSection]:
             "Interview",
             "Prepare, run and evaluate structured interviews.",
             [
+                EnterprisePage("Interview Intelligence", "talentcopilot.ui.interview_intelligence", "render_interview_intelligence", "✦", "Generate questions from evidence gaps."),
                 EnterprisePage("Interview Workspace", "talentcopilot.ui.interview_workspace", "render_interview_workspace", "▥", "Questions, notes, scorecards and evaluation."),
             ],
         ),
