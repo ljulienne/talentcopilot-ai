@@ -1,26 +1,29 @@
 from talentcopilot.services.demo_session_factory import create_demo_recruitment_session
+from talentcopilot.services.recruitment_pipeline_service import RecruitmentPipelineService
 from talentcopilot.services.recruitment_workspace_service import RecruitmentWorkspaceService
 from talentcopilot.services.streamlit_session_bridge import get_streamlit_session, set_streamlit_session
 from talentcopilot.ui.design_system.components import enterprise_hero, metric_grid, next_action_card, section_title
 from talentcopilot.ui.design_system.theme import apply_enterprise_theme
 
 
-def _pipeline(report):
+def _pipeline_deep_view(pipeline_report):
     import streamlit as st
 
     st.markdown('<div class="tc-card">', unsafe_allow_html=True)
-    st.subheader("Pipeline")
-    cols = st.columns(len(report.pipeline) if report.pipeline else 1)
-    for col, stage in zip(cols, report.pipeline):
-        with col:
-            if stage.status == "done":
-                st.success(stage.name)
-            elif stage.status == "active":
-                st.info(stage.name)
-            else:
-                st.caption(stage.name)
-            st.metric("Count", stage.count)
+    st.subheader("Recruitment Pipeline")
+    st.progress(max(0, min(100, pipeline_report.overall_readiness)) / 100)
+    st.caption(f"Overall pipeline readiness: {pipeline_report.overall_readiness}%")
     st.markdown("</div>", unsafe_allow_html=True)
+
+    for stage in pipeline_report.stages:
+        with st.expander(f"{stage.name} · {stage.status} · {stage.readiness}%"):
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Status", stage.status)
+            c2.metric("Count", stage.count)
+            c3.metric("Readiness", f"{stage.readiness}%")
+            st.write(f"**Recommended action:** {stage.action.title}")
+            st.caption(f"Owner: {stage.action.owner} · Priority: {stage.action.priority}")
+            st.write(stage.action.rationale)
 
 
 def _candidate_table(report):
@@ -46,8 +49,6 @@ def _candidate_table(report):
 def _timeline(report):
     import streamlit as st
 
-    st.markdown('<div class="tc-card">', unsafe_allow_html=True)
-    st.subheader("Recruitment Timeline")
     for event in report.timeline:
         if event.status == "done":
             st.success(f"{event.label} — {event.description}")
@@ -55,7 +56,6 @@ def _timeline(report):
             st.info(f"{event.label} — {event.description}")
         else:
             st.caption(f"{event.label} — {event.description}")
-    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render_recruitment_workspace():
@@ -64,7 +64,8 @@ def render_recruitment_workspace():
     apply_enterprise_theme()
 
     session = get_streamlit_session()
-    report = RecruitmentWorkspaceService().build(session)
+    workspace_report = RecruitmentWorkspaceService().build(session)
+    pipeline_report = RecruitmentPipelineService().build(session)
 
     enterprise_hero(
         "Recruitment Workspace",
@@ -77,34 +78,48 @@ def render_recruitment_workspace():
         if st.button("Load Enterprise Demo"):
             session = create_demo_recruitment_session()
             set_streamlit_session(session)
-            report = RecruitmentWorkspaceService().build(session)
+            workspace_report = RecruitmentWorkspaceService().build(session)
+            pipeline_report = RecruitmentPipelineService().build(session)
             st.success("Enterprise demo loaded.")
     with col2:
-        st.caption(f"Active recruitment: {report.role_title} · Status: {report.status}")
+        st.caption(f"Active recruitment: {workspace_report.role_title} · Status: {workspace_report.status}")
 
     metric_grid([
-        ("Role", report.role_title, report.status),
-        ("Candidates", str(report.candidates_count), "Total"),
-        ("Analyzed", str(report.analyzed_count), "AI completed"),
-        ("Session", report.session_id[:8] if report.session_id else "-", "Active"),
+        ("Role", workspace_report.role_title, workspace_report.status),
+        ("Candidates", str(workspace_report.candidates_count), "Total"),
+        ("Analyzed", str(workspace_report.analyzed_count), "AI completed"),
+        ("Pipeline Readiness", f"{pipeline_report.overall_readiness}%", "Operational"),
     ])
 
-    _pipeline(report)
+    if pipeline_report.blockers:
+        for blocker in pipeline_report.blockers:
+            st.warning(blocker)
 
-    left, right = st.columns([1.2, 0.8])
+    tab_pipeline, tab_candidates, tab_timeline, tab_actions = st.tabs([
+        "Pipeline",
+        "Candidates",
+        "Timeline",
+        "Actions",
+    ])
 
-    with left:
+    with tab_pipeline:
+        _pipeline_deep_view(pipeline_report)
+
+    with tab_candidates:
         section_title("Candidates in this recruitment", "Candidate stage and recommendation summary.")
-        _candidate_table(report)
+        _candidate_table(workspace_report)
 
-    with right:
-        _timeline(report)
-        next_action_card(
-            "Next recruitment action",
-            report.next_actions[0] if report.next_actions else "Continue the recruitment workflow.",
-            "Continue",
-        )
+    with tab_timeline:
+        section_title("Recruitment Timeline")
+        _timeline(workspace_report)
 
-    section_title("Recommended actions")
-    for action in report.next_actions:
-        st.write(f"- {action}")
+    with tab_actions:
+        section_title("Recommended actions")
+        for action in pipeline_report.next_actions:
+            with st.expander(f"{action.priority} · {action.title}"):
+                st.write(action.rationale)
+                st.caption(f"Owner: {action.owner}")
+
+        first_action = pipeline_report.next_actions[0] if pipeline_report.next_actions else None
+        if first_action:
+            next_action_card(first_action.title, first_action.rationale, "Continue")
