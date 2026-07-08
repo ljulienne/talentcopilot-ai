@@ -1,0 +1,38 @@
+from dataclasses import dataclass, field
+from typing import List
+
+
+@dataclass
+class ComparisonCandidate:
+    rank: int
+    candidate_name: str
+    match_score: float
+    recommendation: str
+    key_strength: str
+    key_risk: str
+
+
+@dataclass
+class ScoreGap:
+    label: str
+    value: float
+    interpretation: str
+
+
+@dataclass
+class DecisionMatrixLine:
+    candidate_name: str
+    technical_fit: int
+    leadership_fit: int
+    evidence_strength: int
+    decision_readiness: int
+
+
+@dataclass
+class ComparisonWorkspaceReport:
+    role_title: str
+    session_id: str
+    candidates: List[ComparisonCandidate] = field(default_factory=list)
+    score_gaps: List[ScoreGap] = field(default_factory=list)
+    matrix: List[DecisionMatrixLine] = field(default_factory=list)
+    differentiators: List[str] = field(default_factory=list)
