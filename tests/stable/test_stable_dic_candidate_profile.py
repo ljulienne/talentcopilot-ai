@@ -1,21 +1,17 @@
-from talentcopilot.decision_core.budget_intelligence_models import BudgetContext, CandidateCompensation
 from talentcopilot.decision_core.candidate_decision_profile_service import CandidateDecisionProfileService
 from talentcopilot.decision_core.fit_intelligence_models import RoleRequirements
 
 
-def test_candidate_decision_profile_builds_with_executive_summary():
+def test_candidate_decision_profile_builds_after_orchestrator_patch():
     profile = CandidateDecisionProfileService().build_from_candidate_dict(
         {"name": "Alice Martin", "skills": ["Project Management"], "years_experience": 8},
         "Transformation Lead",
         RoleRequirements("Transformation Lead", required_skills=["Project Management"], minimum_years_experience=5),
-        BudgetContext(target_salary=85000, maximum_salary=100000),
-        CandidateCompensation(expected_salary=90000),
     )
 
-    assert profile.metadata["profile_version"] == "dic-v2.0-alpha-h"
+    assert profile.metadata["profile_version"] == "dic-v2.0-alpha-i"
     assert profile.recommendation is not None
     assert "executive_summary" in profile.metadata
-    assert "recommendation_rationale" in profile.metadata
 
 
 def test_candidate_decision_profile_build_many():

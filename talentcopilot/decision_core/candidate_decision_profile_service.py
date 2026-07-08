@@ -75,7 +75,7 @@ class CandidateDecisionProfileService:
         executive_engine.add_trace_step(trace, graph, executive_report)
 
         metadata = {
-            "profile_version": "dic-v2.0-alpha-h",
+            "profile_version": "dic-v2.0-alpha-i",
             "evidence_status": evidence_report.status,
             "evidence_quality_score": str(evidence_report.evidence_quality_score),
             "evidence_readiness_score": str(evidence_report.evidence_readiness_score),
