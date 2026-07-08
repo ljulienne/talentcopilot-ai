@@ -68,6 +68,10 @@ def create_demo_recruitment_session():
 
 
 class DemoSessionFactory:
+    """
+    Compatibility wrapper for older UI imports.
+    """
+
     @staticmethod
     def demo_job():
         return demo_job()

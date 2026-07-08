@@ -1,4 +1,3 @@
-
 from typing import Any
 
 
@@ -19,15 +18,15 @@ def render_governance_card(governance_report: Any) -> None:
     if card:
         col1, col2, col3, col4 = st.columns(4)
         col1.metric("Decision", getattr(card, "decision", "-"))
-        col2.metric("Confidence", f"{getattr(card, 'confidence_score', 0):.0f}%")
-        col3.metric("Evidence Quality", f"{getattr(card, 'evidence_quality_score', 0):.0f}%")
+        col2.metric("Confidence", f"{float(getattr(card, 'confidence_score', 0) or 0):.0f}%")
+        col3.metric("Evidence Quality", f"{float(getattr(card, 'evidence_quality_score', 0) or 0):.0f}%")
         col4.metric("Risk", getattr(card, "risk_level", "-"))
 
-        st.info(getattr(card, "executive_summary", ""))
-    else:
-        st.write("Governance report available, but no decision card found.")
+        summary = getattr(card, "executive_summary", "")
+        if summary:
+            st.info(summary)
 
-    notes = getattr(governance_report, "explainability_notes", [])
+    notes = getattr(governance_report, "explainability_notes", []) or []
     if notes:
         with st.expander("Explainability notes"):
             for note in notes:

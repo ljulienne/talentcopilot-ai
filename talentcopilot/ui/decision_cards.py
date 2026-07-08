@@ -1,5 +1,8 @@
-
 from typing import Any
+
+
+def _value(value: Any) -> str:
+    return getattr(value, "value", str(value))
 
 
 def render_decision_intelligence_card(decision_report: Any) -> None:
@@ -14,36 +17,35 @@ def render_decision_intelligence_card(decision_report: Any) -> None:
         st.info("No decision report available yet.")
         return
 
-    recommendation = getattr(decision_report, "recommendation", "-")
-    recommendation = getattr(recommendation, "value", recommendation)
+    recommendation = _value(getattr(decision_report, "recommendation", "-"))
+    confidence = _value(getattr(decision_report, "confidence", "-"))
+    human_validation = _value(getattr(decision_report, "human_validation", "-"))
+    decision_score = float(getattr(decision_report, "decision_score", 0) or 0)
 
-    confidence = getattr(decision_report, "confidence", "-")
-    confidence = getattr(confidence, "value", confidence)
-
-    human_validation = getattr(decision_report, "human_validation", "-")
-    human_validation = getattr(human_validation, "value", human_validation)
-
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     col1.metric("Recommendation", recommendation)
-    col2.metric("Decision Score", f"{getattr(decision_report, 'decision_score', 0):.0f}%")
+    col2.metric("Decision Score", f"{decision_score:.0f}%")
     col3.metric("Confidence", confidence)
+    col4.metric("Human Validation", human_validation)
 
-    st.info(getattr(decision_report, "executive_summary", ""))
+    summary = getattr(decision_report, "executive_summary", "")
+    if summary:
+        st.info(summary)
 
-    if getattr(decision_report, "concerns", None):
+    concerns = getattr(decision_report, "concerns", []) or []
+    if concerns:
         with st.expander("Concerns"):
-            for concern in decision_report.concerns:
+            for concern in concerns:
                 st.warning(
                     f"**{getattr(concern, 'title', 'Concern')}** — "
                     f"{getattr(concern, 'explanation', '')}"
                 )
 
-    if getattr(decision_report, "interview_focus", None):
+    focus = getattr(decision_report, "interview_focus", []) or []
+    if focus:
         with st.expander("Interview Focus"):
-            for item in decision_report.interview_focus:
+            for item in focus:
                 st.write(f"- {item}")
-
-    st.caption(f"Human validation: {human_validation}")
 
 
 def render_decision_summary_badge(decision_report: Any) -> None:
@@ -56,11 +58,7 @@ def render_decision_summary_badge(decision_report: Any) -> None:
         st.metric("AI Decision", "Not available")
         return
 
-    recommendation = getattr(decision_report, "recommendation", "-")
-    recommendation = getattr(recommendation, "value", recommendation)
+    recommendation = _value(getattr(decision_report, "recommendation", "-"))
+    decision_score = float(getattr(decision_report, "decision_score", 0) or 0)
 
-    st.metric(
-        "AI Decision",
-        recommendation,
-        f"{getattr(decision_report, 'decision_score', 0):.0f}% decision score",
-    )
+    st.metric("AI Decision", recommendation, f"{decision_score:.0f}% decision score")
