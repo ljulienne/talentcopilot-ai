@@ -10,14 +10,26 @@ def _render_report(report):
 
     metric_grid([
         ("Candidate", report.candidate_name, report.role_title),
-        ("Hybrid Score", f"{report.hybrid_score}%", "Semantic + Career"),
+        ("Hybrid Score", f"{report.hybrid_score}%", "Explainable"),
         ("Semantic Score", f"{report.semantic_score}%", "Skill proximity"),
         ("Career Score", f"{report.career_score}%", report.career_report.seniority_level if report.career_report else "-"),
     ])
 
-    insight_card("Hybrid Matching Summary", report.summary, "Hybrid Intelligence")
+    insight_card("Recruiter Summary", report.summary, "Explainable Hybrid Matching")
 
-    tab_skills, tab_career = st.tabs(["Semantic Skills", "Career Intelligence"])
+    tab_breakdown, tab_skills, tab_career, tab_explain = st.tabs([
+        "Score Breakdown",
+        "Semantic Skills",
+        "Career Intelligence",
+        "Explainability",
+    ])
+
+    with tab_breakdown:
+        section_title("Score Breakdown")
+        if report.explanation_report:
+            st.json(report.explanation_report.breakdown.__dict__)
+        else:
+            st.info("No explanation report available.")
 
     with tab_skills:
         section_title("Semantic Skill Matching")
@@ -50,6 +62,38 @@ def _render_report(report):
             ]
             st.dataframe(rows, use_container_width=True)
 
+    with tab_explain:
+        section_title("Positive Contributions")
+        if report.explanation_report:
+            st.dataframe(
+                [
+                    {
+                        "Category": item.category,
+                        "Label": item.label,
+                        "Points": item.points,
+                        "Evidence": " | ".join(item.evidence),
+                        "Explanation": item.explanation,
+                    }
+                    for item in report.explanation_report.positive_contributions
+                ],
+                use_container_width=True,
+            )
+
+            section_title("Penalties")
+            st.dataframe(
+                [
+                    {
+                        "Category": item.category,
+                        "Label": item.label,
+                        "Points": item.points,
+                        "Evidence": " | ".join(item.evidence),
+                        "Explanation": item.explanation,
+                    }
+                    for item in report.explanation_report.penalties
+                ],
+                use_container_width=True,
+            )
+
 
 def render_hybrid_intelligence():
     import streamlit as st
@@ -58,14 +102,14 @@ def render_hybrid_intelligence():
 
     enterprise_hero(
         "Hybrid Intelligence",
-        "Compare candidates and roles through semantic skills, career signals and achievement evidence.",
-        "Release 2.0 — Sprint 4B",
+        "Explain candidate-role fit through semantic skills, career evidence and score contributions.",
+        "Release 2.0 — Sprint 4C",
     )
 
     insight_card(
         "Why this matters",
-        "Hybrid Intelligence combines skill proximity with career and achievement signals.",
-        "Hybrid Matching Foundation",
+        "Hybrid Intelligence now explains why a candidate receives a score, including positive factors and penalties.",
+        "Explainable Matching",
     )
 
     tab_demo, tab_custom = st.tabs(["Demo", "Custom"])
