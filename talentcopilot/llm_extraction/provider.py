@@ -19,10 +19,13 @@ class MockLLMProvider:
 
             text = prompt
             name = "Unknown Candidate"
-            if "LORETTA DANIELSON" in text.upper():
-                name = "Loretta Danielson"
-            elif "VINCENT BLAKOE" in text.upper():
+            cv_text = text.split("CV TEXT:", 1)[-1] if "CV TEXT:" in text else text
+            upper = cv_text.upper()
+
+            if "VINCENT BLAKOE" in upper:
                 name = "Vincent Blakoe"
+            elif "LORETTA DANIELSON" in upper:
+                name = "Loretta Danielson"
             elif "Louis Julienne" in text:
                 name = "Louis Julienne"
 
