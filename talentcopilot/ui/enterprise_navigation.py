@@ -58,6 +58,7 @@ def get_enterprise_navigation() -> Dict[str, EnterpriseSection]:
             "Evaluate feasibility and make collaborative hiring decisions.",
             [
                 EnterprisePage("Decision Core", "talentcopilot.ui.decision_core", "render_decision_core", "◆", "Run Decision Intelligence Core v2."),
+                EnterprisePage("Decision Core Bridge", "talentcopilot.ui.decision_core_bridge", "render_decision_core_bridge", "◇", "Bridge current sessions to Decision Core profiles."),
                 EnterprisePage("Hiring Budget", "talentcopilot.ui.hiring_budget", "render_hiring_budget", "¤", "Financial feasibility without changing fit score."),
                 EnterprisePage("Decision Board", "talentcopilot.ui.decision_board", "render_decision_board", "◆", "Collaborative decision review."),
                 EnterprisePage("Recruiter Copilot", "talentcopilot.ui.recruiter_copilot_workspace", "render_recruiter_copilot_workspace", "✦", "Action-oriented recruiter guidance."),

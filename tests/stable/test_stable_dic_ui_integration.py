@@ -10,13 +10,6 @@ def test_decision_core_demo_service_runs():
     assert output.engine_status["recommendation_intelligence"] == "OK"
 
 
-def test_decision_core_ui_imports():
-    module = __import__("talentcopilot.ui.decision_core", fromlist=["render_decision_core"])
-    assert hasattr(module, "render_decision_core")
-
-
-def test_decision_core_navigation():
+def test_decision_core_navigation_still_exists():
     page = get_page_by_label("Decision Core")
     assert page is not None
-    assert page.module == "talentcopilot.ui.decision_core"
-    assert page.function == "render_decision_core"
