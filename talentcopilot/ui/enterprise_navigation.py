@@ -48,8 +48,8 @@ def get_enterprise_navigation() -> Dict[str, EnterpriseSection]:
             "Use AI guidance and human review.",
             [
                 EnterprisePage("Decision Board", "talentcopilot.ui.decision_board", "render_decision_board", "◆", "Make collaborative decisions."),
+                EnterprisePage("Recruiter Copilot", "talentcopilot.ui.recruiter_copilot_workspace", "render_recruiter_copilot_workspace", "✦", "Act on AI guidance."),
                 EnterprisePage("Decision Center", "talentcopilot.ui.dashboard_v2", "render_dashboard_v2", "◆", "Control the decision process."),
-                EnterprisePage("Recruiter Copilot", "talentcopilot.ui.recruiter_copilot_v2", "render_recruiter_copilot_v2", "✦", "Act on AI guidance."),
                 EnterprisePage("Decision Workspace", "talentcopilot.ui.decision_workspace", "render_decision_workspace", "◇", "Review governance and explainability."),
             ],
         ),
