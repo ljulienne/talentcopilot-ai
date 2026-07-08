@@ -64,9 +64,10 @@ def get_enterprise_navigation() -> Dict[str, EnterpriseSection]:
         ),
         "reporting": EnterpriseSection(
             "Reporting",
-            "Prepare stakeholder-ready outputs.",
+            "Prepare stakeholder-ready outputs and analytics.",
             [
                 EnterprisePage("Executive Reporting", "talentcopilot.ui.executive_reporting", "render_executive_reporting", "▤", "Prepare stakeholder-ready reports."),
+                EnterprisePage("Analytics Dashboard", "talentcopilot.ui.analytics_dashboard", "render_analytics_dashboard", "▧", "Track recruitment health and KPIs."),
             ],
         ),
         "administration": EnterpriseSection(
