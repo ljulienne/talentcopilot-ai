@@ -22,8 +22,11 @@ def get_enterprise_navigation() -> Dict[str, EnterpriseSection]:
     return {
         "command": EnterpriseSection(
             "Command",
-            "Daily cockpit and priorities.",
-            [EnterprisePage("Recruitment Command Center", "talentcopilot.ui.command_center", "render_command_center", "⌂", "What needs attention today.")],
+            "Daily cockpit and product overview.",
+            [
+                EnterprisePage("Recruitment Command Center", "talentcopilot.ui.command_center", "render_command_center", "⌂", "What needs attention today."),
+                EnterprisePage("Product Overview", "talentcopilot.ui.product_overview", "render_product_overview", "◇", "Understand the product and demo flow."),
+            ],
         ),
         "recruitment": EnterpriseSection(
             "Recruitment",
