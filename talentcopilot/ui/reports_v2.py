@@ -1,5 +1,7 @@
+from talentcopilot.services.session_report_builder import SessionReportBuilder
+from talentcopilot.services.streamlit_session_bridge import get_streamlit_session
 from talentcopilot.ui.enterprise_components import hero, safe_render
-from talentcopilot.ui.session_driven_components import session_action_bar, report_readiness
+from talentcopilot.ui.feature_restoration_components import page_purpose, session_required_hint
 
 
 @safe_render
@@ -8,11 +10,30 @@ def render_reports_v2(*args, **kwargs):
 
     hero(
         "Reports",
-        "Session-based reporting readiness and candidate decision summary.",
-        "Session-driven",
+        "Prepare recruiter-ready outputs from the active session.",
+        "Deliver",
     )
 
-    session = session_action_bar()
+    page_purpose(
+        "Reports",
+        "This page is for producing outputs, not reviewing raw analysis.",
+        [
+            "Preview a structured recruitment report.",
+            "Export the current session summary.",
+            "Prepare stakeholder communication.",
+        ],
+    )
 
-    st.subheader("Report readiness")
-    report_readiness(session)
+    session = get_streamlit_session()
+    if not session_required_hint(session):
+        return
+
+    markdown_report = SessionReportBuilder().build_markdown(session)
+    st.markdown(markdown_report)
+
+    st.download_button(
+        "Download markdown report",
+        data=markdown_report,
+        file_name="talentcopilot_recruitment_report.md",
+        mime="text/markdown",
+    )

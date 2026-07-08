@@ -1,14 +1,12 @@
 import importlib
-from typing import Callable, Dict, Tuple
+from typing import Callable
 
 import streamlit as st
 
 from talentcopilot.config import APP_NAME, APP_VERSION
 from talentcopilot.i18n import LANGUAGES, tr
 from talentcopilot.services.import_safety_audit import ImportSafetyAudit
-
-
-PageSpec = Tuple[str, str]
+from talentcopilot.ui.navigation import get_navigation_sections
 
 
 def _safe_call(module_name: str, function_name: str) -> Callable:
@@ -26,17 +24,15 @@ def _safe_call(module_name: str, function_name: str) -> Callable:
 
 
 def _apply_theme():
-    try:
-        from talentcopilot.ui.theme import apply_theme
-        apply_theme()
-    except Exception:
-        pass
-
-    try:
-        from talentcopilot.ui.premium_theme import apply_premium_ui
-        apply_premium_ui()
-    except Exception:
-        pass
+    for module_name, function_name in [
+        ("talentcopilot.ui.theme", "apply_theme"),
+        ("talentcopilot.ui.premium_theme", "apply_premium_ui"),
+    ]:
+        try:
+            module = importlib.import_module(module_name)
+            getattr(module, function_name)()
+        except Exception:
+            pass
 
 
 def _render_sidebar_brand():
@@ -48,44 +44,18 @@ def _render_sidebar_brand():
         )
 
         render_sidebar_brand(APP_VERSION)
-        context = st.session_state.get("recruitment_context")
-        render_sidebar_context(context)
+        render_sidebar_context(st.session_state.get("recruitment_context"))
         render_sidebar_workflow()
     except Exception:
         st.sidebar.markdown("## 🧠 TalentCopilot-AI")
         st.sidebar.caption(f"AI Recruitment Intelligence · {APP_VERSION}")
 
 
-def navigation_registry() -> Dict[str, PageSpec]:
-    return {
-        "Home": ("talentcopilot.ui.home_v2", "render_home_v2"),
-        "Decision Center": ("talentcopilot.ui.dashboard_v2", "render_dashboard_v2"),
-        tr("menu.new_recruitment"): ("talentcopilot.ui.recruitment_wizard", "render_new_recruitment"),
-        tr("menu.open_recruitment"): ("talentcopilot.ui.open_recruitment", "render_open_recruitment"),
-        tr("menu.dashboard"): ("talentcopilot.ui.dashboard", "render_dashboard"),
-        "Decision Workspace": ("talentcopilot.ui.decision_workspace", "render_decision_workspace"),
-        "Candidates": ("talentcopilot.ui.candidates_v2", "render_candidates_v2"),
-        "Talent Pool": ("talentcopilot.ui.talent_pool_v2", "render_talent_pool_v2"),
-        "Recruiter Copilot": ("talentcopilot.ui.recruiter_copilot_v2", "render_recruiter_copilot_v2"),
-        "Comparison": ("talentcopilot.ui.comparison_v2", "render_comparison_v2"),
-        "Reports": ("talentcopilot.ui.reports_v2", "render_reports_v2"),
-        tr("menu.settings"): ("talentcopilot.ui.settings", "render_settings"),
-        "Session Health": ("talentcopilot.ui.session_health", "render_session_health"),
-    }
-
-
 def _initialize_state():
-    if "language" not in st.session_state:
-        st.session_state.language = "English"
-
-    if "analysis_batch" not in st.session_state:
-        st.session_state.analysis_batch = None
-
-    if "recruitment_context" not in st.session_state:
-        st.session_state.recruitment_context = None
-
-    if "current_recruitment" not in st.session_state:
-        st.session_state.current_recruitment = None
+    st.session_state.setdefault("language", "English")
+    st.session_state.setdefault("analysis_batch", None)
+    st.session_state.setdefault("recruitment_context", None)
+    st.session_state.setdefault("current_recruitment", None)
 
 
 def _language_selector():
@@ -103,12 +73,40 @@ def _language_selector():
     st.session_state.language = selected_language
 
 
+def _render_navigation():
+    sections = get_navigation_sections()
+
+    section_names = list(sections.keys())
+    selected_section = st.sidebar.radio(
+        "Navigation",
+        section_names,
+        format_func=lambda name: sections[name].label,
+    )
+
+    st.sidebar.caption(sections[selected_section].description)
+
+    page_options = sections[selected_section].pages
+    selected_page = st.sidebar.radio(
+        "Page",
+        page_options,
+        format_func=lambda page: page.label,
+    )
+
+    return selected_page
+
+
 def _render_import_health():
     with st.sidebar.expander("App health"):
-        report = ImportSafetyAudit().audit_navigation(navigation_registry())
+        sections = get_navigation_sections()
+        navigation = {}
+        for section in sections.values():
+            for page in section.pages:
+                navigation[page.label] = (page.module, page.function)
+
+        report = ImportSafetyAudit().audit_navigation(navigation)
         if report["missing"]:
             st.warning(f"{len(report['missing'])} import issue(s)")
-            for item in report["missing"][:5]:
+            for item in report["missing"][:6]:
                 st.caption(item)
         else:
             st.success("Imports OK")
@@ -124,13 +122,10 @@ def main():
 
     st.sidebar.markdown("---")
 
-    pages = navigation_registry()
-    page_label = st.sidebar.radio(tr("navigation"), list(pages.keys()))
-
+    selected_page = _render_navigation()
     _render_import_health()
 
-    module_name, function_name = pages[page_label]
-    renderer = _safe_call(module_name, function_name)
+    renderer = _safe_call(selected_page.module, selected_page.function)
     renderer()
 
     try:
