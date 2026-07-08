@@ -22,6 +22,7 @@ class HybridMatchingReport:
     semantic_skill_report: SemanticSkillReport
     career_report: CareerIntelligenceReport | None = None
     explanation_report: object | None = None
+    recruiter_report: object | None = None
 
     @property
     def semantic_score(self) -> int:
@@ -41,6 +42,8 @@ class HybridMatchingReport:
 
     @property
     def summary(self) -> str:
+        if self.recruiter_report and self.recruiter_report.executive_summary:
+            return self.recruiter_report.executive_summary
         if self.explanation_report and self.explanation_report.recruiter_summary:
             return self.explanation_report.recruiter_summary
         base = (

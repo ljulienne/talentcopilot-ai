@@ -8,32 +8,51 @@ from talentcopilot.ui.design_system.theme import apply_enterprise_theme
 def _render_report(report):
     import streamlit as st
 
+    recruiter = report.recruiter_report
+
     metric_grid([
         ("Candidate", report.candidate_name, report.role_title),
-        ("Hybrid Score", f"{report.hybrid_score}%", "Explainable"),
+        ("Hybrid Score", f"{report.hybrid_score}%", recruiter.readiness_level if recruiter else "Explainable"),
         ("Semantic Score", f"{report.semantic_score}%", "Skill proximity"),
         ("Career Score", f"{report.career_score}%", report.career_report.seniority_level if report.career_report else "-"),
     ])
 
-    insight_card("Recruiter Summary", report.summary, "Explainable Hybrid Matching")
+    insight_card("Recruiter Summary", report.summary, "Hybrid Intelligence Report")
 
-    tab_breakdown, tab_skills, tab_career, tab_explain = st.tabs([
+    tab_summary, tab_breakdown, tab_skills, tab_career, tab_explain = st.tabs([
+        "Recruiter Report",
         "Score Breakdown",
         "Semantic Skills",
         "Career Intelligence",
         "Explainability",
     ])
 
+    with tab_summary:
+        section_title("Recruiter-Ready Report")
+        if recruiter:
+            st.write(f"**Readiness:** {recruiter.readiness_level}")
+            st.write(f"**Action:** {recruiter.action_recommendation}")
+            st.write(recruiter.executive_summary)
+
+            st.write("**Top strengths**")
+            st.write(recruiter.top_strengths or ["No major strength detected yet."])
+
+            st.write("**Gaps**")
+            st.write(recruiter.gaps or ["No critical gap detected."])
+
+            st.write("**Interview focus**")
+            st.write(recruiter.interview_focus)
+        else:
+            st.info("No recruiter report available.")
+
     with tab_breakdown:
         section_title("Score Breakdown")
         if report.explanation_report:
             st.json(report.explanation_report.breakdown.__dict__)
-        else:
-            st.info("No explanation report available.")
 
     with tab_skills:
         section_title("Semantic Skill Matching")
-        rows = [
+        st.dataframe([
             {
                 "Required Skill": match.required_skill,
                 "Candidate Skill": match.candidate_skill or "-",
@@ -42,16 +61,13 @@ def _render_report(report):
                 "Explanation": match.explanation,
             }
             for match in report.semantic_skill_report.matches
-        ]
-        st.dataframe(rows, use_container_width=True)
+        ], use_container_width=True)
 
     with tab_career:
         section_title("Career & Achievement Signals")
-        if not report.career_report:
-            st.info("No career report.")
-        else:
+        if report.career_report:
             st.write(f"**Seniority:** {report.career_report.seniority_level}")
-            rows = [
+            st.dataframe([
                 {
                     "Category": signal.category,
                     "Label": signal.label,
@@ -59,40 +75,22 @@ def _render_report(report):
                     "Evidence": " | ".join(signal.evidence),
                 }
                 for signal in report.career_report.signals
-            ]
-            st.dataframe(rows, use_container_width=True)
+            ], use_container_width=True)
 
     with tab_explain:
-        section_title("Positive Contributions")
+        section_title("Explainability")
         if report.explanation_report:
-            st.dataframe(
-                [
-                    {
-                        "Category": item.category,
-                        "Label": item.label,
-                        "Points": item.points,
-                        "Evidence": " | ".join(item.evidence),
-                        "Explanation": item.explanation,
-                    }
-                    for item in report.explanation_report.positive_contributions
-                ],
-                use_container_width=True,
-            )
-
-            section_title("Penalties")
-            st.dataframe(
-                [
-                    {
-                        "Category": item.category,
-                        "Label": item.label,
-                        "Points": item.points,
-                        "Evidence": " | ".join(item.evidence),
-                        "Explanation": item.explanation,
-                    }
-                    for item in report.explanation_report.penalties
-                ],
-                use_container_width=True,
-            )
+            st.write(report.explanation_report.recruiter_summary)
+            st.dataframe([
+                {
+                    "Category": item.category,
+                    "Label": item.label,
+                    "Points": item.points,
+                    "Evidence": " | ".join(item.evidence),
+                    "Explanation": item.explanation,
+                }
+                for item in report.explanation_report.positive_contributions
+            ], use_container_width=True)
 
 
 def render_hybrid_intelligence():
@@ -102,14 +100,14 @@ def render_hybrid_intelligence():
 
     enterprise_hero(
         "Hybrid Intelligence",
-        "Explain candidate-role fit through semantic skills, career evidence and score contributions.",
-        "Release 2.0 — Sprint 4C",
+        "Generate recruiter-ready explanations from semantic skills, career evidence and hybrid scoring.",
+        "Release 2.0 — Sprint 4E",
     )
 
     insight_card(
         "Why this matters",
-        "Hybrid Intelligence now explains why a candidate receives a score, including positive factors and penalties.",
-        "Explainable Matching",
+        "The system now turns hybrid matching into actionable recruiter guidance.",
+        "Recruiter Report",
     )
 
     tab_demo, tab_custom = st.tabs(["Demo", "Custom"])
