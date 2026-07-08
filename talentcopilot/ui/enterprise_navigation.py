@@ -27,10 +27,11 @@ def get_enterprise_navigation() -> Dict[str, EnterpriseSection]:
         ),
         "recruitment": EnterpriseSection(
             "Recruitment",
-            "Create and resume recruitment workflows.",
+            "Create, open and pilot recruitment workflows.",
             [
                 EnterprisePage("New Recruitment", "talentcopilot.ui.recruitment_wizard", "render_new_recruitment", "＋", "Create a recruitment."),
                 EnterprisePage("Open Recruitment", "talentcopilot.ui.open_recruitment", "render_open_recruitment", "▣", "Resume recruitment."),
+                EnterprisePage("Recruitment Workspace", "talentcopilot.ui.recruitment_workspace", "render_recruitment_workspace", "▦", "Pilot the active recruitment."),
             ],
         ),
         "analysis": EnterpriseSection(
