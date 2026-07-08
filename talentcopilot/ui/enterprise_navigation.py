@@ -59,6 +59,7 @@ def get_enterprise_navigation() -> Dict[str, EnterpriseSection]:
             [
                 EnterprisePage("Decision Board", "talentcopilot.ui.decision_board", "render_decision_board", "◆", "Make collaborative decisions."),
                 EnterprisePage("Recruiter Copilot", "talentcopilot.ui.recruiter_copilot_workspace", "render_recruiter_copilot_workspace", "✦", "Act on AI guidance."),
+                EnterprisePage("Hiring Budget", "talentcopilot.ui.hiring_budget", "render_hiring_budget", "¤", "Assess financial feasibility without changing fit score."),
             ],
         ),
         "reporting": EnterpriseSection(
