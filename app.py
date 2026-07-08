@@ -4,9 +4,10 @@ from typing import Callable
 import streamlit as st
 
 from talentcopilot.config import APP_NAME, APP_VERSION
-from talentcopilot.i18n import LANGUAGES, tr
+from talentcopilot.i18n import LANGUAGES
 from talentcopilot.services.import_safety_audit import ImportSafetyAudit
-from talentcopilot.ui.navigation import get_navigation_sections
+from talentcopilot.ui.design_system.navigation import get_enterprise_navigation
+from talentcopilot.ui.design_system.theme import apply_enterprise_theme
 
 
 def _safe_call(module_name: str, function_name: str) -> Callable:
@@ -23,39 +24,26 @@ def _safe_call(module_name: str, function_name: str) -> Callable:
     return _renderer
 
 
-def _apply_theme():
-    for module_name, function_name in [
-        ("talentcopilot.ui.theme", "apply_theme"),
-        ("talentcopilot.ui.premium_theme", "apply_premium_ui"),
-    ]:
-        try:
-            module = importlib.import_module(module_name)
-            getattr(module, function_name)()
-        except Exception:
-            pass
-
-
-def _render_sidebar_brand():
-    try:
-        from talentcopilot.ui.sidebar import (
-            render_sidebar_brand,
-            render_sidebar_context,
-            render_sidebar_workflow,
-        )
-
-        render_sidebar_brand(APP_VERSION)
-        render_sidebar_context(st.session_state.get("recruitment_context"))
-        render_sidebar_workflow()
-    except Exception:
-        st.sidebar.markdown("## 🧠 TalentCopilot-AI")
-        st.sidebar.caption(f"AI Recruitment Intelligence · {APP_VERSION}")
-
-
 def _initialize_state():
     st.session_state.setdefault("language", "English")
     st.session_state.setdefault("analysis_batch", None)
     st.session_state.setdefault("recruitment_context", None)
     st.session_state.setdefault("current_recruitment", None)
+
+
+def _render_brand():
+    st.sidebar.markdown(
+        f"""
+        <div style="display:flex;align-items:center;margin-bottom:1rem;">
+            <div class="tc-logo-mark">TC</div>
+            <div>
+                <div style="font-weight:800;font-size:1rem;">TalentCopilot</div>
+                <div style="font-size:0.78rem;opacity:0.72;">Enterprise · {APP_VERSION}</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def _language_selector():
@@ -66,7 +54,7 @@ def _language_selector():
         st.session_state.language = current
 
     selected_language = st.sidebar.selectbox(
-        "🌍 Language",
+        "Language",
         language_keys,
         index=language_keys.index(current),
     )
@@ -74,32 +62,31 @@ def _language_selector():
 
 
 def _render_navigation():
-    sections = get_navigation_sections()
+    sections = get_enterprise_navigation()
 
-    section_names = list(sections.keys())
-    selected_section = st.sidebar.radio(
-        "Navigation",
-        section_names,
-        format_func=lambda name: sections[name].label,
-    )
+    selected = None
+    st.sidebar.markdown("---")
 
-    st.sidebar.caption(sections[selected_section].description)
+    for section_name, section in sections.items():
+        st.sidebar.markdown(f"**{section.label}**")
+        labels = [f"{page.icon} {page.label}" for page in section.pages]
+        choice = st.sidebar.radio(
+            section.label,
+            labels,
+            label_visibility="collapsed",
+            key=f"nav_{section_name}",
+        )
+        selected_page = section.pages[labels.index(choice)]
+        if selected is None and st.session_state.get(f"nav_{section_name}") == choice:
+            selected = selected_page
 
-    page_options = sections[selected_section].pages
-    selected_page = st.sidebar.radio(
-        "Page",
-        page_options,
-        format_func=lambda page: page.label,
-    )
-
-    return selected_page
+    return selected or list(sections.values())[0].pages[0]
 
 
 def _render_import_health():
     with st.sidebar.expander("App health"):
-        sections = get_navigation_sections()
         navigation = {}
-        for section in sections.values():
+        for section in get_enterprise_navigation().values():
             for page in section.pages:
                 navigation[page.label] = (page.module, page.function)
 
@@ -113,14 +100,12 @@ def _render_import_health():
 
 
 def main():
-    st.set_page_config(page_title=APP_NAME, page_icon="🧠", layout="wide")
+    st.set_page_config(page_title=APP_NAME, page_icon="TC", layout="wide")
 
     _initialize_state()
-    _apply_theme()
-    _render_sidebar_brand()
+    apply_enterprise_theme()
+    _render_brand()
     _language_selector()
-
-    st.sidebar.markdown("---")
 
     selected_page = _render_navigation()
     _render_import_health()
