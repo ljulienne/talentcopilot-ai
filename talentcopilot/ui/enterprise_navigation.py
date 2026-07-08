@@ -42,6 +42,7 @@ def get_enterprise_navigation() -> Dict[str, EnterpriseSection]:
             "Understand candidates and compare decision signals.",
             [
                 EnterprisePage("Candidate Workspace", "talentcopilot.ui.candidate_workspace", "render_candidate_workspace", "◉", "Review candidates one by one."),
+                EnterprisePage("Candidate Intelligence", "talentcopilot.ui.candidate_workspace_v2", "render_candidate_workspace_v2", "◎", "Decision Core candidate profile view."),
                 EnterprisePage("Talent Intelligence", "talentcopilot.ui.talent_intelligence", "render_talent_intelligence", "⌕", "Understand talent coverage and sourcing readiness."),
                 EnterprisePage("Comparison", "talentcopilot.ui.comparison_workspace", "render_comparison_workspace", "⇄", "Compare candidates through decision signals."),
             ],
