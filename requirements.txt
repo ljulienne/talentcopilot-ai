@@ -6,3 +6,6 @@ numpy
 python-dotenv
 pyngrok
 reportlab
+
+pypdf>=5.0
+python-docx>=1.1
