@@ -3,7 +3,7 @@ from talentcopilot.decision_core.candidate_decision_profile_service import Candi
 from talentcopilot.decision_core.fit_intelligence_models import RoleRequirements
 
 
-def test_candidate_decision_profile_builds_with_budget():
+def test_candidate_decision_profile_builds_with_confidence():
     candidate = {
         "name": "Alice Martin",
         "skills": ["Project Management"],
@@ -23,11 +23,12 @@ def test_candidate_decision_profile_builds_with_budget():
         CandidateCompensation(expected_salary=120000),
     )
 
-    assert profile.metadata["profile_version"] == "dic-v2.0-alpha-e"
+    assert profile.metadata["profile_version"] == "dic-v2.0-alpha-f"
     assert profile.fit_score is not None
     assert profile.risk_level is not None
-    assert "budget_fit_score" in profile.metadata
-    assert "budget_recommendation" in profile.metadata
+    assert profile.confidence_score is not None
+    assert "confidence_score" in profile.metadata
+    assert "decision_quality" in profile.metadata
 
 
 def test_candidate_decision_profile_build_many():

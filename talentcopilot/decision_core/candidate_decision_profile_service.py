@@ -2,6 +2,7 @@ from hashlib import md5
 
 from talentcopilot.decision_core.budget_intelligence_engine import BudgetIntelligenceEngine
 from talentcopilot.decision_core.budget_intelligence_models import BudgetContext, CandidateCompensation
+from talentcopilot.decision_core.confidence_intelligence_engine import ConfidenceIntelligenceEngine
 from talentcopilot.decision_core.decision_trace_service import DecisionTraceService
 from talentcopilot.decision_core.evidence_graph_builder import EvidenceGraphBuilder
 from talentcopilot.decision_core.evidence_intelligence_engine import EvidenceIntelligenceEngine
@@ -49,8 +50,19 @@ class CandidateDecisionProfileService:
             budget_report = budget_engine.evaluate(graph, budget_context, compensation, fit_report)
             budget_engine.add_trace_step(trace, graph, budget_report)
 
+        confidence_engine = ConfidenceIntelligenceEngine()
+        confidence_report = confidence_engine.evaluate(
+            graph,
+            evidence_report,
+            fit_report,
+            risk_report,
+            trace,
+            budget_report,
+        )
+        confidence_engine.add_trace_step(trace, graph, confidence_report)
+
         metadata = {
-            "profile_version": "dic-v2.0-alpha-e",
+            "profile_version": "dic-v2.0-alpha-f",
             "evidence_status": evidence_report.status,
             "evidence_quality_score": str(evidence_report.evidence_quality_score),
             "evidence_readiness_score": str(evidence_report.evidence_readiness_score),
@@ -60,6 +72,9 @@ class CandidateDecisionProfileService:
             "risk_score": str(risk_report.risk_score),
             "risk_level": risk_report.risk_level,
             "risk_summary": risk_report.summary,
+            "confidence_score": str(confidence_report.confidence_score),
+            "confidence_level": confidence_report.confidence_level,
+            "decision_quality": confidence_report.decision_quality,
         }
 
         if budget_report:
@@ -77,7 +92,7 @@ class CandidateDecisionProfileService:
             evidence_graph=graph,
             decision_trace=trace,
             fit_score=fit_report.fit_score,
-            confidence_score=evidence_report.evidence_readiness_score,
+            confidence_score=confidence_report.confidence_score,
             risk_level=risk_report.risk_level,
             recommendation=None,
             metadata=metadata,
