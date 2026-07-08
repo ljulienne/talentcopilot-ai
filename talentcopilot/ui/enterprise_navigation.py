@@ -46,6 +46,13 @@ def get_enterprise_navigation() -> Dict[str, EnterpriseSection]:
                 EnterprisePage("Comparison", "talentcopilot.ui.comparison_workspace", "render_comparison_workspace", "⇄", "Compare candidates through decision signals."),
             ],
         ),
+        "interview": EnterpriseSection(
+            "Interview",
+            "Prepare structured interviews and score candidate evidence.",
+            [
+                EnterprisePage("Interview Workspace", "talentcopilot.ui.interview_workspace", "render_interview_workspace", "▥", "Prepare interviews with AI questions and scorecards."),
+            ],
+        ),
         "decision": EnterpriseSection(
             "Decision",
             "Move from analysis to action and collaborative decision.",
