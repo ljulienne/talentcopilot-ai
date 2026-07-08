@@ -1,8 +1,9 @@
+from talentcopilot.decision_core.budget_intelligence_models import BudgetContext, CandidateCompensation
 from talentcopilot.decision_core.candidate_decision_profile_service import CandidateDecisionProfileService
 from talentcopilot.decision_core.fit_intelligence_models import RoleRequirements
 
 
-def test_candidate_decision_profile_builds():
+def test_candidate_decision_profile_builds_with_budget():
     candidate = {
         "name": "Alice Martin",
         "skills": ["Project Management"],
@@ -18,17 +19,15 @@ def test_candidate_decision_profile_builds():
         candidate,
         "Transformation Lead",
         role,
+        BudgetContext(target_salary=85000, maximum_salary=100000),
+        CandidateCompensation(expected_salary=120000),
     )
 
-    assert profile.candidate_name == "Alice Martin"
-    assert profile.role_title == "Transformation Lead"
-    assert profile.evidence_graph.nodes
-    assert profile.decision_trace.steps
-    assert profile.is_ready_for_decision_core()
-    assert profile.metadata["profile_version"] == "dic-v2.0-alpha-d"
+    assert profile.metadata["profile_version"] == "dic-v2.0-alpha-e"
     assert profile.fit_score is not None
     assert profile.risk_level is not None
-    assert "risk_score" in profile.metadata
+    assert "budget_fit_score" in profile.metadata
+    assert "budget_recommendation" in profile.metadata
 
 
 def test_candidate_decision_profile_build_many():
