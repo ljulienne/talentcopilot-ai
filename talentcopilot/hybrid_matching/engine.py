@@ -4,7 +4,6 @@ from talentcopilot.hybrid_matching.models import HybridMatchingInput, HybridMatc
 from talentcopilot.hybrid_matching.report_engine import HybridRecruiterReportEngine
 from talentcopilot.semantic_intelligence.skill_matcher import SemanticSkillMatcher
 
-
 class HybridMatchingEngine:
     def __init__(
         self,
@@ -35,4 +34,5 @@ class HybridMatchingEngine:
         )
         report.explanation_report = self.explainability_engine.explain(report)
         report.recruiter_report = self.report_engine.build(report)
+        self.report_engine.attach_interview_questions(report)
         return report

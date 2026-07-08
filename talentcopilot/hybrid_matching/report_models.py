@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 from typing import List
 
-
 @dataclass
 class HybridRecruiterReport:
     candidate_name: str
@@ -12,3 +11,4 @@ class HybridRecruiterReport:
     gaps: List[str] = field(default_factory=list)
     interview_focus: List[str] = field(default_factory=list)
     action_recommendation: str = "Review"
+    structured_interview_questions: List[object] = field(default_factory=list)
