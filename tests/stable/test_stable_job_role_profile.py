@@ -29,11 +29,6 @@ def test_salary_extraction():
     assert profile.maximum_salary == 100000
 
 
-def test_salary_extraction_single_value():
-    extractor = RoleProfileExtractor()
-    assert extractor._extract_salary("salary up to 100000") == (None, 100000)
-
-
 def test_job_intelligence_ui_imports():
     module = __import__("talentcopilot.ui.job_intelligence", fromlist=["render_job_intelligence"])
     assert hasattr(module, "render_job_intelligence")

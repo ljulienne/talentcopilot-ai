@@ -1,7 +1,8 @@
 from talentcopilot.decision_core.orchestrator import DecisionCoreOrchestrator
 from talentcopilot.decision_core.orchestrator_models import DecisionCoreInput
-from talentcopilot.document_intelligence.pipeline import DocumentIntelligencePipeline
+from talentcopilot.document_intelligence.candidate_extractor import CandidateDocumentExtractor
 from talentcopilot.document_intelligence.models import ExtractedCandidateProfile
+from talentcopilot.document_intelligence.pipeline import DocumentIntelligencePipeline
 from talentcopilot.job_intelligence.pipeline import JobIntelligencePipeline
 from talentcopilot.real_matching.models import RealMatchingInput, RealMatchingOutput
 
@@ -44,28 +45,4 @@ class RealMatchingPipeline:
         )
 
     def _candidate_dict(self, candidate: ExtractedCandidateProfile) -> dict:
-        return {
-            "name": candidate.candidate_name,
-            "skills": candidate.skills,
-            "years_experience": self._infer_years(candidate.raw_excerpt),
-            "achievements": self._infer_achievements(candidate.raw_excerpt),
-        }
-
-    def _infer_years(self, text: str) -> int:
-        import re
-
-        lower = text.lower()
-        patterns = [
-            r"(\d+)\+?\s+years",
-            r"(\d+)\+?\s+ans",
-        ]
-        for pattern in patterns:
-            match = re.search(pattern, lower)
-            if match:
-                return int(match.group(1))
-        return 0
-
-    def _infer_achievements(self, text: str) -> list[str]:
-        if "%" in text:
-            return [text[:180]]
-        return []
+        return CandidateDocumentExtractor().to_candidate_dict(candidate)
