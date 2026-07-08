@@ -2,6 +2,7 @@ from hashlib import md5
 
 from talentcopilot.decision_core.decision_trace_service import DecisionTraceService
 from talentcopilot.decision_core.evidence_graph_builder import EvidenceGraphBuilder
+from talentcopilot.decision_core.evidence_intelligence_engine import EvidenceIntelligenceEngine
 from talentcopilot.decision_core.models import CandidateDecisionProfile
 
 
@@ -11,13 +12,22 @@ class CandidateDecisionProfileService:
         graph = EvidenceGraphBuilder().build_from_candidate_dict(candidate, role_title)
         trace = DecisionTraceService().initialize_trace(name, graph)
 
+        evidence_report = EvidenceIntelligenceEngine().evaluate(graph)
+        EvidenceIntelligenceEngine().add_trace_step(trace, graph, evidence_report)
+
         profile = CandidateDecisionProfile(
             profile_id=self._id("profile", name, role_title),
             candidate_name=name,
             role_title=role_title,
             evidence_graph=graph,
             decision_trace=trace,
-            metadata={"profile_version": "dic-v2.0-alpha-a"},
+            confidence_score=evidence_report.evidence_readiness_score,
+            metadata={
+                "profile_version": "dic-v2.0-alpha-b",
+                "evidence_status": evidence_report.status,
+                "evidence_quality_score": str(evidence_report.evidence_quality_score),
+                "evidence_readiness_score": str(evidence_report.evidence_readiness_score),
+            },
         )
 
         return profile

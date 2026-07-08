@@ -11,5 +11,7 @@ def test_decision_trace_contains_evidence_steps():
     actions = [step.action for step in profile.decision_trace.steps]
 
     assert "EvidenceGraphBuilder" in engines
+    assert "EvidenceIntelligenceEngine" in engines
     assert "CREATE_EVIDENCE_GRAPH" in actions
     assert "CALCULATE_EVIDENCE_COVERAGE" in actions
+    assert "EVALUATE_EVIDENCE_QUALITY" in actions
