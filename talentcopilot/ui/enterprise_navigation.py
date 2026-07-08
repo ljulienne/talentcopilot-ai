@@ -22,24 +22,24 @@ def get_enterprise_navigation() -> Dict[str, EnterpriseSection]:
     return {
         "command": EnterpriseSection(
             "Command",
-            "Daily cockpit and product overview.",
+            "Start here: product story and daily cockpit.",
             [
-                EnterprisePage("Recruitment Command Center", "talentcopilot.ui.command_center", "render_command_center", "⌂", "What needs attention today."),
                 EnterprisePage("Product Overview", "talentcopilot.ui.product_overview", "render_product_overview", "◇", "Understand the product and demo flow."),
+                EnterprisePage("Recruitment Command Center", "talentcopilot.ui.command_center", "render_command_center", "⌂", "What needs attention today."),
             ],
         ),
         "recruitment": EnterpriseSection(
             "Recruitment",
-            "Create, open and pilot recruitment workflows.",
+            "Create, open and operate recruitment workflows.",
             [
                 EnterprisePage("New Recruitment", "talentcopilot.ui.recruitment_wizard", "render_new_recruitment", "＋", "Create a recruitment."),
                 EnterprisePage("Open Recruitment", "talentcopilot.ui.open_recruitment", "render_open_recruitment", "▣", "Resume recruitment."),
-                EnterprisePage("Recruitment Workspace", "talentcopilot.ui.recruitment_workspace", "render_recruitment_workspace", "▦", "Pilot the active recruitment."),
+                EnterprisePage("Recruitment Workspace", "talentcopilot.ui.recruitment_workspace", "render_recruitment_workspace", "▦", "Pipeline, tasks and recruitment status."),
             ],
         ),
         "analysis": EnterpriseSection(
             "Analysis",
-            "Review candidates, compare profiles and understand talent coverage.",
+            "Understand candidates and compare decision signals.",
             [
                 EnterprisePage("Candidate Workspace", "talentcopilot.ui.candidate_workspace", "render_candidate_workspace", "◉", "Review candidates one by one."),
                 EnterprisePage("Talent Intelligence", "talentcopilot.ui.talent_intelligence", "render_talent_intelligence", "⌕", "Understand talent coverage and sourcing readiness."),
@@ -48,38 +48,37 @@ def get_enterprise_navigation() -> Dict[str, EnterpriseSection]:
         ),
         "interview": EnterpriseSection(
             "Interview",
-            "Prepare structured interviews and score candidate evidence.",
+            "Prepare, run and evaluate structured interviews.",
             [
-                EnterprisePage("Interview Workspace", "talentcopilot.ui.interview_workspace", "render_interview_workspace", "▥", "Prepare interviews with AI questions and scorecards."),
+                EnterprisePage("Interview Workspace", "talentcopilot.ui.interview_workspace", "render_interview_workspace", "▥", "Questions, notes, scorecards and evaluation."),
             ],
         ),
         "decision": EnterpriseSection(
             "Decision",
-            "Move from analysis to action and collaborative decision.",
+            "Evaluate feasibility and make collaborative hiring decisions.",
             [
-                EnterprisePage("Decision Board", "talentcopilot.ui.decision_board", "render_decision_board", "◆", "Make collaborative decisions."),
-                EnterprisePage("Recruiter Copilot", "talentcopilot.ui.recruiter_copilot_workspace", "render_recruiter_copilot_workspace", "✦", "Act on AI guidance."),
-                EnterprisePage("Hiring Budget", "talentcopilot.ui.hiring_budget", "render_hiring_budget", "¤", "Assess financial feasibility without changing fit score."),
+                EnterprisePage("Hiring Budget", "talentcopilot.ui.hiring_budget", "render_hiring_budget", "¤", "Financial feasibility without changing fit score."),
+                EnterprisePage("Decision Board", "talentcopilot.ui.decision_board", "render_decision_board", "◆", "Collaborative decision review."),
+                EnterprisePage("Recruiter Copilot", "talentcopilot.ui.recruiter_copilot_workspace", "render_recruiter_copilot_workspace", "✦", "Action-oriented recruiter guidance."),
             ],
         ),
         "reporting": EnterpriseSection(
             "Reporting",
-            "Prepare stakeholder-ready outputs and analytics.",
+            "Prepare stakeholder outputs and monitor recruitment health.",
             [
-                EnterprisePage("Executive Reporting", "talentcopilot.ui.executive_reporting", "render_executive_reporting", "▤", "Prepare stakeholder-ready reports."),
-                EnterprisePage("Analytics Dashboard", "talentcopilot.ui.analytics_dashboard", "render_analytics_dashboard", "▧", "Track recruitment health and KPIs."),
+                EnterprisePage("Analytics Dashboard", "talentcopilot.ui.analytics_dashboard", "render_analytics_dashboard", "▧", "Recruitment health and KPIs."),
+                EnterprisePage("Executive Reporting", "talentcopilot.ui.executive_reporting", "render_executive_reporting", "▤", "Stakeholder-ready report."),
             ],
         ),
         "administration": EnterpriseSection(
             "Administration",
-            "Demo, health, settings and design system.",
+            "Demo, release health, settings and design system.",
             [
-                EnterprisePage("Enterprise Demo Final", "talentcopilot.ui.enterprise_demo_final", "render_enterprise_demo_final", "▶", "Run the final Release 1.1 demo."),
-                EnterprisePage("Demo Experience", "talentcopilot.ui.demo_experience", "render_demo_experience", "▶", "Prepare a reliable demo."),
-                EnterprisePage("Release Summary", "talentcopilot.ui.release_summary", "render_release_summary", "★", "Review Release 1.0 status."),
+                EnterprisePage("Enterprise Demo Final", "talentcopilot.ui.enterprise_demo_final", "render_enterprise_demo_final", "▶", "Run the Release 1.1 demo."),
+                EnterprisePage("Release 1.1 Summary", "talentcopilot.ui.release_1_1_summary", "render_release_1_1_summary", "★", "Review Release 1.1 status."),
                 EnterprisePage("Release Readiness", "talentcopilot.ui.release_readiness", "render_release_readiness", "✓", "Validate release health."),
                 EnterprisePage("Session Health", "talentcopilot.ui.session_health", "render_session_health", "◌", "Check session quality."),
-                EnterprisePage("UI Showcase", "talentcopilot.ui.ui_showcase", "render_ui_showcase", "◧", "View TalentCopilot Design System components."),
+                EnterprisePage("UI Showcase", "talentcopilot.ui.ui_showcase", "render_ui_showcase", "◧", "View design system components."),
                 EnterprisePage("Settings", "talentcopilot.ui.settings", "render_settings", "⚙", "Configure the app."),
             ],
         ),
