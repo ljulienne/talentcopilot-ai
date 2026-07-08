@@ -58,7 +58,7 @@ def get_enterprise_navigation() -> Dict[str, EnterpriseSection]:
             "Decision",
             "Evaluate feasibility and make collaborative hiring decisions.",
             [
-                EnterprisePage("Decision Core", "talentcopilot.ui.decision_core", "render_decision_core", "◆", "Run Decision Intelligence Core v2."),
+                EnterprisePage("Decision Core", "talentcopilot.ui.decision_core", "render_decision_core", "◆", "Run Decision Intelligence Core."),
                 EnterprisePage("Decision Core Bridge", "talentcopilot.ui.decision_core_bridge", "render_decision_core_bridge", "◇", "Bridge current sessions to Decision Core profiles."),
                 EnterprisePage("Hiring Budget", "talentcopilot.ui.hiring_budget", "render_hiring_budget", "¤", "Financial feasibility without changing fit score."),
                 EnterprisePage("Decision Board", "talentcopilot.ui.decision_board", "render_decision_board", "◆", "Collaborative decision review."),
@@ -77,7 +77,8 @@ def get_enterprise_navigation() -> Dict[str, EnterpriseSection]:
             "Administration",
             "Demo, release health, settings, design system and architecture.",
             [
-                EnterprisePage("Enterprise Demo Final", "talentcopilot.ui.enterprise_demo_final", "render_enterprise_demo_final", "▶", "Run the Release 1.1 demo."),
+                EnterprisePage("AI Platform", "talentcopilot.ui.ai_platform", "render_ai_platform", "✦", "Monitor AI infrastructure foundation."),
+                EnterprisePage("Enterprise Demo Final", "talentcopilot.ui.enterprise_demo_final", "render_enterprise_demo_final", "▶", "Run the Release demo."),
                 EnterprisePage("Blueprint Overview", "talentcopilot.ui.blueprint_overview", "render_blueprint_overview", "▣", "Review product architecture foundation."),
                 EnterprisePage("Release 1.1 Summary", "talentcopilot.ui.release_1_1_summary", "render_release_1_1_summary", "★", "Review Release 1.1 status."),
                 EnterprisePage("Release Readiness", "talentcopilot.ui.release_readiness", "render_release_readiness", "✓", "Validate release health."),
