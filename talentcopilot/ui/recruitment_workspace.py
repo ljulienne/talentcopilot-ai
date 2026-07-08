@@ -1,5 +1,6 @@
 from talentcopilot.services.demo_session_factory import create_demo_recruitment_session
 from talentcopilot.services.recruitment_pipeline_service import RecruitmentPipelineService
+from talentcopilot.services.recruitment_tasks_service import RecruitmentTasksService
 from talentcopilot.services.recruitment_workspace_service import RecruitmentWorkspaceService
 from talentcopilot.services.streamlit_session_bridge import get_streamlit_session, set_streamlit_session
 from talentcopilot.ui.design_system.components import enterprise_hero, metric_grid, next_action_card, section_title
@@ -39,11 +40,7 @@ def _candidate_table(report):
         }
         for c in report.candidates
     ]
-
-    if rows:
-        st.dataframe(rows, use_container_width=True)
-    else:
-        st.info("No candidates available yet.")
+    st.dataframe(rows, use_container_width=True) if rows else st.info("No candidates available yet.")
 
 
 def _timeline(report):
@@ -58,6 +55,39 @@ def _timeline(report):
             st.caption(f"{event.label} — {event.description}")
 
 
+def _task_board(task_report):
+    import streamlit as st
+
+    metric_grid([
+        ("Tasks", str(task_report.total_tasks), "Total"),
+        ("Open", str(task_report.open_tasks), "To do"),
+        ("Blockers", str(len(task_report.blockers)), "Attention"),
+    ])
+
+    if task_report.blockers:
+        section_title("Blockers")
+        for blocker in task_report.blockers:
+            st.warning(blocker)
+
+    section_title("Task Board")
+    rows = [
+        {
+            "Task": task.title,
+            "Owner": task.owner,
+            "Priority": task.priority,
+            "Status": task.status,
+            "Detail": task.detail,
+        }
+        for task in task_report.tasks
+    ]
+    st.dataframe(rows, use_container_width=True)
+
+    for task in task_report.tasks:
+        with st.expander(f"{task.priority} · {task.title}"):
+            st.write(task.detail)
+            st.caption(f"Owner: {task.owner} · Status: {task.status}")
+
+
 def render_recruitment_workspace():
     import streamlit as st
 
@@ -66,6 +96,7 @@ def render_recruitment_workspace():
     session = get_streamlit_session()
     workspace_report = RecruitmentWorkspaceService().build(session)
     pipeline_report = RecruitmentPipelineService().build(session)
+    task_report = RecruitmentTasksService().build(session)
 
     enterprise_hero(
         "Recruitment Workspace",
@@ -80,6 +111,7 @@ def render_recruitment_workspace():
             set_streamlit_session(session)
             workspace_report = RecruitmentWorkspaceService().build(session)
             pipeline_report = RecruitmentPipelineService().build(session)
+            task_report = RecruitmentTasksService().build(session)
             st.success("Enterprise demo loaded.")
     with col2:
         st.caption(f"Active recruitment: {workspace_report.role_title} · Status: {workspace_report.status}")
@@ -88,18 +120,14 @@ def render_recruitment_workspace():
         ("Role", workspace_report.role_title, workspace_report.status),
         ("Candidates", str(workspace_report.candidates_count), "Total"),
         ("Analyzed", str(workspace_report.analyzed_count), "AI completed"),
-        ("Pipeline Readiness", f"{pipeline_report.overall_readiness}%", "Operational"),
+        ("Open Tasks", str(task_report.open_tasks), "Operational"),
     ])
-
-    if pipeline_report.blockers:
-        for blocker in pipeline_report.blockers:
-            st.warning(blocker)
 
     tab_pipeline, tab_candidates, tab_timeline, tab_actions = st.tabs([
         "Pipeline",
         "Candidates",
         "Timeline",
-        "Actions",
+        "Actions & Tasks",
     ])
 
     with tab_pipeline:
@@ -114,12 +142,7 @@ def render_recruitment_workspace():
         _timeline(workspace_report)
 
     with tab_actions:
-        section_title("Recommended actions")
-        for action in pipeline_report.next_actions:
-            with st.expander(f"{action.priority} · {action.title}"):
-                st.write(action.rationale)
-                st.caption(f"Owner: {action.owner}")
-
-        first_action = pipeline_report.next_actions[0] if pipeline_report.next_actions else None
-        if first_action:
-            next_action_card(first_action.title, first_action.rationale, "Continue")
+        _task_board(task_report)
+        if task_report.tasks:
+            first = task_report.tasks[0]
+            next_action_card(first.title, first.detail, "Continue")
