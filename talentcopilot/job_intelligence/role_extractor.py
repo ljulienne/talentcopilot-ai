@@ -1,3 +1,4 @@
+import os
 import re
 
 from talentcopilot.ai_core.llm_router import LLMRouter
@@ -6,6 +7,8 @@ from talentcopilot.ai_core.structured_outputs import StructuredOutputValidator
 from talentcopilot.extraction.skills_ontology import SkillsOntology
 from talentcopilot.extraction.text_signals import TextSignalExtractor
 from talentcopilot.job_intelligence.models import JobAnalysis, RoleProfile
+from talentcopilot.llm_extraction.adapters import RoleExtractionAdapter
+from talentcopilot.llm_extraction.engine import LLMExtractionEngine
 
 
 class RoleProfileExtractor:
@@ -16,6 +19,13 @@ class RoleProfileExtractor:
         self.signals = TextSignalExtractor()
 
     def extract(self, analysis: JobAnalysis) -> RoleProfile:
+        if self._should_use_llm():
+            try:
+                result = LLMExtractionEngine().extract_role(analysis.cleaned_text)
+                return RoleExtractionAdapter().to_role_profile(result, analysis.language)
+            except Exception:
+                pass
+
         extraction_text = self._best_text(analysis)
         response = self.router.run(
             AIRequest(
@@ -63,6 +73,14 @@ class RoleProfileExtractor:
             minimum_years_experience=profile.minimum_years_experience,
         )
 
+    def _should_use_llm(self) -> bool:
+        flag = os.environ.get("TALENTCOPILOT_USE_LLM_EXTRACTION", "auto").lower()
+        if flag in {"true", "1", "yes"}:
+            return True
+        if flag in {"false", "0", "no", "mock"}:
+            return False
+        return bool(os.environ.get("OPENAI_API_KEY"))
+
     def _best_text(self, analysis: JobAnalysis) -> str:
         if not analysis.sections:
             return analysis.cleaned_text[:6000]
@@ -83,8 +101,7 @@ class RoleProfileExtractor:
         return fallback or "Unknown Role"
 
     def _extract_required_skills(self, text: str) -> list[str]:
-        skills = self.ontology.extract_skills(text)
-        return skills
+        return self.ontology.extract_skills(text)
 
     def _extract_preferred_skills(self, text: str, required: list[str]) -> list[str]:
         lower = (text or "").lower()

@@ -83,6 +83,7 @@ def get_enterprise_navigation() -> Dict[str, EnterpriseSection]:
             "Administration",
             "Demo, release health, settings, design system and architecture.",
             [
+                EnterprisePage("LLM Extraction", "talentcopilot.ui.llm_extraction", "render_llm_extraction", "✧", "Structured LLM extraction engine."),
                 EnterprisePage("AI Platform", "talentcopilot.ui.ai_platform", "render_ai_platform", "✦", "Monitor AI infrastructure foundation."),
                 EnterprisePage("Enterprise Demo Final", "talentcopilot.ui.enterprise_demo_final", "render_enterprise_demo_final", "▶", "Run the Release demo."),
                 EnterprisePage("Blueprint Overview", "talentcopilot.ui.blueprint_overview", "render_blueprint_overview", "▣", "Review product architecture foundation."),
