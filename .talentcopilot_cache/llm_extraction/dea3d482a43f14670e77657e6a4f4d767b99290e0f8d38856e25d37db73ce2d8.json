@@ -1,0 +1,30 @@
+{
+  "facts": {
+    "title": "Extracted Role",
+    "required_skills": [
+      "HRIS",
+      "Project Management"
+    ],
+    "preferred_skills": [],
+    "required_languages": [],
+    "certifications": [],
+    "minimum_experience": 5,
+    "responsibilities": [
+      "Lead HRIS projects"
+    ],
+    "salary_min": null,
+    "salary_max": null,
+    "location": null,
+    "remote_policy": null
+  },
+  "insights": {
+    "seniority_level": "Senior",
+    "business_context": null,
+    "critical_requirements": [],
+    "nice_to_have": [],
+    "missing_information": []
+  },
+  "extraction_confidence": 0.8,
+  "source_summary": "Mock extraction",
+  "extraction_status": "OK"
+}

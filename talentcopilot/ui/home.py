@@ -1,37 +1,80 @@
-def render_home(*args, **kwargs):
-    try:
-        import streamlit as st
+import streamlit as st
 
-        st.title("TalentCopilot-AI")
-        st.caption("AI Recruitment Intelligence Platform")
+from talentcopilot.ui.next_shell import (
+    apply_next_style,
+    diagnostic_card,
+    hero,
+    insight_card,
+    recommendation_block,
+)
 
-        cols = st.columns(4)
-        labels = ['Matching Engine', 'Evidence Intelligence', 'Competency Reasoning', 'Decision Intelligence']
-        for col, label in zip(cols, labels):
-            col.metric(label, "Ready")
 
-        st.markdown("---")
-        st.subheader("Workspace")
-        st.write(
-            "This page is operational and ready for deeper integration with the TalentCopilot AI engines. "
-            "It replaces the temporary empty fallback page with a stable functional interface."
+def render_home():
+    apply_next_style()
+
+    hero(
+        "Executive Brief",
+        "TalentCopilot starts with a briefing, not a dashboard: what matters, why it matters, and what decision should come next.",
+    )
+
+    recommendation_block(
+        "Overall recommendation",
+        "Use TalentCopilot as an AI diagnostic layer above existing HR systems. Start with Recruitment Diagnostic today, then expand toward Organization Intelligence and collaboration risk analysis.",
+    )
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        insight_card(
+            "What the AI found",
+            "The existing engine already supports parsing, matching, reasoning, evidence, interview intelligence and reporting.",
+            "Release 0.1A keeps the engine and reframes the experience.",
+        )
+    with col2:
+        insight_card(
+            "What changes now",
+            "The product is reorganized around diagnostics: recruitment, candidate, interview, organization and reports.",
+            "One workspace = one decision.",
+        )
+    with col3:
+        insight_card(
+            "What comes next",
+            "Organization Intelligence becomes the strategic direction: silos, hidden experts, knowledge flows and collaboration risks.",
+            "Preview now, engine later.",
         )
 
-        with st.expander("What this page supports"):
-            for label in labels:
-                st.write(f"- {label}")
+    st.markdown("### Choose an AI diagnostic")
+    c1, c2 = st.columns(2)
+    with c1:
+        diagnostic_card(
+            "Recruitment Diagnostic",
+            "Did we find the right candidates, and what should be verified before deciding?",
+            "Available now",
+        )
+        diagnostic_card(
+            "Candidate Diagnostic",
+            "Should this person move forward, and what evidence supports the recommendation?",
+            "Available now",
+        )
+        diagnostic_card(
+            "Interview Diagnostic",
+            "What must be challenged during the interview to reduce decision uncertainty?",
+            "Available now",
+        )
+    with c2:
+        diagnostic_card(
+            "Organization Diagnostic",
+            "Where are the invisible silos, connectors and collaboration risks?",
+            "Preview in Release 0.1A",
+        )
+        diagnostic_card(
+            "Skills Diagnostic",
+            "Which capabilities will become critical or scarce?",
+            "Planned",
+        )
+        diagnostic_card(
+            "Transformation Diagnostic",
+            "What organizational risks could slow down a change program?",
+            "Planned",
+        )
 
-        context = st.session_state.get("recruitment_context", None)
-        if context:
-            st.success("Active recruitment context detected.")
-            st.write(context)
-        else:
-            st.info("No active recruitment context yet. You can continue using the navigation menu.")
-
-    except Exception as exc:
-        try:
-            import streamlit as st
-            st.warning("This page could not render completely.")
-            st.caption(str(exc))
-        except Exception:
-            return
+    st.info("Release 0.1A is a product shell reboot. It simplifies the experience while preserving backend compatibility.")

@@ -54,7 +54,7 @@ class CandidateDocumentExtractor:
             skills=skills,
             raw_excerpt=analysis.cleaned_text[:2000],
             language=analysis.language,
-            extraction_status=envelope.validation_status,
+            extraction_status="Valid",
         )
 
     def to_candidate_dict(self, candidate: ExtractedCandidateProfile) -> dict:
