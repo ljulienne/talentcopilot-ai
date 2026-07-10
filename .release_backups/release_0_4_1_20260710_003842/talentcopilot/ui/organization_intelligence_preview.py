@@ -4,20 +4,11 @@ import streamlit as st
 from talentcopilot.organization_intelligence.demo_data import demo_dataframe
 from talentcopilot.organization_intelligence.ingestion import dataframe_to_employees, load_uploaded_file
 from talentcopilot.organization_intelligence.knowledge_engine import KnowledgeConcentrationEngine
-from talentcopilot.organization_intelligence.graph import OrganizationGraphBuilder
-from talentcopilot.organization_intelligence.graph_engine import OrganizationGraphEngine
-from talentcopilot.organization_intelligence.graph_export import edges_dataframe
-from talentcopilot.intelligence_core.adapters import KnowledgeInsightAdapter
-from talentcopilot.intelligence_core.engine import ExecutiveEngine
-from talentcopilot.ui.intelligence_core import render_executive_brief, render_insight
 from talentcopilot.ui.next_shell import apply_next_style, hero, insight_card, recommendation_block
 
 
 def _render_diagnostic(diagnostic):
-    insights = KnowledgeInsightAdapter().from_diagnostic(diagnostic)
-    brief = ExecutiveEngine().generate(insights)
-    render_executive_brief(brief)
-    recommendation_block("Diagnostic summary", diagnostic.summary)
+    recommendation_block("Executive Brief", diagnostic.summary)
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Employees analyzed", diagnostic.employee_count)
@@ -29,11 +20,7 @@ def _render_diagnostic(diagnostic):
         st.info("No skill data was available for diagnosis.")
         return
 
-    st.markdown("### Priority organizational insights")
-    for index, insight in enumerate(insights[:5]):
-        render_insight(insight, expanded=index == 0)
-
-    st.markdown("### Detailed knowledge risks")
+    st.markdown("### Priority knowledge risks")
     for risk in diagnostic.skill_risks[:8]:
         badge = "🔴" if risk.risk_level == "High" else "🟠" if risk.risk_level == "Medium" else "🟢"
         with st.expander(f"{badge} {risk.skill} — {risk.risk_score}/100 ({risk.risk_level})", expanded=risk.risk_level == "High"):
@@ -101,56 +88,6 @@ def render_organization_intelligence_preview():
 
         diagnostic = KnowledgeConcentrationEngine().analyze(employees)
         _render_diagnostic(diagnostic)
-
-        st.markdown("---")
-        st.markdown("### Organization graph foundation")
-        graph = OrganizationGraphBuilder().build(employees)
-        graph_diagnostic = OrganizationGraphEngine().analyze(graph)
-
-        g1, g2, g3, g4 = st.columns(4)
-        g1.metric("People nodes", graph_diagnostic.employee_count)
-        g2.metric("Inferred relationships", graph_diagnostic.edge_count)
-        g3.metric("Key connectors", graph_diagnostic.connector_count)
-        g4.metric("Isolated departments", graph_diagnostic.isolated_department_count)
-
-        if graph_diagnostic.insights:
-            st.markdown("#### Network insights")
-            for index, insight in enumerate(graph_diagnostic.insights[:4]):
-                render_insight(insight, expanded=index == 0)
-
-        left, right = st.columns(2)
-        with left:
-            st.markdown("#### Most connected people")
-            people_df = pd.DataFrame([
-                {
-                    "Name": item.name,
-                    "Department": item.department,
-                    "Relationships": item.degree,
-                    "Cross-department": item.cross_department_links,
-                }
-                for item in graph_diagnostic.people[:8]
-            ])
-            st.dataframe(people_df, use_container_width=True, hide_index=True)
-        with right:
-            st.markdown("#### Department connectivity")
-            dept_df = pd.DataFrame([
-                {
-                    "Department": item.department,
-                    "Employees": item.employee_count,
-                    "External links": item.external_links,
-                    "Connectivity": item.connectivity_score,
-                }
-                for item in graph_diagnostic.departments
-            ])
-            st.dataframe(dept_df, use_container_width=True, hide_index=True)
-
-        graph_export = edges_dataframe(graph)
-        st.download_button(
-            "Download inferred organization graph",
-            graph_export.to_csv(index=False).encode("utf-8"),
-            file_name="talentcopilot_organization_graph.csv",
-            mime="text/csv",
-        )
     except Exception as exc:
         st.error("The organization diagnostic could not be generated.")
         st.exception(exc)
