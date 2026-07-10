@@ -8,7 +8,6 @@ class EnterprisePage:
     module: str
     function: str
     description: str = ""
-    icon: str = "•"
 
 
 @dataclass(frozen=True)
@@ -16,46 +15,39 @@ class EnterpriseSection:
     title: str
     description: str
     pages: List[EnterprisePage]
-    icon: str = ""
-
-    @property
-    def label(self) -> str:
-        """Compatibility property used by the Streamlit shell."""
-        return self.title
 
 
-def _page(label, module, function, description="", icon="•"):
-    return EnterprisePage(label, module, function, description, icon)
+def _page(label, module, function, description=""):
+    return EnterprisePage(label, module, function, description)
 
 
-# The 11 Release 1.1 compatibility pages remain visible while five Next pages
-# introduce the new product direction. Total: exactly 16 pages.
+# 11 legacy pages required by release 1.1 tests + 5 TalentCopilot Next pages = 16 visible pages.
 COMMAND_PAGES = [
-    _page("Executive Brief", "talentcopilot.ui.home", "render_home", "What matters and what to do next.", "✦"),
-    _page("Product Overview", "talentcopilot.ui.product_overview", "render_product_overview", icon="◈"),
-    _page("Recruitment Command Center", "talentcopilot.ui.command_center", "render_command_center", icon="◎"),
+    _page("Product Overview", "talentcopilot.ui.product_overview", "render_product_overview"),
+    _page("Recruitment Command Center", "talentcopilot.ui.command_center", "render_command_center"),
+    _page("Executive Brief", "talentcopilot.ui.home", "render_home", "AI-first product entry point."),
 ]
 
 ANALYSIS_PAGES = [
-    _page("Organization Intelligence", "talentcopilot.ui.organization_intelligence_preview", "render_organization_intelligence_preview", "Diagnose collaboration patterns from uploaded data.", "◉"),
-    _page("Recruitment Workspace", "talentcopilot.ui.recruitment_workspace", "render_recruitment_workspace", icon="▣"),
-    _page("Candidate Workspace", "talentcopilot.ui.candidate_workspace", "render_candidate_workspace", icon="◇"),
-    _page("Comparison", "talentcopilot.ui.comparison_workspace", "render_comparison_workspace", icon="⇄"),
-    _page("Analytics Dashboard", "talentcopilot.ui.analytics_dashboard", "render_analytics_dashboard", icon="▥"),
+    _page("Recruitment Workspace", "talentcopilot.ui.recruitment_workspace", "render_recruitment_workspace"),
+    _page("Candidate Workspace", "talentcopilot.ui.candidate_workspace", "render_candidate_workspace"),
+    _page("Comparison", "talentcopilot.ui.comparison_workspace", "render_comparison_workspace"),
+    _page("Analytics Dashboard", "talentcopilot.ui.analytics_dashboard", "render_analytics_dashboard"),
+    _page("Organization Intelligence", "talentcopilot.ui.organization_intelligence_preview", "render_organization_intelligence_preview"),
 ]
 
 DECISION_PAGES = [
-    _page("Interview Workspace", "talentcopilot.ui.interview_workspace", "render_interview_workspace", icon="◌"),
-    _page("Hiring Budget", "talentcopilot.ui.hiring_budget", "render_hiring_budget", icon="¤"),
-    _page("Decision Board", "talentcopilot.ui.decision_board", "render_decision_board", icon="✓"),
-    _page("Executive Reporting", "talentcopilot.ui.executive_reporting", "render_executive_reporting", icon="▤"),
-    _page("Enterprise Demo Final", "talentcopilot.ui.enterprise_demo_final", "render_enterprise_demo_final", icon="▶"),
+    _page("Interview Workspace", "talentcopilot.ui.interview_workspace", "render_interview_workspace"),
+    _page("Hiring Budget", "talentcopilot.ui.hiring_budget", "render_hiring_budget"),
+    _page("Decision Board", "talentcopilot.ui.decision_board", "render_decision_board"),
+    _page("Executive Reporting", "talentcopilot.ui.executive_reporting", "render_executive_reporting"),
+    _page("Enterprise Demo Final", "talentcopilot.ui.enterprise_demo_final", "render_enterprise_demo_final"),
 ]
 
 ADMINISTRATION_PAGES = [
-    _page("Candidate Intelligence", "talentcopilot.ui.candidate_workspace_v2", "render_candidate_workspace_v2", icon="◆"),
-    _page("Interview Intelligence", "talentcopilot.ui.interview_intelligence", "render_interview_intelligence", icon="?"),
-    _page("AI Copilot", "talentcopilot.ui.recruiter_copilot_workspace", "render_recruiter_copilot_workspace", icon="✧"),
+    _page("Candidate Intelligence", "talentcopilot.ui.candidate_workspace_v2", "render_candidate_workspace_v2"),
+    _page("Interview Intelligence", "talentcopilot.ui.interview_intelligence", "render_interview_intelligence"),
+    _page("AI Copilot", "talentcopilot.ui.recruiter_copilot_workspace", "render_recruiter_copilot_workspace"),
 ]
 
 
@@ -87,10 +79,26 @@ LEGACY_PAGES = {
 
 def get_enterprise_navigation() -> Dict[str, EnterpriseSection]:
     return {
-        "command": EnterpriseSection("Start", "Begin with a decision-oriented AI brief.", COMMAND_PAGES, "✦"),
-        "analysis": EnterpriseSection("Diagnose", "Explore recruitment and organizational signals.", ANALYSIS_PAGES, "◉"),
-        "decision": EnterpriseSection("Decide", "Turn evidence into interviews, decisions and reports.", DECISION_PAGES, "✓"),
-        "administration": EnterpriseSection("Explore", "Advanced and compatibility workspaces.", ADMINISTRATION_PAGES, "⋯"),
+        "command": EnterpriseSection(
+            title="Command",
+            description="Executive entry points and product overview.",
+            pages=COMMAND_PAGES,
+        ),
+        "analysis": EnterpriseSection(
+            title="Analysis",
+            description="Recruitment, candidate and organization analysis.",
+            pages=ANALYSIS_PAGES,
+        ),
+        "decision": EnterpriseSection(
+            title="Decision",
+            description="Decision support, interview and executive reporting.",
+            pages=DECISION_PAGES,
+        ),
+        "administration": EnterpriseSection(
+            title="Administration",
+            description="TalentCopilot Next compatibility and AI workspaces.",
+            pages=ADMINISTRATION_PAGES,
+        ),
     }
 
 

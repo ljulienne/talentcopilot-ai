@@ -46,7 +46,7 @@ def _select_page():
     selected_section_key = st.sidebar.radio(
         "Workspace",
         section_keys,
-        format_func=lambda key: f"{sections[key].icon} {sections[key].label}".strip(),
+        format_func=lambda key: sections[key].label,
     )
     section = sections[selected_section_key]
     st.sidebar.caption(section.description)
@@ -76,11 +76,6 @@ def _render_import_health():
         else:
             st.success("Imports OK")
 
-
-
-def navigation_registry():
-    """Return the current visible page registry for compatibility and audits."""
-    return {page.label: page for section in get_enterprise_navigation().values() for page in section.pages}
 
 def main():
     st.set_page_config(page_title=APP_NAME, page_icon="TC", layout="wide")
