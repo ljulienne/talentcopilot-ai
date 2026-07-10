@@ -1,7 +1,0 @@
-new|docs/TALENTCOPILOT_NEXT_RELEASE_0_4.md
-existing|talentcopilot/organization_intelligence/__init__.py
-new|talentcopilot/organization_intelligence/graph.py
-new|talentcopilot/organization_intelligence/graph_engine.py
-new|talentcopilot/organization_intelligence/graph_export.py
-existing|talentcopilot/ui/organization_intelligence_preview.py
-new|tests/stable/test_stable_organization_graph.py

@@ -9,3 +9,7 @@ __pycache__/
 data/*
 !data/enterprise_demo/
 !data/enterprise_demo/**
+
+# Local release installer artifacts
+.release_backups/
+.release_*_backup_path
