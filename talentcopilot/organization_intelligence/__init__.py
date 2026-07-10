@@ -1,4 +1,4 @@
-from .models import CollaborationRecord, OrganizationDiagnostic
-from .service import OrganizationIntelligenceService
+from .knowledge_engine import KnowledgeConcentrationEngine
+from .models import EmployeeRecord, KnowledgeDiagnostic, SkillRisk
 
-__all__ = ["CollaborationRecord", "OrganizationDiagnostic", "OrganizationIntelligenceService"]
+__all__ = ["KnowledgeConcentrationEngine", "EmployeeRecord", "KnowledgeDiagnostic", "SkillRisk"]

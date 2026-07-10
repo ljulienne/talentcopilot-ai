@@ -1,37 +1,41 @@
 from dataclasses import dataclass, field
+from typing import List
 
 
 @dataclass(frozen=True)
-class CollaborationRecord:
-    source_person: str
-    source_department: str
-    target_person: str
-    target_department: str
-    interactions: int = 1
-
-
-@dataclass(frozen=True)
-class ConnectorInsight:
-    person: str
-    departments_reached: int
-    interaction_weight: int
-
-
-@dataclass(frozen=True)
-class DepartmentInsight:
+class EmployeeRecord:
+    employee_id: str
+    name: str
     department: str
-    internal_weight: int
-    external_weight: int
-    collaboration_ratio: float
+    role: str = ""
+    manager: str = ""
+    skills: List[str] = field(default_factory=list)
+    critical_skills: List[str] = field(default_factory=list)
+    backup_for: List[str] = field(default_factory=list)
+    retirement_risk: bool = False
+    documentation_level: str = "unknown"
 
 
 @dataclass(frozen=True)
-class OrganizationDiagnostic:
-    record_count: int
-    departments: list[str]
-    connectors: list[ConnectorInsight] = field(default_factory=list)
-    department_insights: list[DepartmentInsight] = field(default_factory=list)
-    cross_department_weight: int = 0
-    total_weight: int = 0
-    executive_summary: str = ""
-    recommendations: list[str] = field(default_factory=list)
+class SkillRisk:
+    skill: str
+    holders: List[str]
+    departments: List[str]
+    backups: List[str]
+    critical: bool
+    risk_score: int
+    risk_level: str
+    reasons: List[str]
+    recommendations: List[str]
+
+
+@dataclass(frozen=True)
+class KnowledgeDiagnostic:
+    employee_count: int
+    skill_count: int
+    high_risk_count: int
+    medium_risk_count: int
+    low_risk_count: int
+    overall_risk_score: int
+    summary: str
+    skill_risks: List[SkillRisk]
