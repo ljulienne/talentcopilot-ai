@@ -1,0 +1,8 @@
+new|docs/TALENTCOPILOT_NEXT_RELEASE_0_3.md
+new|talentcopilot/intelligence_core/__init__.py
+new|talentcopilot/intelligence_core/adapters.py
+new|talentcopilot/intelligence_core/engine.py
+new|talentcopilot/intelligence_core/models.py
+new|talentcopilot/ui/intelligence_core.py
+existing|talentcopilot/ui/organization_intelligence_preview.py
+new|tests/stable/test_stable_intelligence_core.py
