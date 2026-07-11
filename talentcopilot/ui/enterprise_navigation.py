@@ -55,7 +55,7 @@ DECISION_PAGES = [
 ADMINISTRATION_PAGES = [
     _page("Candidate Intelligence", "talentcopilot.ui.candidate_workspace_v2", "render_candidate_workspace_v2", icon="◆"),
     _page("Interview Intelligence", "talentcopilot.ui.interview_intelligence", "render_interview_intelligence", icon="?"),
-    _page("AI Copilot", "talentcopilot.ui.recruiter_copilot_workspace", "render_recruiter_copilot_workspace", icon="✧"),
+    _page("Executive Copilot", "talentcopilot.ui.executive_copilot_workspace", "render_executive_copilot_workspace", "Ask evidence-grounded executive HR questions.", "✧"),
 ]
 
 

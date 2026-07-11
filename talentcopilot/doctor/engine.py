@@ -10,6 +10,7 @@ from talentcopilot.doctor.checks import (
     check_release_artifacts,
     check_repository_layout,
     check_test_inventory,
+    check_executive_copilot_readiness,
 )
 from talentcopilot.doctor.models import DoctorReport
 
@@ -25,6 +26,7 @@ class TalentCopilotDoctor:
             check_critical_imports(),
             check_navigation(),
             check_test_inventory(self.repo),
+            check_executive_copilot_readiness(self.repo),
         ]
         if include_git:
             checks.extend(

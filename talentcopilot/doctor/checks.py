@@ -190,3 +190,51 @@ def check_git_state(repo: Path) -> DoctorCheck:
             {"change_count": len(changes)},
         )
     return DoctorCheck("Git state", CheckStatus.PASS, "Working tree is clean and remote URL is safe.")
+
+
+def check_executive_copilot_readiness(repo: Path) -> DoctorCheck:
+    try:
+        from talentcopilot.release_health import load_release_manifest, validate_release_files
+        manifest = load_release_manifest(repo, "1.4")
+    except Exception as exc:
+        return DoctorCheck(
+            "Executive Copilot readiness",
+            CheckStatus.WARN,
+            "Release 1.4 manifest is unavailable.",
+            (f"{type(exc).__name__}: {exc}",),
+        )
+
+    missing = validate_release_files(repo, manifest)
+    if missing:
+        return DoctorCheck(
+            "Executive Copilot readiness",
+            CheckStatus.FAIL,
+            f"Release {manifest.release} is incomplete.",
+            missing,
+            {"release": manifest.release, "missing_count": len(missing)},
+        )
+
+    try:
+        from talentcopilot.ui.enterprise_navigation import get_page_by_label
+        page = get_page_by_label("Executive Copilot")
+    except Exception as exc:
+        return DoctorCheck(
+            "Executive Copilot readiness",
+            CheckStatus.FAIL,
+            "Executive Copilot navigation could not be validated.",
+            (f"{type(exc).__name__}: {exc}",),
+        )
+
+    if page is None:
+        return DoctorCheck(
+            "Executive Copilot readiness",
+            CheckStatus.FAIL,
+            "Executive Copilot is absent from navigation.",
+        )
+
+    return DoctorCheck(
+        "Executive Copilot readiness",
+        CheckStatus.PASS,
+        f"Release {manifest.release} ({manifest.product_label}) is complete and navigable.",
+        metadata={"release": manifest.release, "required_file_count": len(manifest.required_files)},
+    )

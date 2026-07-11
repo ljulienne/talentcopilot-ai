@@ -1,0 +1,31 @@
+{
+  "release": "1.4",
+  "product_label": "Executive Copilot",
+  "required_files": [
+    "talentcopilot/executive_copilot/__init__.py",
+    "talentcopilot/executive_copilot/engine.py",
+    "talentcopilot/executive_copilot/models.py",
+    "talentcopilot/executive_copilot/question_catalog.py",
+    "talentcopilot/executive_copilot/question_router.py",
+    "talentcopilot/executive_copilot/response_view.py",
+    "talentcopilot/executive_copilot/context.py",
+    "talentcopilot/executive_copilot/session.py",
+    "talentcopilot/executive_copilot/actions.py",
+    "talentcopilot/ui/executive_copilot_workspace.py",
+    "talentcopilot/ui/navigation_actions.py",
+    "talentcopilot/ui/executive/__init__.py",
+    "talentcopilot/ui/executive/cards.py",
+    "talentcopilot/ui/executive/response_view.py",
+    "talentcopilot/ui/executive/section.py",
+    "talentcopilot/ui/executive/theme.py",
+    "talentcopilot/ui/executive/timeline.py"
+  ],
+  "required_tests": [
+    "tests/stable/test_stable_executive_copilot_core.py",
+    "tests/stable/test_stable_executive_design_system.py",
+    "tests/stable/test_stable_executive_copilot_response_view.py",
+    "tests/stable/test_stable_executive_copilot_workspace.py",
+    "tests/stable/test_stable_executive_copilot_sprint_c.py",
+    "tests/stable/test_stable_release_1_4_readiness.py"
+  ]
+}
