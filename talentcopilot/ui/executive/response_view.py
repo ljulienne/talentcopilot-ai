@@ -117,28 +117,46 @@ def render_copilot_response(
         ]
         render_timeline(trace_steps, title="Decision trace")
 
-        included_engines = []
+        workspace_sources = {}
+
         for item in view.trace:
-            if item.included and item.source_engine not in included_engines:
-                included_engines.append(item.source_engine)
-        if included_engines:
+            if not item.included:
+                continue
+
+            page_label = page_for_engine(item.source_engine)
+            workspace_sources.setdefault(page_label, []).append(
+                item.source_engine
+            )
+
+        if workspace_sources:
             render_section(
                 "Explore source workspaces",
                 subtitle="Open the workspace most closely related to each contributing engine.",
             )
-            columns = st.columns(min(3, len(included_engines)))
-            for index, engine in enumerate(included_engines):
-                page_label = page_for_engine(engine)
+
+            columns = st.columns(min(3, len(workspace_sources)))
+
+            for index, (page_label, engines) in enumerate(
+                workspace_sources.items()
+            ):
+                engine_summary = ", ".join(engines)
+
                 with columns[index % len(columns)]:
                     if st.button(
                         f"Open {page_label}",
-                        key=f"{key_prefix}_open_{index}_{engine}",
-                        use_container_width=True,
-                        help=f"Explore evidence contributed by {engine}.",
+                        key=f"{key_prefix}_open_workspace_{index}",
+                        width="stretch",
+                        help=(
+                            "Explore evidence contributed by: "
+                            f"{engine_summary}."
+                        ),
                     ):
                         request_page(
                             page_label,
-                            reason=f"Opened from Executive Copilot · {engine}",
+                            reason=(
+                                "Opened from Executive Copilot · "
+                                f"{engine_summary}"
+                            ),
                         )
                         st.rerun()
 

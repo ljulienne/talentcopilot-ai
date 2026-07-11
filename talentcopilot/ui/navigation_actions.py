@@ -23,11 +23,30 @@ ENGINE_PAGE_MAP: dict[str, str] = {
 }
 
 
-def page_for_engine(source_engine: str) -> str:
-    """Return the most relevant visible workspace for an intelligence source."""
-    return ENGINE_PAGE_MAP.get(source_engine, "Organization Intelligence")
+def page_for_engine(engine: str) -> str:
+    """Return the workspace associated with an intelligence engine."""
+    normalized = (engine or '').strip().lower()
 
+    mappings = {
+        "skills": "Organization Intelligence",
+        "skills intelligence": "Organization Intelligence",
+        "workforce": "Organization Intelligence",
+        "workforce intelligence": "Organization Intelligence",
+        "collaboration": "Organization Intelligence",
+        "collaboration intelligence": "Organization Intelligence",
+        "knowledge": "Organization Intelligence",
+        "knowledge concentration": "Organization Intelligence",
+        "organization graph": "Organization Intelligence",
+        "matching": "Recruitment Workspace",
+        "recruitment": "Recruitment Workspace",
+        "candidate": "Candidate Workspace",
+        "decision": "Decision Board",
+        "decision queue": "Decision Board",
+        "executive reasoning": "Executive Reporting",
+        "executive": "Executive Reporting",
+    }
 
+    return mappings.get(normalized, "Organization Intelligence")
 def request_page(page_label: str, *, reason: str = "") -> None:
     """Queue a page change for the Streamlit shell on the next rerun."""
     import streamlit as st
