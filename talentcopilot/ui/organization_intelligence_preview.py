@@ -7,13 +7,14 @@ from talentcopilot.organization_intelligence.knowledge_engine import KnowledgeCo
 from talentcopilot.organization_intelligence.graph import OrganizationGraphBuilder
 from talentcopilot.organization_intelligence.graph_engine import OrganizationGraphEngine
 from talentcopilot.organization_intelligence.graph_export import edges_dataframe
+from talentcopilot.organization_intelligence.collaboration_engine import CollaborationIntelligenceEngine
 from talentcopilot.intelligence_core.adapters import KnowledgeInsightAdapter
 from talentcopilot.intelligence_core.engine import DecisionEngine, ExecutiveEngine
 from talentcopilot.ui.intelligence_core import render_executive_brief, render_insight
 from talentcopilot.ui.decision_queue import render_decision_queue
 from talentcopilot.ui.decision_timeline import render_decision_timeline
+from talentcopilot.ui.collaboration_intelligence import render_collaboration_intelligence
 from talentcopilot.ui.next_shell import apply_next_style, hero, insight_card, recommendation_block
-from talentcopilot.skills_intelligence import SkillsIntelligenceEngine, skills_dataframe
 
 
 def _render_diagnostic(diagnostic):
@@ -71,6 +72,7 @@ def _render_diagnostic(diagnostic):
 
     return insights
 
+
 def render_organization_intelligence_preview():
     apply_next_style()
     hero(
@@ -104,7 +106,8 @@ def render_organization_intelligence_preview():
             employees = load_uploaded_file(uploaded)
 
         diagnostic = KnowledgeConcentrationEngine().analyze(employees)
-        knowledge_insights = _render_diagnostic(diagnostic)
+        knowledge_insights = _render_diagnostic(diagnostic) or []
+
         st.markdown("---")
         st.markdown("### Organization graph foundation")
         graph = OrganizationGraphBuilder().build(employees)
@@ -121,48 +124,13 @@ def render_organization_intelligence_preview():
             for index, insight in enumerate(graph_diagnostic.insights[:4]):
                 render_insight(insight, expanded=index == 0)
 
-        st.markdown("---")
-        st.markdown("### Skills Intelligence")
-        st.caption("Normalize the skills portfolio, identify strategic gaps and reveal capabilities that are rare or concentrated.")
-        strategic_text = st.text_input(
-            "Strategic skills to assess",
-            value="HRIS, Project Management, Payroll, Artificial Intelligence",
-            help="Comma-separated capabilities that matter to the organization's strategy.",
-        )
-        strategic_skills = [item.strip() for item in strategic_text.split(",") if item.strip()]
-        skills_report = SkillsIntelligenceEngine().analyze(employees, strategic_skills=strategic_skills)
-
-        s1, s2, s3, s4 = st.columns(4)
-        s1.metric("Portfolio health", f"{skills_report.portfolio_health_score}/100")
-        s2.metric("Normalized skills", skills_report.unique_skill_count)
-        s3.metric("Critical exposures", skills_report.critical_skill_count)
-        s4.metric("Strategic gaps", skills_report.missing_strategic_count)
-        st.write(skills_report.executive_summary)
-
-        if skills_report.insights:
-            st.markdown("#### Priority skills insights")
-            for index, insight in enumerate(skills_report.insights[:4]):
-                render_insight(insight, expanded=index == 0)
-
-        skills_table = skills_dataframe(skills_report)
-        if not skills_table.empty:
-            st.markdown("#### Skills portfolio")
-            st.dataframe(
-                skills_table[["skill", "category", "strategic", "gap_status", "holder_count", "department_count", "rarity_score", "coverage_level"]],
-                use_container_width=True,
-                hide_index=True,
-            )
-            st.download_button(
-                "Download skills intelligence CSV",
-                skills_table.to_csv(index=False).encode("utf-8"),
-                file_name="talentcopilot_skills_intelligence.csv",
-                mime="text/csv",
-            )
+        collaboration_diagnostic = CollaborationIntelligenceEngine().analyze(graph)
+        render_collaboration_intelligence(collaboration_diagnostic)
 
         combined_insights = [
-            *(knowledge_insights or []),
-            *(getattr(graph_diagnostic, "insights", []) or []),
-            *(getattr(skills_report, "insights", []) or []),
+            *knowledge_insights,
+            *(graph_diagnostic.insights or []),
+            *(collaboration_diagnostic.insights or []),
         ]
         decision_queue = DecisionEngine().generate(combined_insights)
         st.markdown("---")
