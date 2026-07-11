@@ -32,4 +32,12 @@ def render_timeline(steps: Iterable[TimelineStep], *, title: str = "Decision tra
             </div>
             """
         )
-    st.markdown(f'<div class="tc-exec-trace">{"".join(content)}</div>', unsafe_allow_html=True)
+    # Remove leading indentation from HTML fragments. Otherwise Markdown may
+    # interpret the HTML as a code block and display the tags as raw text.
+    normalized_content = "".join(fragment.strip() for fragment in content)
+    trace_html = f'<div class="tc-exec-trace">{normalized_content}</div>'
+
+    st.markdown(
+        trace_html,
+        unsafe_allow_html=True,
+    )
