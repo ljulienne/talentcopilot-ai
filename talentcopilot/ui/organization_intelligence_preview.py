@@ -15,6 +15,8 @@ from talentcopilot.ui.decision_queue import render_decision_queue
 from talentcopilot.ui.decision_timeline import render_decision_timeline
 from talentcopilot.ui.collaboration_intelligence import render_collaboration_intelligence
 from talentcopilot.ui.workforce_intelligence import render_workforce_intelligence
+from talentcopilot.executive_reasoning import ExecutiveReasoningEngine
+from talentcopilot.ui.executive_reasoning import render_executive_answer
 from talentcopilot.ui.next_shell import apply_next_style, hero, insight_card, recommendation_block
 
 
@@ -137,6 +139,8 @@ def render_organization_intelligence_preview():
             *workforce_insights,
         ]
         decision_queue = DecisionEngine().generate(combined_insights)
+        executive_answer = ExecutiveReasoningEngine().reason(combined_insights, decision_queue)
+        render_executive_answer(executive_answer)
         st.markdown("---")
         render_decision_queue(decision_queue, key_prefix="organization_decision_queue_1")
         render_decision_timeline(decision_queue)
