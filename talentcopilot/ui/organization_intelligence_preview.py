@@ -14,6 +14,7 @@ from talentcopilot.ui.intelligence_core import render_executive_brief, render_in
 from talentcopilot.ui.decision_queue import render_decision_queue
 from talentcopilot.ui.decision_timeline import render_decision_timeline
 from talentcopilot.ui.collaboration_intelligence import render_collaboration_intelligence
+from talentcopilot.ui.workforce_intelligence import render_workforce_intelligence
 from talentcopilot.ui.next_shell import apply_next_style, hero, insight_card, recommendation_block
 
 
@@ -127,10 +128,13 @@ def render_organization_intelligence_preview():
         collaboration_diagnostic = CollaborationIntelligenceEngine().analyze(graph)
         render_collaboration_intelligence(collaboration_diagnostic)
 
+        workforce_insights = render_workforce_intelligence(employees) or []
+
         combined_insights = [
             *knowledge_insights,
             *(graph_diagnostic.insights or []),
             *(collaboration_diagnostic.insights or []),
+            *workforce_insights,
         ]
         decision_queue = DecisionEngine().generate(combined_insights)
         st.markdown("---")
