@@ -3,7 +3,12 @@ from __future__ import annotations
 from statistics import mean
 
 from .models import (
+    AIDecision,
+    DecisionEffort,
+    DecisionPriority,
+    DecisionQueue,
     DecisionReadiness,
+    DecisionStatus,
     Evidence,
     ExecutiveBrief,
     OrganizationInsight,
@@ -142,3 +147,90 @@ class ExecutiveEngine:
         if confidence >= 0.55:
             return DecisionReadiness.REVIEW
         return DecisionReadiness.NOT_READY
+
+
+class DecisionEngine:
+    """Transforms explainable organization insights into a prioritized action queue."""
+
+    _priority_weight = {
+        DecisionPriority.DO_NOW: 3,
+        DecisionPriority.PLAN: 2,
+        DecisionPriority.MONITOR: 1,
+    }
+
+    def generate(self, insights: list[OrganizationInsight], limit: int = 10) -> DecisionQueue:
+        decisions: list[AIDecision] = []
+        seen_actions: set[str] = set()
+
+        for insight in insights:
+            for index, recommendation in enumerate(insight.recommendations, start=1):
+                normalized_action = " ".join(recommendation.action.casefold().split())
+                if not normalized_action or normalized_action in seen_actions:
+                    continue
+                seen_actions.add(normalized_action)
+                decisions.append(self._from_recommendation(insight, recommendation, index))
+
+        ranked = sorted(
+            decisions,
+            key=lambda item: (
+                -self._priority_weight[item.priority],
+                -item.confidence,
+                item.effort.value,
+                item.title.casefold(),
+            ),
+        )[: max(1, limit)]
+        return DecisionQueue(decisions=tuple(ranked))
+
+    def _from_recommendation(
+        self,
+        insight: OrganizationInsight,
+        recommendation: Recommendation,
+        index: int,
+    ) -> AIDecision:
+        priority = self._priority(insight, recommendation)
+        effort = self._effort(recommendation.action)
+        evidence = tuple(
+            f"{item.label}: {item.detail}"
+            for item in insight.evidence[:4]
+        )
+        return AIDecision(
+            decision_id=f"{insight.insight_id}-decision-{index}",
+            title=recommendation.action,
+            priority=priority,
+            status=DecisionStatus.PROPOSED,
+            business_impact=insight.business_impact,
+            effort=effort,
+            horizon=recommendation.timeframe,
+            confidence=insight.confidence,
+            source_insight_id=insight.insight_id,
+            source_insight_title=insight.title,
+            rationale=insight.current_situation,
+            evidence=evidence,
+            business_value=recommendation.business_value,
+        )
+
+    @staticmethod
+    def _priority(
+        insight: OrganizationInsight,
+        recommendation: Recommendation,
+    ) -> DecisionPriority:
+        recommendation_priority = recommendation.priority.casefold()
+        if (
+            insight.severity in {Severity.CRITICAL, Severity.HIGH}
+            and insight.decision_readiness == DecisionReadiness.READY
+        ) or recommendation_priority in {"immediate", "critical", "urgent"}:
+            return DecisionPriority.DO_NOW
+        if insight.severity == Severity.LOW or insight.decision_readiness == DecisionReadiness.NOT_READY:
+            return DecisionPriority.MONITOR
+        return DecisionPriority.PLAN
+
+    @staticmethod
+    def _effort(action: str) -> DecisionEffort:
+        text = action.casefold()
+        high_markers = ("reorgan", "restructure", "recruit", "implement", "redesign")
+        low_markers = ("document", "validate", "review", "identify", "name a liaison")
+        if any(marker in text for marker in high_markers):
+            return DecisionEffort.HIGH
+        if any(marker in text for marker in low_markers):
+            return DecisionEffort.LOW
+        return DecisionEffort.MEDIUM

@@ -8,8 +8,10 @@ from talentcopilot.organization_intelligence.graph import OrganizationGraphBuild
 from talentcopilot.organization_intelligence.graph_engine import OrganizationGraphEngine
 from talentcopilot.organization_intelligence.graph_export import edges_dataframe
 from talentcopilot.intelligence_core.adapters import KnowledgeInsightAdapter
-from talentcopilot.intelligence_core.engine import ExecutiveEngine
+from talentcopilot.intelligence_core.engine import DecisionEngine, ExecutiveEngine
 from talentcopilot.ui.intelligence_core import render_executive_brief, render_insight
+from talentcopilot.ui.decision_queue import render_decision_queue
+from talentcopilot.ui.decision_timeline import render_decision_timeline
 from talentcopilot.ui.next_shell import apply_next_style, hero, insight_card, recommendation_block
 
 
@@ -117,6 +119,12 @@ def render_organization_intelligence_preview():
             st.markdown("#### Network insights")
             for index, insight in enumerate(graph_diagnostic.insights[:4]):
                 render_insight(insight, expanded=index == 0)
+
+        combined_insights = [*insights, *graph_diagnostic.insights]
+        decision_queue = DecisionEngine().generate(combined_insights)
+        st.markdown("---")
+        render_decision_queue(decision_queue)
+        render_decision_timeline(decision_queue)
 
         left, right = st.columns(2)
         with left:
