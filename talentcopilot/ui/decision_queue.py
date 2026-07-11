@@ -62,7 +62,8 @@ def render_decision_queue(queue: DecisionQueue) -> None:
         export.to_csv(index=False).encode("utf-8"),
         file_name="talentcopilot_ai_decision_queue.csv",
         mime="text/csv",
-    )
+    
+        key="organization_decision_queue_download_csv",)
 
 
 def _render_decision(decision: AIDecision, *, index: int) -> None:
