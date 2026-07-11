@@ -37,7 +37,11 @@ def decisions_dataframe(queue: DecisionQueue) -> pd.DataFrame:
     )
 
 
-def render_decision_queue(queue: DecisionQueue) -> None:
+def render_decision_queue(
+    queue: DecisionQueue,
+    *,
+    key_prefix: str = "decision_queue",
+) -> None:
     st.markdown("### AI Decision Queue")
     st.caption(
         "TalentCopilot converts explainable insights into a prioritized action plan. "
@@ -63,7 +67,7 @@ def render_decision_queue(queue: DecisionQueue) -> None:
         file_name="talentcopilot_ai_decision_queue.csv",
         mime="text/csv",
     
-        key="organization_decision_queue_download_csv",)
+        key=f"{key_prefix}_download_csv",)
 
 
 def _render_decision(decision: AIDecision, *, index: int) -> None:

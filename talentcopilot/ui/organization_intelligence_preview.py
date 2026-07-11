@@ -138,7 +138,7 @@ def render_organization_intelligence_preview():
         ]
         decision_queue = DecisionEngine().generate(combined_insights)
         st.markdown("---")
-        render_decision_queue(decision_queue)
+        render_decision_queue(decision_queue, key_prefix="organization_decision_queue_1")
         render_decision_timeline(decision_queue)
 
         left, right = st.columns(2)
