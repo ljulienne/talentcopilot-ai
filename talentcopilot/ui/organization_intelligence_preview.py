@@ -68,6 +68,7 @@ def _render_diagnostic(diagnostic):
         mime="text/csv",
     )
 
+    return insights
 
 def render_organization_intelligence_preview():
     apply_next_style()
@@ -102,8 +103,7 @@ def render_organization_intelligence_preview():
             employees = load_uploaded_file(uploaded)
 
         diagnostic = KnowledgeConcentrationEngine().analyze(employees)
-        _render_diagnostic(diagnostic)
-
+        knowledge_insights = _render_diagnostic(diagnostic)
         st.markdown("---")
         st.markdown("### Organization graph foundation")
         graph = OrganizationGraphBuilder().build(employees)
@@ -120,7 +120,10 @@ def render_organization_intelligence_preview():
             for index, insight in enumerate(graph_diagnostic.insights[:4]):
                 render_insight(insight, expanded=index == 0)
 
-        combined_insights = [*insights, *graph_diagnostic.insights]
+        combined_insights = [
+        *(knowledge_insights or []),
+        *(getattr(graph_diagnostic, "insights", []) or []),
+    ]
         decision_queue = DecisionEngine().generate(combined_insights)
         st.markdown("---")
         render_decision_queue(decision_queue)
