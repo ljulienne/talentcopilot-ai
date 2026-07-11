@@ -50,7 +50,7 @@ def render_copilot_response(
 
     render_section(
         "Executive summary",
-        description="A concise answer based on the available TalentCopilot evidence.",
+        subtitle="A concise answer based on the available TalentCopilot evidence.",
     )
     render_priority_card(
         view.summary,
@@ -61,7 +61,7 @@ def render_copilot_response(
     if view.actions:
         render_section(
             "Recommended actions",
-            description="Prioritized actions derived from the executive reasoning output.",
+            subtitle="Prioritized actions derived from the executive reasoning output.",
         )
         for index, action in enumerate(view.actions[:5]):
             render_recommendation_card(
@@ -88,7 +88,7 @@ def render_copilot_response(
 
     render_section(
         "Evidence",
-        description="The most relevant signals supporting this response.",
+        subtitle="The most relevant signals supporting this response.",
     )
     if view.evidence:
         for item in view.evidence[:8]:
@@ -124,7 +124,7 @@ def render_copilot_response(
         if included_engines:
             render_section(
                 "Explore source workspaces",
-                description="Open the workspace most closely related to each contributing engine.",
+                subtitle="Open the workspace most closely related to each contributing engine.",
             )
             columns = st.columns(min(3, len(included_engines)))
             for index, engine in enumerate(included_engines):
@@ -156,7 +156,7 @@ def render_copilot_response(
     if view.suggested_questions:
         render_section(
             "Suggested follow-up questions",
-            description="Continue the analysis without losing the executive context.",
+            subtitle="Continue the analysis without losing the executive context.",
         )
         for question_id, title in view.suggested_questions:
             if st.button(
