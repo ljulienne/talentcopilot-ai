@@ -38,10 +38,63 @@ def activity_item(time: str, title: str, detail: str):
     st.markdown(f'''<div class="tc-activity"><div style="font-weight:800;color:#2563EB;min-width:54px;">{time}</div><div><div style="font-weight:800;">{title}</div><div class="tc-muted">{detail}</div></div></div>''', unsafe_allow_html=True)
 
 
-def next_action_card(title: str, body: str, action_label: str = "Continue"):
+def next_action_card(
+    title: str,
+    body: str,
+    action_label: str = "Continue",
+    key: str | None = None,
+):
+    """Render a next-action card with a stable unique Streamlit key."""
+    import hashlib
+    import inspect
     import streamlit as st
-    st.markdown(f'''<div class="tc-card"><div class="tc-badge" style="background:#EEF2FF;color:#3730A3;border-color:#C7D2FE;">Next Best Action</div><h3 style="margin:0.35rem 0;">{title}</h3><p class="tc-muted">{body}</p></div>''', unsafe_allow_html=True)
-    st.button(action_label)
+
+    st.markdown(
+        f"""
+        <div class="tc-card">
+            <div
+                class="tc-badge"
+                style="
+                    background:#EEF2FF;
+                    color:#3730A3;
+                    border-color:#C7D2FE;
+                "
+            >
+                Next Best Action
+            </div>
+            <h3 style="margin:0.35rem 0;">{title}</h3>
+            <p class="tc-muted">{body}</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    if key is None:
+        caller_frame = inspect.currentframe().f_back
+
+        if caller_frame is not None:
+            callsite = (
+                f"{caller_frame.f_code.co_filename}:"
+                f"{caller_frame.f_lineno}"
+            )
+        else:
+            callsite = "unknown"
+
+        identity = (
+            f"{callsite}|{title}|{body}|{action_label}"
+        )
+
+        digest = hashlib.sha1(
+            identity.encode("utf-8")
+        ).hexdigest()[:20]
+
+        key = f"tc_next_action_{digest}"
+
+    return st.button(
+        action_label,
+        key=key,
+    )
+
 
 
 def empty_state(title: str, body: str, action_label: str = ""):
