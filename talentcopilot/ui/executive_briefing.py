@@ -10,6 +10,7 @@ from talentcopilot.ui.project_hub import build_project_summaries
 from talentcopilot.storage.recruitment_store import list_recruitments
 from talentcopilot.models.mission import MissionCanvas
 from talentcopilot.services.mission_intelligence import understand_mission
+from talentcopilot.ui.mission_workspace import render_mission_workspace
 
 
 @dataclass(frozen=True)
@@ -388,6 +389,7 @@ def render_executive_briefing() -> None:
     canvas = st.session_state.get("enterprise_mission_canvas")
     if isinstance(canvas, MissionCanvas):
         _render_mission_canvas(canvas)
+        render_mission_workspace(canvas, session)
 
 
 
