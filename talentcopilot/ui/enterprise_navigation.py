@@ -37,17 +37,12 @@ COMMAND_PAGES = [
 
 ANALYSIS_PAGES = [
     _page("Organization Intelligence", "talentcopilot.ui.organization_intelligence_preview", "render_organization_intelligence_preview", "Diagnose collaboration patterns from uploaded data.", "◉"),
-    _page("Recruitment Workspace", "talentcopilot.ui.recruitment_workspace", "render_recruitment_workspace", icon="▣"),
-    _page("Candidate Workspace", "talentcopilot.ui.candidate_workspace", "render_candidate_workspace", icon="◇"),
-    _page("Comparison", "talentcopilot.ui.comparison_workspace", "render_comparison_workspace", icon="⇄"),
+    _page("Recruitment Workspace", "talentcopilot.ui.recruitment_decision_workspace", "render_recruitment_decision_workspace", "One guided workspace from evidence to hiring decision.", "▣"),
     _page("Analytics Dashboard", "talentcopilot.ui.analytics_dashboard", "render_analytics_dashboard", icon="▥"),
 ]
 
 DECISION_PAGES = [
-    _page("Interview Workspace", "talentcopilot.ui.interview_workspace", "render_interview_workspace", icon="◌"),
     _page("Hiring Budget", "talentcopilot.ui.hiring_budget", "render_hiring_budget", icon="¤"),
-    _page("Decision Board", "talentcopilot.ui.decision_board", "render_decision_board", icon="✓"),
-    _page("Executive Reporting", "talentcopilot.ui.executive_reporting", "render_executive_reporting", icon="▤"),
     _page("Enterprise Demo Final", "talentcopilot.ui.enterprise_demo_final", "render_enterprise_demo_final", icon="▶"),
 ]
 
@@ -59,6 +54,11 @@ ADMINISTRATION_PAGES = [
 
 
 LEGACY_PAGES = {
+    "Candidate Workspace": _page("Candidate Workspace", "talentcopilot.ui.candidate_workspace", "render_candidate_workspace"),
+    "Comparison": _page("Comparison", "talentcopilot.ui.comparison_workspace", "render_comparison_workspace"),
+    "Interview Workspace": _page("Interview Workspace", "talentcopilot.ui.interview_workspace", "render_interview_workspace"),
+    "Decision Board": _page("Decision Board", "talentcopilot.ui.decision_board", "render_decision_board"),
+    "Executive Reporting": _page("Executive Reporting", "talentcopilot.ui.executive_reporting", "render_executive_reporting"),
     "Product Overview": _page("Product Overview", "talentcopilot.ui.product_overview", "render_product_overview"),
     "Recruitment Command Center": _page("Recruitment Command Center", "talentcopilot.ui.command_center", "render_command_center"),
     "AI Platform": _page("AI Platform", "talentcopilot.ui.ai_platform", "render_ai_platform"),

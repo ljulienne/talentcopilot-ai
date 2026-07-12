@@ -10,14 +10,22 @@ def test_recruitment_workspace_empty_report():
     assert report.next_actions
 
 
-def test_recruitment_workspace_page_imports():
-    module = __import__("talentcopilot.ui.recruitment_workspace", fromlist=["render_recruitment_workspace"])
-    assert hasattr(module, "render_recruitment_workspace")
+def test_recruitment_workspace_pages_import():
+    legacy_module = __import__(
+        "talentcopilot.ui.recruitment_workspace",
+        fromlist=["render_recruitment_workspace"],
+    )
+    unified_module = __import__(
+        "talentcopilot.ui.recruitment_decision_workspace",
+        fromlist=["render_recruitment_decision_workspace"],
+    )
+    assert hasattr(legacy_module, "render_recruitment_workspace")
+    assert hasattr(unified_module, "render_recruitment_decision_workspace")
 
 
 def test_recruitment_workspace_in_navigation():
     page = get_page_by_label("Recruitment Workspace")
 
     assert page is not None
-    assert page.module == "talentcopilot.ui.recruitment_workspace"
-    assert page.function == "render_recruitment_workspace"
+    assert page.module == "talentcopilot.ui.recruitment_decision_workspace"
+    assert page.function == "render_recruitment_decision_workspace"
