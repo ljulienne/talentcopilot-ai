@@ -28,12 +28,10 @@ def _page(label, module, function, description="", icon="•"):
     return EnterprisePage(label, module, function, description, icon)
 
 
-# The 11 Release 1.1 compatibility pages remain visible while five Next pages
-# introduce the new product direction. Total: exactly 16 pages.
+# Release Alpha exposes a decision-led product shell. Internal utilities remain
+# importable through LEGACY_PAGES but are no longer primary navigation destinations.
 COMMAND_PAGES = [
     _page("Executive Brief", "talentcopilot.ui.home", "render_home", "What matters and what to do next.", "✦"),
-    _page("Product Overview", "talentcopilot.ui.product_overview", "render_product_overview", icon="◈"),
-    _page("Recruitment Command Center", "talentcopilot.ui.command_center", "render_command_center", icon="◎"),
 ]
 
 ANALYSIS_PAGES = [
@@ -60,6 +58,8 @@ ADMINISTRATION_PAGES = [
 
 
 LEGACY_PAGES = {
+    "Product Overview": _page("Product Overview", "talentcopilot.ui.product_overview", "render_product_overview"),
+    "Recruitment Command Center": _page("Recruitment Command Center", "talentcopilot.ui.command_center", "render_command_center"),
     "AI Platform": _page("AI Platform", "talentcopilot.ui.ai_platform", "render_ai_platform"),
     "Blueprint Overview": _page("Blueprint Overview", "talentcopilot.ui.blueprint_overview", "render_blueprint_overview"),
     "Decision Core": _page("Decision Core", "talentcopilot.ui.decision_core", "render_decision_core"),
