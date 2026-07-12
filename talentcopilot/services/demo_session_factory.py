@@ -19,14 +19,10 @@ def demo_job() -> Dict:
 def demo_candidates() -> List[Dict]:
     return [
         {
+            "candidate_id": "demo-alice-martin",
             "name": "Alice Martin",
             "title": "Senior Transformation Manager",
-            "skills": [
-                "Project Management",
-                "Stakeholder Management",
-                "Change Management",
-                "HRIS",
-            ],
+            "skills": ["Project Management", "Stakeholder Management", "Change Management", "HRIS"],
             "years_experience": 9,
             "achievements": [
                 "Led HRIS transformation project across 6 departments.",
@@ -35,6 +31,7 @@ def demo_candidates() -> List[Dict]:
             ],
         },
         {
+            "candidate_id": "demo-david-smith-reporting",
             "name": "David Smith",
             "title": "Reporting Analyst",
             "skills": ["Excel", "Reporting", "Data Analysis"],
@@ -45,14 +42,10 @@ def demo_candidates() -> List[Dict]:
             ],
         },
         {
+            "candidate_id": "demo-mei-chen",
             "name": "Mei Chen",
             "title": "HRIS Project Lead",
-            "skills": [
-                "HRIS",
-                "Project Management",
-                "Change Management",
-                "Training",
-            ],
+            "skills": ["HRIS", "Project Management", "Change Management", "Training"],
             "years_experience": 7,
             "achievements": [
                 "Deployed employee self-service portal.",
@@ -68,10 +61,6 @@ def create_demo_recruitment_session():
 
 
 class DemoSessionFactory:
-    """
-    Compatibility wrapper for older UI imports.
-    """
-
     @staticmethod
     def demo_job():
         return demo_job()

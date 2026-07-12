@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -21,9 +21,11 @@ class CandidateAnalysisStatus(str, Enum):
 @dataclass
 class CandidateAnalysisState:
     candidate_name: str
+    candidate_id: str = ""
     status: CandidateAnalysisStatus = CandidateAnalysisStatus.PENDING
     match_score: float = 0.0
     rank: Optional[int] = None
+    score_breakdown: Dict[str, float] = field(default_factory=dict)
     governance_report: Optional[Any] = None
     decision_report: Optional[Any] = None
     recruiter_copilot_report: Optional[Any] = None
@@ -39,6 +41,14 @@ class CandidateAnalysisState:
     def has_errors(self) -> bool:
         return bool(self.errors)
 
+    @property
+    def official_match_score(self) -> float:
+        return self.match_score
+
+    @property
+    def official_rank(self) -> Optional[int]:
+        return self.rank
+
 
 @dataclass
 class RecruitmentSession:
@@ -47,8 +57,8 @@ class RecruitmentSession:
     candidates: List[Dict[str, Any]] = field(default_factory=list)
     status: SessionStatus = SessionStatus.DRAFT
     analyses: List[CandidateAnalysisState] = field(default_factory=list)
-    created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     @property
@@ -71,18 +81,22 @@ class RecruitmentSession:
     def ranked_analyses(self) -> List[CandidateAnalysisState]:
         return sorted(
             self.analyses,
-            key=lambda item: item.rank if item.rank is not None else 9999,
+            key=lambda item: (
+                item.rank if item.rank is not None else 9999,
+                -float(item.match_score),
+                item.candidate_id or item.candidate_name,
+            ),
         )
 
     def mark_updated(self) -> None:
-        self.updated_at = datetime.utcnow().isoformat()
+        self.updated_at = datetime.now(timezone.utc).isoformat()
 
     def add_analysis(self, analysis: CandidateAnalysisState) -> None:
         self.analyses.append(analysis)
         self.mark_updated()
 
-    def get_analysis(self, candidate_name: str) -> Optional[CandidateAnalysisState]:
+    def get_analysis(self, candidate_key: str) -> Optional[CandidateAnalysisState]:
         for analysis in self.analyses:
-            if analysis.candidate_name == candidate_name:
+            if analysis.candidate_id == candidate_key or analysis.candidate_name == candidate_key:
                 return analysis
         return None

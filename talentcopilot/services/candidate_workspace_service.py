@@ -4,6 +4,7 @@ from talentcopilot.models.candidate_workspace import (
     CandidateSkill,
     CandidateWorkspaceReport,
 )
+from talentcopilot.services.candidate_identity import resolve_candidate_id
 
 
 class CandidateWorkspaceService:
@@ -11,57 +12,47 @@ class CandidateWorkspaceService:
         if session is None or not getattr(session, "ranked_analyses", None):
             return []
 
-        reports = []
+        candidates_by_id = {}
         candidates_by_name = {}
         for candidate in getattr(session, "candidates", []) or []:
+            candidate_id = resolve_candidate_id(candidate)
+            candidates_by_id[candidate_id] = candidate
             name = candidate.get("name")
             if name:
-                candidates_by_name[name] = candidate
+                candidates_by_name.setdefault(name, candidate)
 
+        reports = []
         for analysis in session.ranked_analyses:
-            candidate = candidates_by_name.get(analysis.candidate_name, {})
+            candidate = candidates_by_id.get(getattr(analysis, "candidate_id", ""))
+            if candidate is None:
+                candidate = candidates_by_name.get(analysis.candidate_name, {})
             reports.append(self._build_one(analysis, candidate))
         return reports
 
     def _build_one(self, analysis, candidate):
         decision_report = getattr(analysis, "decision_report", None)
-
         recommendation = "-"
         executive_summary = "No decision summary available yet."
         risks = []
 
         if decision_report:
-            recommendation = getattr(
-                decision_report.recommendation,
-                "value",
-                decision_report.recommendation,
-            )
+            recommendation = getattr(decision_report.recommendation, "value", decision_report.recommendation)
             executive_summary = getattr(decision_report, "executive_summary", executive_summary)
-
             for concern in getattr(decision_report, "concerns", []) or []:
-                risks.append(
-                    CandidateRisk(
-                        title=getattr(concern, "title", "Concern"),
-                        detail=getattr(concern, "explanation", ""),
-                        severity=getattr(concern, "severity", "Medium"),
-                    )
-                )
+                risks.append(CandidateRisk(
+                    title=getattr(concern, "title", "Concern"),
+                    detail=getattr(concern, "explanation", ""),
+                    severity=getattr(concern, "severity", "Medium"),
+                ))
 
-        skills = []
-        for skill in candidate.get("skills", [])[:8]:
-            level = 85 if str(skill).lower() in executive_summary.lower() else 72
-            skills.append(CandidateSkill(name=str(skill), level=level, evidence="Detected from candidate profile."))
-
-        evidence = []
-        for achievement in candidate.get("achievements", [])[:6]:
-            evidence.append(
-                CandidateEvidence(
-                    title="Candidate evidence",
-                    detail=str(achievement),
-                    strength="High",
-                )
-            )
-
+        skills = [
+            CandidateSkill(name=str(skill), level=72, evidence="Detected from candidate profile.")
+            for skill in candidate.get("skills", [])[:8]
+        ]
+        evidence = [
+            CandidateEvidence(title="Candidate evidence", detail=str(achievement), strength="High")
+            for achievement in candidate.get("achievements", [])[:6]
+        ]
         if not evidence:
             evidence.append(CandidateEvidence("Evidence not available", "No detailed achievements provided.", "Low"))
 
@@ -73,8 +64,10 @@ class CandidateWorkspaceService:
 
         return CandidateWorkspaceReport(
             candidate_name=getattr(analysis, "candidate_name", "Candidate"),
-            rank=int(getattr(analysis, "rank", 0) or 0),
-            match_score=float(getattr(analysis, "match_score", 0) or 0),
+            candidate_id=getattr(analysis, "candidate_id", "") or resolve_candidate_id(candidate),
+            rank=int(getattr(analysis, "official_rank", None) or getattr(analysis, "rank", 0) or 0),
+            match_score=float(getattr(analysis, "official_match_score", getattr(analysis, "match_score", 0.0))),
+            score_breakdown=dict(getattr(analysis, "score_breakdown", {}) or {}),
             recommendation=str(recommendation),
             executive_summary=str(executive_summary),
             skills=skills,

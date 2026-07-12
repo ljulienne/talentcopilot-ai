@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List
+from typing import Dict, List
 
 
 @dataclass
@@ -34,3 +34,13 @@ class CandidateWorkspaceReport:
     evidence: List[CandidateEvidence] = field(default_factory=list)
     risks: List[CandidateRisk] = field(default_factory=list)
     interview_focus: List[str] = field(default_factory=list)
+    candidate_id: str = ""
+    score_breakdown: Dict[str, float] = field(default_factory=dict)
+
+    @property
+    def official_match_score(self) -> float:
+        return self.match_score
+
+    @property
+    def official_rank(self) -> int:
+        return self.rank
