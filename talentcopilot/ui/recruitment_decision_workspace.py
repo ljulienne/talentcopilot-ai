@@ -22,6 +22,7 @@ from talentcopilot.services.recruitment_pipeline_service import RecruitmentPipel
 from talentcopilot.services.recruitment_tasks_service import RecruitmentTasksService
 from talentcopilot.services.recruitment_workspace_service import RecruitmentWorkspaceService
 from talentcopilot.services.streamlit_session_bridge import get_streamlit_session, set_streamlit_session
+from talentcopilot.ui.recruitment_upload_panel import render_recruitment_upload_panel
 from talentcopilot.ui.design_system.components import (
     enterprise_hero,
     insight_card,
@@ -567,9 +568,11 @@ def render_recruitment_decision_workspace() -> None:
 
     enterprise_hero(
         "Recruitment Decision Workspace",
-        "Move from candidate evidence to a confident hiring decision without leaving the project.",
-        "Who should we hire?",
+        "Upload a mission and candidate CVs, then move from evidence to a confident hiring decision.",
+        "Recruitment workflow",
     )
+
+    session = render_recruitment_upload_panel(session)
 
     if session is None:
         _render_empty_state()
