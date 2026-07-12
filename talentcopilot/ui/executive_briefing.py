@@ -8,6 +8,8 @@ from talentcopilot.services.streamlit_session_bridge import get_streamlit_sessio
 from talentcopilot.ui.navigation_actions import request_page
 from talentcopilot.ui.project_hub import build_project_summaries
 from talentcopilot.storage.recruitment_store import list_recruitments
+from talentcopilot.models.mission import MissionCanvas
+from talentcopilot.services.mission_intelligence import understand_mission
 
 
 @dataclass(frozen=True)
@@ -238,6 +240,63 @@ def _render_priorities(priorities: Iterable[BriefingPriority]) -> None:
         )
 
 
+def _render_mission_canvas(canvas: MissionCanvas) -> None:
+    import streamlit as st
+
+    st.markdown("### Mission Canvas")
+    c1, c2, c3 = st.columns([1.35, 1, 1])
+    c1.metric("Mission", canvas.mission_title, canvas.domain.value.replace("_", " ").title())
+    c2.metric("Routing confidence", canvas.confidence, "Business-language interpretation")
+    c3.metric("Workflow", f"{len(canvas.recommended_workflow)} steps", "AI-guided")
+
+    st.markdown(
+        '<div class="tc-ai-brief"><strong>Objective</strong><p>'
+        + escape(canvas.objective)
+        + '</p></div>',
+        unsafe_allow_html=True,
+    )
+
+    left, middle, right = st.columns(3)
+    with left:
+        st.markdown("**Context understood**")
+        st.write(canvas.context)
+        if canvas.constraints:
+            st.markdown("**Detected constraints**")
+            for item in canvas.constraints:
+                st.write(f"• {item}")
+        else:
+            st.caption("No explicit constraint detected yet.")
+
+    with middle:
+        st.markdown("**Evidence to provide**")
+        for item in canvas.required_inputs:
+            st.write(f"• {item}")
+
+    with right:
+        st.markdown("**Success criteria**")
+        for item in canvas.success_criteria:
+            st.write(f"• {item}")
+
+    st.markdown("**Recommended workflow**")
+    for index, step in enumerate(canvas.recommended_workflow, start=1):
+        st.write(f"{index}. {step}")
+
+    st.caption(canvas.limitation)
+    if canvas.target_page:
+        if st.button(
+            f"Continue to {canvas.mission_title}",
+            key=f"mission_canvas_continue_{canvas.domain.value}",
+            type="primary",
+        ):
+            request_page(canvas.target_page, reason=f"Mission routed to {canvas.mission_title}.")
+            st.rerun()
+    else:
+        st.info(
+            "This mission is recognized, but its full Studio is not enabled yet. "
+            "The required evidence and workflow are shown above without fabricating an analysis."
+        )
+
+
 def render_executive_briefing() -> None:
     import streamlit as st
 
@@ -301,26 +360,35 @@ def render_executive_briefing() -> None:
     else:
         st.caption("No project yet. Start with Recruitment Intelligence to create your first decision project.")
 
-    st.subheader("Ask TalentCopilot")
-    prompt = st.text_input(
-        "Describe the HR decision you need to make",
-        placeholder="Example: Who are the strongest candidates for this role, and what should I verify before interviewing them?",
-        label_visibility="collapsed",
+    st.subheader("Describe your mission")
+    st.caption(
+        "Start with the business outcome. TalentCopilot will route the mission, "
+        "identify the minimum useful evidence and propose the workflow."
     )
-    if prompt:
-        lowered = prompt.lower()
-        if any(term in lowered for term in ("candidate", "recruit", "hire", "interview", "cv")):
-            st.success("This question belongs to Recruitment Intelligence.")
-            if st.button("Open Recruitment Workspace", key="briefing_prompt_recruitment"):
-                request_page("Recruitment Workspace", reason="TalentCopilot routed your question to Recruitment Intelligence.")
-                st.rerun()
-        elif any(term in lowered for term in ("collaboration", "silo", "department", "organization", "ona")):
-            st.info("This question belongs to Organization or Collaboration Intelligence. TalentCopilot will verify data readiness before analysis.")
-            if st.button("Open Organization Intelligence", key="briefing_prompt_organization"):
-                request_page("Organization Intelligence", reason="TalentCopilot routed your question to Organization Intelligence.")
-                st.rerun()
-        else:
-            st.info("TalentCopilot needs a little more context to route this decision. Mention the role, team, workforce question or risk you want to diagnose.")
+    prompt = st.text_area(
+        "What are you trying to accomplish?",
+        placeholder=(
+            "Example: We need to recruit a Global HRIS Director within three months. "
+            "International transformation experience is mandatory."
+        ),
+        label_visibility="collapsed",
+        height=120,
+        key="enterprise_mission_prompt",
+    )
+
+    analyse_clicked = st.button(
+        "Understand my mission",
+        key="enterprise_mission_analyse",
+        type="primary",
+        disabled=not bool(prompt.strip()),
+    )
+    if analyse_clicked:
+        st.session_state["enterprise_mission_canvas"] = understand_mission(prompt)
+
+    canvas = st.session_state.get("enterprise_mission_canvas")
+    if isinstance(canvas, MissionCanvas):
+        _render_mission_canvas(canvas)
+
 
 
 def render_home() -> None:
