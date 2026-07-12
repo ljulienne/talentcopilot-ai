@@ -53,6 +53,18 @@ def _find(items: Sequence[object], name: str, attribute: str = "candidate_name")
 
 
 @dataclass(frozen=True)
+class ExplainableMatchView:
+    """Presentation-only explanation of an existing matching score."""
+
+    score: float
+    evidence_quality: str
+    evidence_summary: str
+    drivers: tuple[tuple[str, int, str], ...]
+    gaps: tuple[str, ...]
+    source_facts: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class ExecutiveDecisionView:
     """Presentation-only summary built from existing recruitment reports."""
 
@@ -132,6 +144,128 @@ def _build_executive_decision(candidate_report, decision_report) -> ExecutiveDec
         strengths=strengths,
         risks=risks,
         next_actions=actions,
+    )
+
+
+def _build_explainable_match(candidate_report) -> ExplainableMatchView | None:
+    """Explain an existing match score using already available report data.
+
+    This function never recalculates or changes the score. It only organises
+    skills, evidence and risks already produced by the current services.
+    """
+    if candidate_report is None:
+        return None
+
+    skills = sorted(
+        list(getattr(candidate_report, "skills", []) or []),
+        key=lambda item: int(getattr(item, "level", 0) or 0),
+        reverse=True,
+    )
+    evidence = list(getattr(candidate_report, "evidence", []) or [])
+    risks = list(getattr(candidate_report, "risks", []) or [])
+
+    drivers = tuple(
+        (
+            _text(getattr(skill, "name", None), "Relevant capability"),
+            max(0, min(100, int(getattr(skill, "level", 0) or 0))),
+            _text(getattr(skill, "evidence", None), "Detected in the candidate profile."),
+        )
+        for skill in skills[:5]
+    )
+
+    gaps = [
+        _text(getattr(risk, "title", None), "Evidence gap")
+        for risk in risks[:4]
+    ]
+    if len(gaps) < 3:
+        for skill in reversed(skills):
+            level = int(getattr(skill, "level", 0) or 0)
+            if level < 75:
+                label = f"Validate depth of {_text(getattr(skill, 'name', None), 'this capability')}"
+                if label not in gaps:
+                    gaps.append(label)
+            if len(gaps) >= 3:
+                break
+    if not gaps:
+        gaps.append("No material gap is documented; validate the strongest claims in interview.")
+
+    source_facts = tuple(
+        _text(getattr(item, "detail", None), _text(getattr(item, "title", None)))
+        for item in evidence[:4]
+    )
+
+    strong_evidence = sum(
+        1
+        for item in evidence
+        if _text(getattr(item, "strength", None), "Medium").lower() == "high"
+    )
+    evidence_count = len(evidence)
+    if evidence_count >= 4 and strong_evidence >= 2:
+        quality = "High"
+    elif evidence_count >= 2:
+        quality = "Medium"
+    else:
+        quality = "Limited"
+
+    summary = (
+        f"{evidence_count} evidence item{'s' if evidence_count != 1 else ''} available; "
+        f"{strong_evidence} rated high strength. The displayed score is unchanged."
+    )
+
+    return ExplainableMatchView(
+        score=float(getattr(candidate_report, "match_score", 0.0) or 0.0),
+        evidence_quality=quality,
+        evidence_summary=summary,
+        drivers=drivers,
+        gaps=tuple(gaps[:4]),
+        source_facts=source_facts,
+    )
+
+
+def _render_explainable_match(view: ExplainableMatchView | None) -> None:
+    import streamlit as st
+
+    section_title(
+        "Explainable matching",
+        "Understand the existing score through visible capability drivers, gaps and source evidence.",
+    )
+    if view is None:
+        st.info("Select an analysed candidate to explain the matching result.")
+        return
+
+    metric_grid([
+        ("Overall match", f"{view.score:.0f}%", "Existing score — not recalculated"),
+        ("Evidence quality", view.evidence_quality, view.evidence_summary),
+        ("Positive drivers", str(len(view.drivers)), "Capabilities supporting the result"),
+        ("Gaps to validate", str(len(view.gaps)), "Questions for human review"),
+    ])
+
+    drivers_col, gaps_col = st.columns([1.25, 0.75])
+    with drivers_col:
+        st.markdown("#### Main matching drivers")
+        if view.drivers:
+            for name, level, evidence in view.drivers:
+                st.write(f"**{name} · {level}%**")
+                st.progress(level / 100)
+                st.caption(evidence)
+        else:
+            st.info("No structured skill drivers are available yet.")
+
+    with gaps_col:
+        st.markdown("#### Gaps to validate")
+        for gap in view.gaps:
+            st.warning(gap)
+
+    st.markdown("#### Evidence influencing the explanation")
+    if view.source_facts:
+        for fact in view.source_facts:
+            st.write(f"- {fact}")
+    else:
+        st.info("No detailed source facts are available. Treat the score as provisional.")
+
+    st.caption(
+        "Explainable Matching organises evidence already present in TalentCopilot. "
+        "It does not alter ranking, matching weights or the underlying decision engines."
     )
 
 
@@ -230,6 +364,7 @@ def _render_candidate(report) -> None:
         ("Recommendation", report.recommendation, "Decision signal"),
         ("Evidence", str(len(report.evidence)), "Supporting observations"),
     ])
+    _render_explainable_match(_build_explainable_match(report))
 
     overview, skills, evidence, risks, interview = st.tabs(
         ["Overview", "Skills", "Evidence", "Risks", "Interview focus"]
