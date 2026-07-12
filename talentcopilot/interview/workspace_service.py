@@ -10,38 +10,75 @@ class InterviewWorkspaceService:
         if session is None or not getattr(session, "ranked_analyses", None):
             return []
 
-        candidates_by_name = {}
-        for candidate in getattr(session, "candidates", []) or []:
-            name = candidate.get("name")
-            if name:
-                candidates_by_name[name] = candidate
+        candidates_by_id = {
+            candidate.get("candidate_id"): candidate
+            for candidate in (getattr(session, "candidates", []) or [])
+            if candidate.get("candidate_id")
+        }
+        candidates_by_name = {
+            candidate.get("name"): candidate
+            for candidate in (getattr(session, "candidates", []) or [])
+            if candidate.get("name")
+        }
+        job = getattr(session, "job", {}) or {}
+        role_title = job.get("title") or getattr(session, "role_title", "Recruitment")
+        required_skills = [str(item) for item in job.get("required_skills", []) if str(item).strip()]
 
         reports = []
         for analysis in session.ranked_analyses:
-            candidate = candidates_by_name.get(analysis.candidate_name, {})
-            reports.append(self.build_one(analysis, candidate, getattr(session, "role_title", "Recruitment")))
+            candidate = candidates_by_id.get(getattr(analysis, "candidate_id", None))
+            if candidate is None:
+                candidate = candidates_by_name.get(analysis.candidate_name, {})
+            reports.append(
+                self.build_one(
+                    analysis,
+                    candidate,
+                    role_title,
+                    required_skills=required_skills,
+                )
+            )
         return reports
 
-    def build_one(self, analysis, candidate: dict, role_title: str) -> InterviewWorkspaceReport:
-        skills = [str(skill) for skill in candidate.get("skills", [])[:5]]
-        if not skills:
-            skills = ["Leadership", "Communication", "Stakeholder Management"]
+    def build_one(
+        self,
+        analysis,
+        candidate: dict,
+        role_title: str,
+        required_skills: list[str] | None = None,
+    ) -> InterviewWorkspaceReport:
+        required_skills = [str(skill) for skill in (required_skills or []) if str(skill).strip()]
+        candidate_skills = [str(skill) for skill in candidate.get("skills", []) if str(skill).strip()]
+        achievements = [str(item) for item in candidate.get("achievements", []) if str(item).strip()]
+        match_score = float(getattr(analysis, "match_score", 0) or 0)
+
+        competency_names = []
+        for skill in required_skills + candidate_skills:
+            if skill not in competency_names:
+                competency_names.append(skill)
+        if not competency_names:
+            competency_names = ["Leadership", "Communication", "Stakeholder Management"]
 
         competencies = []
-        for index, skill in enumerate(skills):
-            match_score = float(getattr(analysis, "match_score", 0) or 0)
-            if match_score >= 85 and index < 3:
+        candidate_skill_tokens = {skill.lower() for skill in candidate_skills}
+        for index, skill in enumerate(competency_names[:7]):
+            explicitly_present = skill.lower() in candidate_skill_tokens
+            evidence_excerpt = self._matching_evidence(skill, achievements)
+
+            if explicitly_present and evidence_excerpt:
                 evidence = "High"
-                confidence = 90
-                validate = False
-            elif match_score >= 70:
+                confidence = 88
+                validate = index >= 3
+                rationale = f"The profile names {skill} and includes supporting achievement evidence."
+            elif explicitly_present:
                 evidence = "Medium"
-                confidence = 72
+                confidence = 68
                 validate = True
+                rationale = f"The profile names {skill}, but scope, ownership and outcome remain insufficiently evidenced."
             else:
                 evidence = "Low"
-                confidence = 45
+                confidence = 38
                 validate = True
+                rationale = f"{skill} is relevant to the mission but is not explicitly demonstrated in the available CV evidence."
 
             competencies.append(
                 InterviewCompetency(
@@ -49,27 +86,30 @@ class InterviewWorkspaceService:
                     evidence_level=evidence,
                     confidence=confidence,
                     validate_in_interview=validate,
-                    rationale="Derived from current candidate analysis and available profile evidence.",
+                    rationale=rationale,
                 )
             )
 
-        fit_score = float(getattr(analysis, "match_score", 0) or 0)
         confidence_score = int(sum(c.confidence for c in competencies) / max(1, len(competencies)))
-        risk_level = "Low" if fit_score >= 80 else "Medium" if fit_score >= 60 else "High"
+        risk_level = "Low" if match_score >= 80 else "Medium" if match_score >= 60 else "High"
+        recommendation = "Interview" if match_score >= 70 else "Review" if match_score >= 40 else "Reject"
 
-        recommendation = "Interview" if fit_score >= 70 else "Review" if fit_score >= 40 else "Reject"
-
-        readiness = InterviewReadinessService().calculate(fit_score, confidence_score, competencies)
+        readiness = InterviewReadinessService().calculate(match_score, confidence_score, competencies)
         validation_topics = [c.name for c in competencies if c.validate_in_interview]
         plan = InterviewPlanService().build(validation_topics)
-        questions = InterviewQuestionService().build(competencies)
+        questions = InterviewQuestionService().build(
+            competencies,
+            role_title=role_title,
+            candidate=candidate,
+            mission_requirements=required_skills,
+        )
         scorecard = InterviewEvaluationService().build_scorecard(competencies)
         decision_readiness = InterviewEvaluationService().decision_readiness(readiness.score, scorecard)
 
         return InterviewWorkspaceReport(
             candidate_name=getattr(analysis, "candidate_name", "Candidate"),
             role_title=role_title,
-            fit_score=fit_score,
+            fit_score=match_score,
             confidence_score=confidence_score,
             risk_level=risk_level,
             recommendation=recommendation,
@@ -80,3 +120,11 @@ class InterviewWorkspaceService:
             scorecard=scorecard,
             decision_readiness=decision_readiness,
         )
+
+    def _matching_evidence(self, competency: str, achievements: list[str]) -> str:
+        tokens = {token for token in competency.lower().replace("/", " ").split() if len(token) > 3}
+        for achievement in achievements:
+            lower = achievement.lower()
+            if tokens and any(token in lower for token in tokens):
+                return achievement
+        return ""
