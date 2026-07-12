@@ -1,9 +1,11 @@
 import streamlit as st
 
+from talentcopilot.ui.design_system.components import enterprise_hero
+from talentcopilot.ui.design_system.theme import apply_enterprise_theme
+
 from talentcopilot.ui.next_shell import (
     apply_next_style,
     diagnostic_card,
-    hero,
     insight_card,
     recommendation_block,
 )
@@ -11,8 +13,9 @@ from talentcopilot.ui.next_shell import (
 
 def render_home():
     apply_next_style()
+    apply_enterprise_theme()
 
-    hero(
+    enterprise_hero(
         "Executive Brief",
         "TalentCopilot starts with a briefing, not a dashboard: what matters, why it matters, and what decision should come next.",
     )

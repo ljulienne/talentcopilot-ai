@@ -17,7 +17,9 @@ from talentcopilot.ui.collaboration_intelligence import render_collaboration_int
 from talentcopilot.ui.workforce_intelligence import render_workforce_intelligence
 from talentcopilot.executive_reasoning import ExecutiveReasoningEngine
 from talentcopilot.ui.executive_reasoning import render_executive_answer
-from talentcopilot.ui.next_shell import apply_next_style, hero, insight_card, recommendation_block
+from talentcopilot.ui.next_shell import apply_next_style, insight_card, recommendation_block
+from talentcopilot.ui.design_system.components import enterprise_hero
+from talentcopilot.ui.design_system.theme import apply_enterprise_theme
 
 
 def _render_diagnostic(diagnostic):
@@ -78,10 +80,11 @@ def _render_diagnostic(diagnostic):
 
 def render_organization_intelligence_preview():
     apply_next_style()
-    hero(
+    apply_enterprise_theme()
+    enterprise_hero(
         "Organization Intelligence",
         "Reveal where critical knowledge is concentrated, why continuity is at risk, and which actions should be prioritized.",
-        tag="Knowledge Concentration Engine v1",
+        badge="Knowledge Concentration Engine v1",
     )
 
     col1, col2, col3 = st.columns(3)
