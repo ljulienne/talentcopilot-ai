@@ -1,22 +1,39 @@
-from talentcopilot.services.candidate_workspace_v2_service import CandidateWorkspaceV2Service
-from talentcopilot.ui.enterprise_navigation import get_page_by_label
+import importlib
+
+from talentcopilot.ui.enterprise_navigation import (
+    get_enterprise_navigation,
+)
 
 
-def test_candidate_workspace_v2_demo():
-    report = CandidateWorkspaceV2Service().build_demo()
+def _candidate_intelligence_pages():
+    pages = []
 
-    assert report.status == "Ready"
-    assert report.outputs
-    assert report.outputs[0].profile.recommendation
+    for section in get_enterprise_navigation().values():
+        for page in section.pages:
+            if page.label == "Candidate Intelligence":
+                pages.append(page)
 
-
-def test_candidate_workspace_v2_imports():
-    module = __import__("talentcopilot.ui.candidate_workspace_v2", fromlist=["render_candidate_workspace_v2"])
-    assert hasattr(module, "render_candidate_workspace_v2")
+    return pages
 
 
 def test_candidate_workspace_v2_navigation():
-    page = get_page_by_label("Candidate Intelligence")
-    assert page is not None
-    assert page.module == "talentcopilot.ui.candidate_workspace_v2"
-    assert page.function == "render_candidate_workspace_v2"
+    """
+    Regression guard for Release 3.0.1.
+
+    The historical Candidate Workspace v2 route was removed because it
+    calculated a second fit score through the Decision Core.
+
+    Candidate Intelligence must now use the official Candidate Workspace,
+    which consumes RecruitmentSession.ranked_analyses.
+    """
+    pages = _candidate_intelligence_pages()
+
+    assert len(pages) == 1
+
+    page = pages[0]
+
+    assert page.module == "talentcopilot.ui.candidate_workspace"
+    assert page.function == "render_candidate_workspace"
+
+    module = importlib.import_module(page.module)
+    assert callable(getattr(module, page.function))
