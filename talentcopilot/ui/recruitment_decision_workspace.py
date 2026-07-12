@@ -8,6 +8,7 @@ replace the current intelligence engines.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Iterable, Sequence
 
 from talentcopilot.services.candidate_workspace_service import CandidateWorkspaceService
@@ -49,6 +50,133 @@ def _find(items: Sequence[object], name: str, attribute: str = "candidate_name")
             return item
     return None
 
+
+
+@dataclass(frozen=True)
+class ExecutiveDecisionView:
+    """Presentation-only summary built from existing recruitment reports."""
+
+    candidate_name: str
+    recommendation: str
+    match_score: float
+    confidence_label: str
+    confidence_reason: str
+    strengths: tuple[str, ...]
+    risks: tuple[str, ...]
+    next_actions: tuple[str, ...]
+
+
+def _text(value: object, fallback: str = "Not available") -> str:
+    cleaned = str(value or "").strip()
+    return cleaned or fallback
+
+
+def _build_executive_decision(candidate_report, decision_report) -> ExecutiveDecisionView | None:
+    """Build a defensive executive view without recalculating AI results."""
+    if candidate_report is None:
+        return None
+
+    decision_candidate = _find(
+        getattr(decision_report, "candidates", []) or [],
+        _text(getattr(candidate_report, "candidate_name", ""), ""),
+    )
+
+    evidence = list(getattr(candidate_report, "evidence", []) or [])
+    candidate_risks = list(getattr(candidate_report, "risks", []) or [])
+    decision_reasons = list(getattr(decision_candidate, "reasons", []) or [])
+    decision_risks = list(getattr(decision_candidate, "risks", []) or [])
+
+    strengths = tuple(
+        _text(getattr(item, "title", item))
+        for item in (decision_reasons or evidence)[:3]
+    )
+    risks = tuple(
+        _text(getattr(item, "title", item))
+        for item in (decision_risks or candidate_risks)[:3]
+    )
+
+    score = float(getattr(candidate_report, "match_score", 0.0) or 0.0)
+    evidence_count = len(evidence) + len(decision_reasons)
+    risk_count = len(candidate_risks) + len(decision_risks)
+
+    if score >= 80 and evidence_count >= 3:
+        confidence_label = "High"
+    elif score >= 60 and evidence_count >= 1:
+        confidence_label = "Medium"
+    else:
+        confidence_label = "Limited"
+
+    confidence_reason = (
+        f"Based on {evidence_count} supporting observations and "
+        f"{risk_count} identified risk{'s' if risk_count != 1 else ''}."
+    )
+
+    recommendation = _text(
+        getattr(decision_candidate, "ai_recommendation", None)
+        or getattr(candidate_report, "recommendation", None)
+    )
+
+    actions = tuple(
+        _text(item)
+        for item in (getattr(decision_report, "next_actions", []) or [])[:3]
+    )
+    if not actions:
+        actions = ("Complete human validation before making the final decision.",)
+
+    return ExecutiveDecisionView(
+        candidate_name=_text(getattr(candidate_report, "candidate_name", None)),
+        recommendation=recommendation,
+        match_score=score,
+        confidence_label=confidence_label,
+        confidence_reason=confidence_reason,
+        strengths=strengths,
+        risks=risks,
+        next_actions=actions,
+    )
+
+
+def _render_executive_decision(view: ExecutiveDecisionView | None) -> None:
+    import streamlit as st
+
+    section_title(
+        "Executive decision",
+        "A concise, evidence-led view of the current recommendation. Human validation remains required.",
+    )
+    if view is None:
+        st.info("Select an analysed candidate to display the executive decision summary.")
+        return
+
+    metric_grid([
+        ("Candidate", view.candidate_name, "Current focus"),
+        ("Recommendation", view.recommendation, "Existing decision signal"),
+        ("Match", f"{view.match_score:.0f}%", "Existing matching result"),
+        ("Evidence confidence", view.confidence_label, view.confidence_reason),
+    ])
+
+    left, middle, right = st.columns(3)
+    with left:
+        st.markdown("#### Why this candidate")
+        if view.strengths:
+            for item in view.strengths:
+                st.success(item)
+        else:
+            st.info("No supporting strengths are available yet.")
+    with middle:
+        st.markdown("#### What to validate")
+        if view.risks:
+            for item in view.risks:
+                st.warning(item)
+        else:
+            st.success("No material risk is currently documented.")
+    with right:
+        st.markdown("#### Recommended next actions")
+        for item in view.next_actions:
+            st.write(f"- {item}")
+
+    st.caption(
+        "TalentCopilot supports the hiring team with existing evidence and recommendations; "
+        "it does not make the final hiring decision."
+    )
 
 def _render_empty_state() -> None:
     import streamlit as st
@@ -344,6 +472,13 @@ def render_recruitment_decision_workspace() -> None:
     else:
         selected_name = ""
 
+    selected_candidate_report = _find(candidate_reports, selected_name)
+    executive_decision = _build_executive_decision(
+        selected_candidate_report,
+        decision_report,
+    )
+    _render_executive_decision(executive_decision)
+
     overview, candidate, compare, interview, decision, advisor, report = st.tabs(
         ["Overview", "Candidate", "Compare", "Interview", "Decision", "AI Advisor", "Report"]
     )
@@ -351,7 +486,7 @@ def render_recruitment_decision_workspace() -> None:
     with overview:
         _render_overview(workspace_report, pipeline_report, task_report)
     with candidate:
-        _render_candidate(_find(candidate_reports, selected_name))
+        _render_candidate(selected_candidate_report)
     with compare:
         _render_comparison(comparison_report)
     with interview:
