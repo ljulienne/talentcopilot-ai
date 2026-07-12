@@ -6,6 +6,8 @@ from typing import Any, Iterable
 
 from talentcopilot.services.streamlit_session_bridge import get_streamlit_session
 from talentcopilot.ui.navigation_actions import request_page
+from talentcopilot.ui.project_hub import build_project_summaries
+from talentcopilot.storage.recruitment_store import list_recruitments
 
 
 @dataclass(frozen=True)
@@ -279,6 +281,25 @@ def render_executive_briefing() -> None:
         for offset, (column, domain) in enumerate(zip(columns, row)):
             with column:
                 _render_domain(domain, row_start + offset)
+
+    st.subheader("Recent projects")
+    try:
+        projects = build_project_summaries(session, list_recruitments())[:4]
+    except Exception:
+        projects = build_project_summaries(session, ())[:4]
+    if projects:
+        project_columns = st.columns(min(4, len(projects)))
+        for column, project in zip(project_columns, projects):
+            with column:
+                st.markdown(
+                    f'<div class="tc-priority"><strong>{escape(project.title)}</strong><span>{project.analyzed_count}/{project.candidate_count} analysed · {escape(project.next_action)}</span></div>',
+                    unsafe_allow_html=True,
+                )
+        if st.button("View all projects", key="briefing_view_projects"):
+            request_page("Projects", reason="Opened the Project Hub from the Executive Brief.")
+            st.rerun()
+    else:
+        st.caption("No project yet. Start with Recruitment Intelligence to create your first decision project.")
 
     st.subheader("Ask TalentCopilot")
     prompt = st.text_input(

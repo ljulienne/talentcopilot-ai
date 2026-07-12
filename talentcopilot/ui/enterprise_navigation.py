@@ -32,6 +32,7 @@ def _page(label, module, function, description="", icon="•"):
 # importable through LEGACY_PAGES but are no longer primary navigation destinations.
 COMMAND_PAGES = [
     _page("Executive Brief", "talentcopilot.ui.home", "render_home", "What matters and what to do next.", "✦"),
+    _page("Projects", "talentcopilot.ui.project_hub", "render_project_hub", "Resume active and saved decision projects.", "▦"),
 ]
 
 ANALYSIS_PAGES = [
