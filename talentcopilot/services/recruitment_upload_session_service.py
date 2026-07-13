@@ -295,9 +295,22 @@ class RecruitmentUploadSessionService:
         profile = self._profile(ranked)
         metadata = getattr(profile, "metadata", {}) or {}
         return {
+            # Preserve the raw upload fit for diagnostics and backward
+            # compatibility with CandidateAnalysisState.match_score.
             "official_upload_fit": round(score, 2),
-            "evidence_quality": self._number(metadata.get("evidence_quality_score")),
-            "confidence": self._number(getattr(ranked, "confidence_score", None)),
+
+            # Persist the consolidated ranking score separately. Recruiter-
+            # facing views resolve this value as the official display score.
+            "official_ranking_score": self._number(
+                getattr(ranked, "ranking_score", None)
+            ),
+
+            "evidence_quality": self._number(
+                metadata.get("evidence_quality_score")
+            ),
+            "confidence": self._number(
+                getattr(ranked, "confidence_score", None)
+            ),
         }
 
     def _first_number(self, *values: Any) -> float:

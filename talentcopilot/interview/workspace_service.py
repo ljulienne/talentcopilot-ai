@@ -1,3 +1,5 @@
+from talentcopilot.services.official_score_service import get_official_candidate_score
+
 from talentcopilot.interview.evaluation_service import InterviewEvaluationService
 from talentcopilot.interview.models import InterviewCompetency, InterviewWorkspaceReport
 from talentcopilot.interview.plan_service import InterviewPlanService
@@ -49,7 +51,7 @@ class InterviewWorkspaceService:
         required_skills = [str(skill) for skill in (required_skills or []) if str(skill).strip()]
         candidate_skills = [str(skill) for skill in candidate.get("skills", []) if str(skill).strip()]
         achievements = [str(item) for item in candidate.get("achievements", []) if str(item).strip()]
-        match_score = float(getattr(analysis, "match_score", 0) or 0)
+        match_score = get_official_candidate_score(analysis)
 
         competency_names = []
         for skill in required_skills + candidate_skills:
