@@ -24,6 +24,7 @@ class CandidateAnalysisState:
     candidate_id: str = ""
     status: CandidateAnalysisStatus = CandidateAnalysisStatus.PENDING
     match_score: float = 0.0
+    ranking_score: Optional[float] = None
     rank: Optional[int] = None
     score_breakdown: Dict[str, float] = field(default_factory=dict)
     governance_report: Optional[Any] = None
@@ -43,7 +44,15 @@ class CandidateAnalysisState:
 
     @property
     def official_match_score(self) -> float:
-        return self.match_score
+        """Return the consolidated ranking score when available.
+
+        match_score remains the raw fit score for diagnostics and backward
+        compatibility. ranking_score is the recruiter-facing consolidated
+        score used to order candidates.
+        """
+        if self.ranking_score is not None:
+            return float(self.ranking_score)
+        return float(self.match_score)
 
     @property
     def official_rank(self) -> Optional[int]:

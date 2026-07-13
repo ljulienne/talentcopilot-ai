@@ -1,3 +1,5 @@
+from talentcopilot.services.official_score_service import get_official_candidate_score
+
 from talentcopilot.models.decision_board import (
     CandidateDecisionSummary,
     DecisionBoardReport,
@@ -52,7 +54,7 @@ class DecisionBoardService:
             if not risks:
                 risks.append(DecisionRisk("No major risk detected", "No blocking risk identified in current analysis.", "Low"))
 
-            match = float(getattr(analysis, "match_score", 0) or 0)
+            match = get_official_candidate_score(analysis)
             consensus = min(96, max(55, int((match + 88) / 2)))
 
             candidates.append(

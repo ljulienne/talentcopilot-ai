@@ -1,3 +1,5 @@
+from talentcopilot.services.official_score_service import get_official_candidate_score
+
 from talentcopilot.models.hiring_budget import (
     CandidateBudgetAssessment,
     CandidateCostInput,
@@ -29,7 +31,7 @@ class HiringBudgetService:
 
         assessments = []
         for index, analysis in enumerate(session.ranked_analyses):
-            fit_score = float(getattr(analysis, "match_score", 0) or 0)
+            fit_score = get_official_candidate_score(analysis)
             expected_salary = self._estimate_salary(index, fit_score, budget)
             candidate_cost = CandidateCostInput(
                 candidate_name=getattr(analysis, "candidate_name", "Candidate"),

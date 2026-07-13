@@ -99,7 +99,16 @@ class RecruitmentUploadSessionService:
                     candidate_name=candidate_name,
                     candidate_id=candidate_id,
                     status=CandidateAnalysisStatus.ANALYZED,
+                    # Raw Decision Intelligence fit score.
                     match_score=round(score, 2),
+
+                    # Consolidated score used by RealRankingPipeline to
+                    # order candidates. None must remain None so legacy and
+                    # non-ranking sessions correctly fall back to match_score.
+                    ranking_score=self._optional_number(
+                        getattr(ranked, "ranking_score", None)
+                    ),
+
                     rank=rank,
                     score_breakdown=self._score_breakdown(ranked, score),
                     notes=[
@@ -305,6 +314,16 @@ class RecruitmentUploadSessionService:
             if value is not None:
                 return self._number(value)
         return 0.0
+
+    def _optional_number(self, value: Any) -> Optional[float]:
+        """Convert a value to float while preserving missing values."""
+        if value is None:
+            return None
+
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
 
     def _number(self, value: Any) -> float:
         try:
