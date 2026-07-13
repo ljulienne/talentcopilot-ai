@@ -21,6 +21,10 @@ from talentcopilot.services.recruiter_copilot_workspace_service import Recruiter
 from talentcopilot.services.recruitment_pipeline_service import RecruitmentPipelineService
 from talentcopilot.services.recruitment_tasks_service import RecruitmentTasksService
 from talentcopilot.services.recruitment_workspace_service import RecruitmentWorkspaceService
+from talentcopilot.services.recruitment_cockpit_service import (
+    RecruitmentCockpitService,
+    RecruitmentCockpitView,
+)
 from talentcopilot.services.streamlit_session_bridge import get_streamlit_session, set_streamlit_session
 from talentcopilot.ui.recruitment_upload_panel import render_recruitment_upload_panel
 from talentcopilot.ui.design_system.components import (
@@ -313,6 +317,77 @@ def _render_executive_decision(view: ExecutiveDecisionView | None) -> None:
         "it does not make the final hiring decision."
     )
 
+
+def _status_icon(status: str) -> str:
+    return {
+        "done": "✓",
+        "active": "●",
+        "pending": "○",
+    }.get(str(status or "").lower(), "○")
+
+
+def _render_workflow_rail(view: RecruitmentCockpitView) -> None:
+    """Render a compact workflow rail from the presentation model."""
+    import streamlit as st
+
+    section_title(
+        "Recruitment workflow",
+        "A single guided path from the mission to the final human decision.",
+    )
+
+    columns = st.columns(len(view.workflow_steps))
+    for column, step in zip(columns, view.workflow_steps):
+        with column:
+            icon = _status_icon(step.status)
+            st.markdown(f"### {icon}")
+            st.markdown(f"**{step.label}**")
+            st.caption(step.detail)
+
+    st.progress(max(0, min(100, view.progress_percent)) / 100)
+    st.caption(
+        f"{view.progress_percent}% complete · Current stage: {view.current_stage}"
+    )
+
+
+def _render_cockpit(view: RecruitmentCockpitView) -> None:
+    """Render the premium session cockpit without any business calculation."""
+    import streamlit as st
+
+    section_title(
+        "Active recruitment",
+        "The essential session context, official ranking and next recommended action.",
+    )
+
+    metric_grid([
+        ("Mission", view.role_title, f"Session {view.session_id}"),
+        (
+            "Candidates",
+            str(view.candidates_count),
+            f"{view.analyzed_count} analysed",
+        ),
+        (
+            "Current lead",
+            view.top_candidate_name,
+            f"{view.top_candidate_score:.0f}% official match"
+            if view.top_candidate_name != "Not available"
+            else "No ranking yet",
+        ),
+        (
+            "Progress",
+            f"{view.progress_percent}%",
+            view.current_stage,
+        ),
+    ])
+
+    _render_workflow_rail(view)
+
+    next_action_card(
+        view.next_action_title,
+        view.next_action_detail,
+        "Recommended next step",
+    )
+
+
 def _render_empty_state() -> None:
     import streamlit as st
 
@@ -579,6 +654,9 @@ def render_recruitment_decision_workspace() -> None:
         return
 
     workspace_report = RecruitmentWorkspaceService().build(session)
+    cockpit_view = RecruitmentCockpitService().build(session, workspace_report)
+    _render_cockpit(cockpit_view)
+
     pipeline_report = RecruitmentPipelineService().build(session)
     task_report = RecruitmentTasksService().build(session)
     candidate_reports = CandidateWorkspaceService().build_all(session)
@@ -592,14 +670,6 @@ def render_recruitment_decision_workspace() -> None:
     candidate_names = _names(candidate_reports)
     if not candidate_names:
         candidate_names = _names(decision_report.candidates)
-
-    top_candidate = candidate_names[0] if candidate_names else "-"
-    metric_grid([
-        ("Role", workspace_report.role_title, workspace_report.status),
-        ("Candidates", str(workspace_report.candidates_count), "Total"),
-        ("Analysed", str(workspace_report.analyzed_count), "AI completed"),
-        ("Current lead", top_candidate, "Highest-ranked candidate"),
-    ])
 
     if candidate_names:
         selected_name = st.selectbox(
