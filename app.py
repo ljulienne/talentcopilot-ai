@@ -6,7 +6,10 @@ import streamlit as st
 from talentcopilot.config import APP_NAME, APP_VERSION
 from talentcopilot.i18n import LANGUAGES
 from talentcopilot.services.import_safety_audit import ImportSafetyAudit
-from talentcopilot.services.streamlit_session_bridge import get_streamlit_session
+from talentcopilot.services.streamlit_session_bridge import (
+    consume_session_invalidation_notice,
+    get_streamlit_session,
+)
 from talentcopilot.ui.design_system.theme import apply_enterprise_theme
 from talentcopilot.ui.enterprise_navigation import get_enterprise_navigation
 from talentcopilot.ui.navigation_actions import consume_page_request
@@ -108,7 +111,12 @@ def main():
     _language_selector()
     st.sidebar.markdown("---")
     selected_page = _select_page()
-    render_current_recruitment(get_streamlit_session())
+    session = get_streamlit_session()
+    invalidation_notice = consume_session_invalidation_notice()
+    if invalidation_notice:
+        st.warning(invalidation_notice)
+
+    render_current_recruitment(session)
     _render_import_health()
     _safe_call(selected_page.module, selected_page.function)()
 

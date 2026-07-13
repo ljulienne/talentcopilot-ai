@@ -18,6 +18,7 @@ from talentcopilot.models.recruitment_session import (
     SessionStatus,
 )
 from talentcopilot.services.candidate_identity import resolve_candidate_id
+from talentcopilot.services.analysis_provenance import build_provenance
 from talentcopilot.services.candidate_name_resolver import CandidateNameResolver
 from talentcopilot.services.real_upload_ranking_service import (
     RealUploadRankingReport,
@@ -122,6 +123,14 @@ class RecruitmentUploadSessionService:
             "required_skills": self._extract_skills(getattr(job_document, "text", "")),
         }
 
+        provenance = build_provenance(
+            job_text=str(getattr(job_document, "text", "") or ""),
+            candidate_texts=[
+                str(getattr(doc, "text", "") or "")
+                for doc in documents
+            ],
+        )
+
         return RecruitmentSession(
             session_id=f"upload-{uuid4().hex[:10]}",
             job=job,
@@ -131,8 +140,12 @@ class RecruitmentUploadSessionService:
             metadata={
                 "source": "real_upload",
                 "job_filename": getattr(job_document, "filename", ""),
-                "candidate_filenames": [getattr(doc, "filename", "") for doc in documents],
-                "workflow_version": "3.1.1A",
+                "candidate_filenames": [
+                    getattr(doc, "filename", "")
+                    for doc in documents
+                ],
+                "workflow_version": "3.2.1A.2.2",
+                **provenance.as_metadata(),
             },
         )
 
