@@ -104,65 +104,6 @@ def _render_import_health():
 
 
 
-def _render_runtime_score_diagnostic(session):
-    import streamlit as st
-
-    with st.expander("Runtime diagnostic — temporary", expanded=True):
-        st.code(
-            "Build commit: 5d8ff1ebe6f35592e064f0b389b51fe0c9a0e09d\n"
-            "Expected analysis version: 3.2.1A.2.2\n"
-            "Expected pipeline: real-upload-ranking"
-        )
-
-        if session is None:
-            st.warning("No active RecruitmentSession.")
-            return
-
-        metadata = dict(getattr(session, "metadata", {}) or {})
-
-        st.write("Session ID:", getattr(session, "session_id", "-"))
-        st.write("Session source:", metadata.get("source"))
-        st.write("Analysis version:", metadata.get("analysis_version"))
-        st.write("Pipeline:", metadata.get("pipeline"))
-        st.write(
-            "Matching engine version:",
-            metadata.get("matching_engine_version"),
-        )
-        st.write(
-            "Normalization version:",
-            metadata.get("normalization_version"),
-        )
-        st.write(
-            "Total analysis time:",
-            metadata.get("total_analysis_seconds"),
-        )
-
-        rows = []
-        for analysis in getattr(
-            session,
-            "ranked_analyses",
-            [],
-        ) or []:
-            rows.append(
-                {
-                    "rank": getattr(analysis, "rank", None),
-                    "candidate": getattr(
-                        analysis,
-                        "candidate_name",
-                        None,
-                    ),
-                    "official_match": getattr(
-                        analysis,
-                        "match_score",
-                        None,
-                    ),
-                }
-            )
-
-        st.write("Official session rows:")
-        st.dataframe(rows, use_container_width=True)
-
-
 def main():
     st.set_page_config(page_title=APP_NAME, page_icon="TC", layout="wide")
     _initialize_state()
@@ -177,7 +118,6 @@ def main():
         st.warning(invalidation_notice)
 
     render_current_recruitment(session)
-    _render_runtime_score_diagnostic(session)
     _render_import_health()
     _safe_call(selected_page.module, selected_page.function)()
 
