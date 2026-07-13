@@ -1,5 +1,9 @@
 from talentcopilot.services.candidate_workspace_service import CandidateWorkspaceService
 from talentcopilot.services.candidate_intelligence import CandidateIntelligenceService
+from talentcopilot.services.candidate_intelligence_view_service import (
+    CandidateDecisionBrief,
+    CandidateIntelligenceViewService,
+)
 from talentcopilot.services.demo_session_factory import create_demo_recruitment_session
 from talentcopilot.services.streamlit_session_bridge import get_streamlit_session, set_streamlit_session
 from talentcopilot.ui.design_system.components import enterprise_hero, insight_card, metric_grid, section_title
@@ -44,64 +48,137 @@ def _render_risks(report):
 
 
 
-def _render_candidate_intelligence(snapshot):
+
+def _render_list_section(
+    title: str,
+    items,
+    *,
+    empty_message: str,
+    tone: str = "neutral",
+) -> None:
+    import streamlit as st
+
+    st.markdown(f"#### {title}")
+
+    values = list(items or [])
+    if not values:
+        st.info(empty_message)
+        return
+
+    for item in values:
+        if tone == "positive":
+            st.success(item)
+        elif tone == "risk":
+            st.warning(item)
+        else:
+            st.markdown(f"- {item}")
+
+
+def _render_candidate_decision_brief(
+    brief: CandidateDecisionBrief,
+) -> None:
     import streamlit as st
 
     section_title(
-        "Candidate Intelligence",
-        "Decision-oriented interpretation of the existing candidate analysis. Scores do not replace human judgment.",
+        "Decision Brief",
+        "A concise interpretation of the official candidate result. "
+        "The score and rank below are read directly from the active recruitment session.",
     )
 
     metric_grid([
-        ("Mission Fit", f"{snapshot.mission_fit:.0f}%", "Existing matching score"),
-        ("Evidence Coverage", f"{snapshot.evidence_coverage}%", snapshot.evidence_summary),
-        ("Decision Confidence", f"{snapshot.decision_confidence}%", "Readiness of the available evidence"),
-        ("Potential Signal", f"{snapshot.potential_signal}%", "Development signal — not a hiring decision"),
+        (
+            "Official Match",
+            f"{brief.official_match_score:.0f}%",
+            "Official session score",
+        ),
+        (
+            "Official Rank",
+            f"#{brief.official_rank}",
+            "Official session ranking",
+        ),
+        (
+            "Decision Confidence",
+            f"{brief.confidence_score}%",
+            brief.confidence_label,
+        ),
+        (
+            "Evidence Coverage",
+            f"{brief.evidence_coverage}%",
+            "Available evidence readiness",
+        ),
     ])
 
     insight_card(
-        "Explain this recommendation",
-        snapshot.recommendation_explanation,
-        snapshot.recommendation,
+        brief.recommendation_label,
+        brief.recommendation_explanation,
+        brief.recommendation,
     )
 
-    strengths_col, risks_col = st.columns(2)
+    st.markdown("#### Executive interpretation")
+    st.write(brief.executive_summary)
+
+    strengths_col, transferable_col = st.columns(2)
+
     with strengths_col:
-        st.markdown("#### Strengths supporting the mission")
-        if snapshot.strengths:
-            for strength in snapshot.strengths:
-                st.success(strength)
-        else:
-            st.info("No structured strength is available yet.")
+        _render_list_section(
+            "Top strengths",
+            brief.strengths,
+            empty_message="No structured strength is available yet.",
+            tone="positive",
+        )
+
+    with transferable_col:
+        _render_list_section(
+            "Transferable evidence",
+            brief.transferable_evidence,
+            empty_message=(
+                "No transferable capability has been identified from the "
+                "current structured profile."
+            ),
+        )
+
+    gaps_col, risks_col = st.columns(2)
+
+    with gaps_col:
+        _render_list_section(
+            "Missing or limited evidence",
+            brief.missing_evidence,
+            empty_message="No material evidence gap is currently documented.",
+        )
 
     with risks_col:
-        st.markdown("#### Risks and uncertainties")
-        if snapshot.risks:
-            for risk in snapshot.risks:
-                label = f"{risk.risk_type.value} · {risk.title}"
-                if risk.severity.lower() in {"high", "critical"}:
-                    st.error(label)
-                else:
-                    st.warning(label)
-                st.caption(risk.detail)
-        else:
-            st.success("No material risk is documented in the current report.")
+        _render_list_section(
+            "Hiring risks to validate",
+            brief.hiring_risks,
+            empty_message="No material risk is currently documented.",
+            tone="risk",
+        )
 
-    evidence_col, interview_col = st.columns(2)
-    with evidence_col:
-        st.markdown("#### Missing evidence")
-        for item in snapshot.missing_evidence:
-            st.write(f"- {item}")
+    _render_list_section(
+        "Interview priorities",
+        brief.interview_priorities,
+        empty_message="No interview priority is currently available.",
+    )
 
-    with interview_col:
-        st.markdown("#### Recommended interview strategy")
-        for item in snapshot.interview_strategy:
-            st.write(f"- {item}")
+    st.markdown("#### Development signal — not a hiring decision")
+    st.progress(
+        max(0, min(100, brief.potential_signal)) / 100
+    )
+    st.caption(
+        f"Potential signal: {brief.potential_signal}%. "
+        "This indicator highlights possible development capacity from the "
+        "available evidence. Potential signals do not evaluate a person's worth. "
+        "They must not be used as an autonomous hiring, rejection, promotion, "
+        "or compensation decision."
+    )
 
     st.caption(
-        "Mission Fit reuses the existing matching score. Evidence Coverage, Decision Confidence and Potential Signal "
-        "are transparent presentation indicators derived from the current report; they do not evaluate a person's worth."
+        f"{brief.evidence_summary} "
+        "Potential and confidence indicators organise existing evidence only; "
+        "they do not replace recruiter judgment or evaluate a person's worth."
     )
+
+
 
 def render_candidate_workspace():
     import streamlit as st
@@ -112,9 +189,9 @@ def render_candidate_workspace():
     reports = CandidateWorkspaceService().build_all(session)
 
     enterprise_hero(
-        "Candidate Workspace",
-        "Review one candidate at a time with evidence, AI recommendation and interview focus.",
-        "Analysis",
+        "Candidate Intelligence",
+        "Understand the official match, supporting evidence, uncertainties and interview priorities.",
+        "Recruitment Decision Support",
     )
 
     if not reports:
@@ -132,21 +209,18 @@ def render_candidate_workspace():
     selected_name = st.selectbox("Select candidate", candidate_names)
     report = reports[candidate_names.index(selected_name)]
 
-    metric_grid([
-        ("Candidate", report.candidate_name, f"Rank #{report.rank}"),
-        ("Match Score", f"{report.match_score:.0f}%", "AI matching"),
-        ("Recommendation", report.recommendation, "Decision signal"),
-        ("Workspace", "Candidate", "360° view"),
-    ])
-
-    insight_card(
-        "Executive Summary",
-        report.executive_summary,
-        "AI Summary",
+    intelligence = CandidateIntelligenceService().build(report)
+    decision_brief = CandidateIntelligenceViewService().build(
+        report,
+        intelligence,
     )
 
-    intelligence = CandidateIntelligenceService().build(report)
-    _render_candidate_intelligence(intelligence)
+    section_title(
+        report.candidate_name,
+        f"Official candidate #{report.rank} in the active recruitment session.",
+    )
+
+    _render_candidate_decision_brief(decision_brief)
 
     tab_overview, tab_skills, tab_evidence, tab_risks, tab_interview = st.tabs([
         "Overview",
