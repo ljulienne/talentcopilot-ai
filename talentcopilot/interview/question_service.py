@@ -6,14 +6,9 @@ from talentcopilot.interview.models import InterviewCompetency, InterviewQuestio
 
 
 class InterviewQuestionService:
-    """Build evidence-grounded interview questions without an LLM call.
+    """Build varied evidence-grounded questions without an LLM call."""
 
-    The service is intentionally deterministic and fast. It consumes the
-    official candidate/session context and turns evidence gaps into structured
-    interview probes. It never recalculates the candidate fit score.
-    """
-
-    ENGINE_VERSION = "3.1.1B"
+    ENGINE_VERSION = "3.1.1C"
 
     def build(
         self,
@@ -24,27 +19,33 @@ class InterviewQuestionService:
         mission_requirements: Optional[Iterable[str]] = None,
     ) -> list[InterviewQuestion]:
         candidate = candidate or {}
-        requirements = [str(item).strip() for item in (mission_requirements or []) if str(item).strip()]
-        achievements = [str(item).strip() for item in candidate.get("achievements", []) if str(item).strip()]
+        requirements = [
+            str(item).strip()
+            for item in (mission_requirements or [])
+            if str(item).strip()
+        ]
+        achievements = [
+            str(item).strip()
+            for item in candidate.get("achievements", [])
+            if str(item).strip()
+        ]
         years = candidate.get("years_experience", 0)
 
-        target_competencies = [c for c in competencies if c.validate_in_interview]
-        if not target_competencies:
-            target_competencies = competencies[:3]
+        target = [c for c in competencies if c.validate_in_interview]
+        if not target:
+            target = competencies[:3]
 
-        questions: list[InterviewQuestion] = []
-        for competency in target_competencies[:6]:
-            questions.append(
-                self._build_question(
-                    competency,
-                    role_title=role_title,
-                    requirements=requirements,
-                    achievements=achievements,
-                    years=years,
-                )
+        return [
+            self._build_question(
+                competency,
+                role_title=role_title,
+                requirements=requirements,
+                achievements=achievements,
+                years=years,
+                index=index,
             )
-
-        return questions
+            for index, competency in enumerate(target[:6])
+        ]
 
     def _build_question(
         self,
@@ -54,74 +55,281 @@ class InterviewQuestionService:
         requirements: list[str],
         achievements: list[str],
         years,
+        index: int,
     ) -> InterviewQuestion:
         name = competency.name
-        evidence_level = str(competency.evidence_level or "Low").lower()
-        matching_requirement = self._matching_requirement(name, requirements)
-        evidence_excerpt = self._matching_evidence(name, achievements)
+        requirement = self._matching_requirement(name, requirements) or name
+        evidence = self._matching_evidence(name, achievements)
+        archetype = self._archetype(name, index)
 
-        if evidence_excerpt:
-            question = (
-                f"Your CV states: ‘{self._shorten(evidence_excerpt, 180)}’. "
-                f"For the {role_title} mission, explain the exact scope you personally owned, "
-                f"the decisions you made, the most difficult trade-off, and the measurable outcome. "
-                f"How does this demonstrate {name}?"
-            )
-            objective = (
-                f"Verify that the stated evidence demonstrates personal ownership and sufficient depth in {name}, "
-                "rather than team-level participation."
-            )
-        elif evidence_level == "low":
-            requirement_text = matching_requirement or name
-            question = (
-                f"The mission requires {requirement_text}, but the available CV evidence is limited. "
-                f"Describe the most comparable situation in which you applied {name}. "
-                "What was the context, what did you personally decide, which stakeholders were affected, "
-                "and what measurable result did you deliver?"
-            )
-            objective = f"Resolve a material evidence gap for {name} before a hiring decision."
-        else:
-            question = (
-                f"For the {role_title} mission, walk me through your strongest example of {name}. "
-                "Separate your own contribution from the team's work, explain one difficult decision, "
-                "and quantify the result."
-            )
-            objective = f"Confirm the depth, scale and transferability of the candidate's experience in {name}."
+        question, expected, positives, warnings, follow_ups = self._question_pack(
+            archetype=archetype,
+            competency=name,
+            requirement=requirement,
+            evidence=evidence,
+            role_title=role_title,
+        )
 
-        experience_note = f" The CV indicates approximately {years:g} years of experience." if isinstance(years, (int, float)) and years else ""
+        experience_note = (
+            f" The CV indicates approximately {years:g} years of experience."
+            if isinstance(years, (int, float)) and years
+            else ""
+        )
         rationale = competency.rationale or "Current evidence requires interview validation."
 
         return InterviewQuestion(
             competency=name,
             question=question,
-            objective=f"{objective}{experience_note} Evidence basis: {rationale}",
-            expected_evidence=[
-                "A specific situation with scope, scale and constraints",
-                "Clear distinction between personal ownership and team contribution",
-                "Decisions and trade-offs made by the candidate",
-                "Stakeholders involved and how resistance or conflict was handled",
-                "A measurable outcome and lessons learned",
+            objective=(
+                f"Validate {name} using a {archetype.replace('_', ' ')} lens."
+                f"{experience_note} Evidence basis: {rationale}"
+            ),
+            expected_evidence=expected,
+            positive_signals=positives,
+            warning_signals=warnings,
+            follow_ups=follow_ups,
+        )
+
+    def _question_pack(
+        self,
+        *,
+        archetype: str,
+        competency: str,
+        requirement: str,
+        evidence: str,
+        role_title: str,
+    ):
+        prefix = (
+            f"Your CV states: ‘{self._shorten(evidence, 155)}’. "
+            if evidence
+            else f"The mission requires {requirement}. "
+        )
+
+        if archetype == "technical":
+            return (
+                prefix
+                + f"Describe the most technically demanding {competency} situation you handled. "
+                  "Which systems, modules, interfaces or data flows were involved, "
+                  "which technical decisions did you personally make, how did you validate the solution, "
+                  "what defect or limitation was hardest to resolve, and which measurable reliability, quality, or delivery result improved?",
+                [
+                    "Specific systems, modules and configuration scope",
+                    "Testing or validation approach",
+                    "Concrete technical constraint and resolution",
+                    "Evidence of production quality or stability",
+                ],
+                [
+                    "Shows clear technical ownership of design and configuration decisions",
+                    "Explains architecture, configuration and validation precisely",
+                    "Distinguishes design choices from vendor defaults",
+                    "Shows diagnostic depth and technical accountability",
+                ],
+                [
+                    "Cannot name the systems or modules involved",
+                    "Describes only coordination with no technical understanding",
+                    "No evidence of testing or quality controls",
+                ],
+                [
+                    "Which interface or data dependency created the highest risk?",
+                    "What did you reject or redesign, and why?",
+                    "Which test result or production metric confirmed that your solution worked?",
+                ],
+            )
+
+        if archetype == "data":
+            return (
+                prefix
+                + f"Describe a {competency} deliverable that influenced an HR or business decision. "
+                  "What source data did you personally validate, how did you ensure reliability, "
+                  "which KPI mattered most, what measurable change did the analysis reveal, and what decision changed because of it?",
+                [
+                    "Source systems and data model",
+                    "Data-quality controls",
+                    "Relevant KPI definition",
+                    "Decision or action enabled",
+                ],
+                [
+                    "Shows clear ownership of data validation and KPI definitions",
+                    "Explains lineage and validation checks",
+                    "Chooses KPIs tied to a business decision",
+                    "Shows how stakeholders used the output",
+                ],
+                [
+                    "Focuses only on dashboard appearance",
+                    "Cannot explain data quality or KPI definitions",
+                    "No evidence that the analysis changed a decision",
+                ],
+                [
+                    "Which data-quality issue could have changed the conclusion?",
+                    "How did you prevent users from misinterpreting the KPI?",
+                    "Which stakeholder decision was directly influenced by the result?",
+                ],
+            )
+
+        if archetype == "change":
+            return (
+                prefix
+                + f"Choose one transformation where adoption of {competency} was uncertain. "
+                  "Which user groups resisted, what did you personally change in the communication or training approach, "
+                  "and which measurable adoption or behavioural indicator proved that the change worked?",
+                [
+                    "Stakeholder segmentation",
+                    "Resistance diagnosis",
+                    "Targeted change actions",
+                    "Adoption metrics or behavioural evidence",
+                ],
+                [
+                    "Shows clear ownership of the change strategy and adoption actions",
+                    "Names distinct populations and resistance patterns",
+                    "Links interventions to measured adoption",
+                    "Shows adaptation rather than generic communication",
+                ],
+                [
+                    "Relies only on training attendance",
+                    "Cannot explain resistance or stakeholder differences",
+                    "No measurable adoption outcome",
+                ],
+                [
+                    "Which population required a different approach?",
+                    "What early signal showed the change plan was not working?",
+                    "Which adoption metric improved after you changed the approach?",
+                ],
+            )
+
+        if archetype == "stakeholder":
+            return (
+                prefix
+                + f"For the {role_title} context, describe a situation where stakeholders had "
+                  f"conflicting priorities around {competency}. Who disagreed, "
+                  "how did you personally influence the decision, what framework did you use, "
+                  "how did you secure commitment, and what measurable delivery or business outcome followed?",
+                [
+                    "Stakeholder map and competing interests",
+                    "Decision criteria",
+                    "Influencing approach",
+                    "Documented agreement or governance outcome",
+                ],
+                [
+                    "Shows clear ownership of stakeholder alignment and final decision-making",
+                    "Explains power dynamics and competing incentives",
+                    "Uses explicit criteria to arbitrate",
+                    "Secures a concrete commitment or governance decision",
+                ],
+                [
+                    "Avoids conflict rather than resolving it",
+                    "Escalates without attempting influence",
+                    "Cannot explain the final decision rationale",
+                ],
+                [
+                    "Which stakeholder had the strongest veto power?",
+                    "What concession did you make, and what did you protect?",
+                    "How did you verify that the final commitment was translated into action?",
+                ],
+            )
+
+        if archetype == "leadership":
+            return (
+                prefix
+                + f"Give an example where you had to develop or redirect another person while "
+                  f"delivering {competency}. What capability gap did you personally identify, "
+                  "what did you delegate, and which measurable performance or autonomy indicator improved?",
+                [
+                    "Initial capability or performance gap",
+                    "Delegation and coaching approach",
+                    "Feedback cadence",
+                    "Observable performance improvement",
+                ],
+                [
+                    "Shows clear ownership of team development and performance improvement",
+                    "Adapts coaching to the individual",
+                    "Delegates meaningful responsibility with controls",
+                    "Shows measurable improvement or independence",
+                ],
+                [
+                    "Equates management with task assignment",
+                    "No feedback or development approach",
+                    "Cannot describe the person's progress",
+                ],
+                [
+                    "What did you stop doing personally once the person improved?",
+                    "How did you handle underperformance?",
+                    "Which measurable behaviour showed that the person had become more autonomous?",
+                ],
+            )
+
+        if archetype == "risk":
+            return (
+                prefix
+                + f"Describe the highest-risk situation you encountered in {competency}. "
+                  "Which early warning indicators did you personally monitor, what mitigation options "
+                  "did you compare, what residual risk did you accept, and what measurable impact did the mitigation prevent or reduce?",
+                [
+                    "Risk statement and impact",
+                    "Early warning indicators",
+                    "Alternative mitigations",
+                    "Residual-risk decision",
+                ],
+                [
+                    "Shows clear ownership of risk identification, mitigation and escalation",
+                    "Quantifies probability and impact",
+                    "Compares options and trade-offs",
+                    "Escalates with a recommendation, not just a problem",
+                ],
+                [
+                    "Identifies the risk only after it materialised",
+                    "No alternative options considered",
+                    "Cannot explain residual risk acceptance",
+                ],
+                [
+                    "Which mitigation did you reject and why?",
+                    "At what threshold would you have escalated differently?",
+                    "Which indicator confirmed that the residual risk remained acceptable?",
+                ],
+            )
+
+        return (
+            prefix
+            + f"Describe one example that best proves your personal contribution to {competency}. "
+              "What responsibility did you personally own, what did you deliver, "
+              "and which measurable result was used to assess success?",
+            [
+                "Personal accountability",
+                "Concrete deliverable",
+                "Decision or action taken",
+                "Outcome assessment",
             ],
-            positive_signals=[
-                "Uses precise scope, timelines, stakeholders and metrics",
-                "Explains personal decisions and accountability",
-                "Connects the example directly to the mission requirement",
-                "Acknowledges risks, trade-offs and lessons learned",
-                "Clear ownership of scope, decisions, and outcomes",
+            [
+                "Shows clear ownership of the deliverable and its outcome",
+                "Separates personal contribution from team activity",
+                "Uses evidence to demonstrate impact",
             ],
-            warning_signals=[
-                "Describes only collective activity with no personal ownership",
-                "Cannot quantify the outcome or explain the decision process",
-                "Uses generic claims that are not supported by a concrete example",
-                "Example is materially smaller or less complex than the target mission",
+            [
+                "Uses only collective language",
+                "Cannot identify a personal deliverable",
+                "No objective success measure",
             ],
-            follow_ups=[
-                "What evidence or deliverable could verify your contribution?",
-                "Which stakeholder disagreed with you, and how did you respond?",
-                "What would have happened if your chosen approach had failed?",
-                "What would you do differently in this mission?",
+            [
+                "What would not have happened without your contribution?",
+                "Who can verify the result?",
+                "Which measurable outcome is most directly attributable to your work?",
             ],
         )
+
+    def _archetype(self, competency: str, index: int) -> str:
+        value = competency.lower()
+        if any(token in value for token in ("power bi", "analytics", "report", "data", "dashboard")):
+            return "data"
+        if any(token in value for token in ("change", "adoption", "training", "transformation")):
+            return "change"
+        if any(token in value for token in ("stakeholder", "vendor", "committee", "communication")):
+            return "stakeholder"
+        if any(token in value for token in ("management", "leadership", "coaching", "team")):
+            return "leadership"
+        if any(token in value for token in ("risk", "quality", "compliance", "governance")):
+            return "risk"
+        if any(token in value for token in ("hris", "core hr", "successfactors", "interface", "integration", "testing")):
+            return "technical"
+        return ("ownership", "risk", "stakeholder")[index % 3]
 
     def _matching_requirement(self, competency: str, requirements: list[str]) -> str:
         needle = competency.lower()
@@ -132,7 +340,11 @@ class InterviewQuestionService:
         return ""
 
     def _matching_evidence(self, competency: str, achievements: list[str]) -> str:
-        tokens = {token for token in competency.lower().replace("/", " ").split() if len(token) > 3}
+        tokens = {
+            token
+            for token in competency.lower().replace("/", " ").split()
+            if len(token) > 3
+        }
         for achievement in achievements:
             lower = achievement.lower()
             if tokens and any(token in lower for token in tokens):

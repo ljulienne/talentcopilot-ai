@@ -6,6 +6,7 @@ from talentcopilot.decision_core.fit_intelligence_models import (
     RoleRequirements,
 )
 from talentcopilot.decision_core.models import DecisionTraceStep, EvidenceGraph
+from talentcopilot.services.skill_normalization import canonical_skill
 
 
 class FitIntelligenceEngine:
@@ -19,26 +20,47 @@ class FitIntelligenceEngine:
         experience_nodes = graph.find_nodes_by_type("experience")
         achievement_nodes = graph.find_nodes_by_type("achievement")
 
-        candidate_skills = {node.label.lower(): node for node in skill_nodes}
-        required = [skill.lower() for skill in role.required_skills]
-        preferred = [skill.lower() for skill in role.preferred_skills]
+        candidate_skills = {
+            canonical_skill(node.label): node
+            for node in skill_nodes
+            if str(node.label or "").strip()
+        }
+        required = [
+            canonical_skill(skill)
+            for skill in role.required_skills
+            if str(skill or "").strip()
+        ]
+        preferred = [
+            canonical_skill(skill)
+            for skill in role.preferred_skills
+            if str(skill or "").strip()
+        ]
 
         matched_required = [skill for skill in required if skill in candidate_skills]
         matched_preferred = [skill for skill in preferred if skill in candidate_skills]
 
-        if required:
-            required_score = int((len(matched_required) / len(required)) * 75)
-        else:
-            required_score = 45 if skill_nodes else 0
-
-        preferred_score = int((len(matched_preferred) / max(1, len(preferred))) * 15) if preferred else 0
-        skill_match_score = min(100, required_score + preferred_score + (10 if skill_nodes else 0))
+        required_score = (
+            int((len(matched_required) / len(required)) * 75)
+            if required
+            else (45 if skill_nodes else 0)
+        )
+        preferred_score = (
+            int((len(matched_preferred) / max(1, len(preferred))) * 15)
+            if preferred
+            else 0
+        )
+        skill_match_score = min(
+            100,
+            required_score + preferred_score + (10 if skill_nodes else 0),
+        )
 
         years = self._extract_years(experience_nodes)
         if role.minimum_years_experience <= 0:
             experience_score = 80 if years > 0 else 50
         else:
-            experience_score = int(min(100, (years / role.minimum_years_experience) * 100))
+            experience_score = int(
+                min(100, (years / role.minimum_years_experience) * 100)
+            )
 
         achievement_score = min(100, len(achievement_nodes) * 35)
 
@@ -57,13 +79,19 @@ class FitIntelligenceEngine:
         )
         fit_score = max(0, min(100, fit_score))
 
-        drivers = self._drivers(skill_nodes, experience_nodes, achievement_nodes, matched_required, role)
+        drivers = self._drivers(
+            skill_nodes,
+            experience_nodes,
+            achievement_nodes,
+            matched_required,
+        )
         gaps = self._gaps(candidate_skills, role, years)
 
         status = self._status(fit_score)
         summary = (
             f"Fit score is {fit_score}%. "
-            f"Skill match={skill_match_score}%, experience match={experience_score}%, "
+            f"Skill match={skill_match_score}%, "
+            f"experience match={experience_score}%, "
             f"achievement signal={achievement_score}%."
         )
 
@@ -103,11 +131,16 @@ class FitIntelligenceEngine:
                 continue
         return years
 
-    def _drivers(self, skill_nodes, experience_nodes, achievement_nodes, matched_required, role):
+    def _drivers(self, skill_nodes, experience_nodes, achievement_nodes, matched_required):
         drivers = []
+        canonical_nodes = {
+            canonical_skill(node.label): node
+            for node in skill_nodes
+            if str(node.label or "").strip()
+        }
 
         for skill in matched_required:
-            node = next((n for n in skill_nodes if n.label.lower() == skill), None)
+            node = canonical_nodes.get(skill)
             drivers.append(
                 FitDriver(
                     area="Required skill",
@@ -143,7 +176,8 @@ class FitIntelligenceEngine:
         gaps = []
 
         for skill in role.required_skills:
-            if skill.lower() not in candidate_skills:
+            canonical = canonical_skill(skill)
+            if canonical not in candidate_skills:
                 gaps.append(
                     FitGap(
                         area="Required skill",
@@ -157,7 +191,10 @@ class FitIntelligenceEngine:
                 FitGap(
                     area="Experience",
                     severity="Medium",
-                    detail=f"Candidate evidence shows {years} year(s), below required {role.minimum_years_experience}.",
+                    detail=(
+                        f"Candidate evidence shows {years} year(s), "
+                        f"below required {role.minimum_years_experience}."
+                    ),
                 )
             )
 
