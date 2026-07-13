@@ -1,5 +1,3 @@
-from talentcopilot.services.official_score_service import get_official_candidate_score
-
 from talentcopilot.models.comparison_workspace import (
     ComparisonCandidate,
     ComparisonWorkspaceReport,
@@ -39,7 +37,7 @@ class ComparisonWorkspaceService:
                 else:
                     key_risk = "No major risk detected"
 
-            score = get_official_candidate_score(analysis)
+            score = float(getattr(analysis, "match_score", 0) or 0)
             scores.append(score)
 
             candidates.append(
