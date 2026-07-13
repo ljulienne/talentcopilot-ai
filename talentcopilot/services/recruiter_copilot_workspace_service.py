@@ -1,5 +1,3 @@
-from talentcopilot.services.official_score_service import get_official_candidate_score
-
 from talentcopilot.models.recruiter_copilot_workspace import (
     CandidateCopilotSummary,
     CopilotAction,
@@ -79,7 +77,7 @@ class RecruiterCopilotWorkspaceService:
                     ),
                 ]
 
-            if not alerts and get_official_candidate_score(analysis) < 75:
+            if not alerts and getattr(analysis, "match_score", 0) < 75:
                 alerts.append(
                     CopilotAlert(
                         "Moderate match score",
@@ -98,7 +96,7 @@ class RecruiterCopilotWorkspaceService:
                 CandidateCopilotSummary(
                     candidate_name=getattr(analysis, "candidate_name", "Candidate"),
                     rank=int(getattr(analysis, "rank", 0) or 0),
-                    match_score=get_official_candidate_score(analysis),
+                    match_score=float(getattr(analysis, "match_score", 0) or 0),
                     headline=str(headline),
                     recruiter_summary=str(recruiter_summary),
                     actions=actions,

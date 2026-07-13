@@ -1,5 +1,3 @@
-from talentcopilot.services.official_score_service import get_official_candidate_score
-
 from talentcopilot.models.recruitment_workspace import (
     PipelineStage,
     RecruitmentWorkspaceReport,
@@ -25,7 +23,7 @@ class RecruitmentWorkspaceService:
 
             if getattr(analysis, "rank", 0) == 1:
                 stage = "Shortlisted"
-            elif get_official_candidate_score(analysis) >= 70:
+            elif getattr(analysis, "match_score", 0) >= 70:
                 stage = "Screening"
             else:
                 stage = "Review"
@@ -35,7 +33,7 @@ class RecruitmentWorkspaceService:
                     rank=getattr(analysis, "rank", 0),
                     name=getattr(analysis, "candidate_name", "Candidate"),
                     stage=stage,
-                    match_score=get_official_candidate_score(analysis),
+                    match_score=float(getattr(analysis, "match_score", 0) or 0),
                     recommendation=str(recommendation),
                 )
             )

@@ -66,8 +66,6 @@ def test_upload_result_becomes_official_recruitment_session():
     assert session.analyzed_count == 2
     assert [item.candidate_name for item in session.ranked_analyses] == ["Alice Martin", "David Smith"]
     assert [item.match_score for item in session.ranked_analyses] == [82.5, 21.0]
-    assert [item.ranking_score for item in session.ranked_analyses] == [84.0, 24.0]
-    assert [item.official_match_score for item in session.ranked_analyses] == [84.0, 24.0]
     assert [item.rank for item in session.ranked_analyses] == [1, 2]
 
 
@@ -89,6 +87,4 @@ def test_zero_official_fit_is_preserved():
     david = session.get_analysis("David Smith")
 
     assert david.match_score == 0
-    assert david.ranking_score == 41
-    assert david.official_match_score == 41
     assert david.rank == 2

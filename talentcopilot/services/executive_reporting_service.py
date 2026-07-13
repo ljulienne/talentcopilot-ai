@@ -1,5 +1,3 @@
-from talentcopilot.services.official_score_service import get_official_candidate_score
-
 from talentcopilot.models.executive_reporting import (
     ExecutiveCandidateLine,
     ExecutiveReport,
@@ -17,7 +15,7 @@ class ExecutiveReportingService:
 
         for analysis in session.ranked_analyses[:5]:
             recommendation = "Review"
-            readiness = int(min(96, max(50, get_official_candidate_score(analysis))))
+            readiness = int(min(96, max(50, float(getattr(analysis, "match_score", 0) or 0))))
 
             decision_report = getattr(analysis, "decision_report", None)
             if decision_report:
@@ -40,7 +38,7 @@ class ExecutiveReportingService:
                 ExecutiveCandidateLine(
                     rank=int(getattr(analysis, "rank", 0) or 0),
                     candidate_name=getattr(analysis, "candidate_name", "Candidate"),
-                    match_score=get_official_candidate_score(analysis),
+                    match_score=float(getattr(analysis, "match_score", 0) or 0),
                     recommendation=str(recommendation),
                     decision_readiness=readiness,
                 )

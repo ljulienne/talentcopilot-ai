@@ -6,8 +6,6 @@ official rank, matching, evidence graph, or interview questions.
 """
 
 from __future__ import annotations
-from talentcopilot.services.official_score_service import get_official_candidate_score
-
 
 from dataclasses import dataclass
 from typing import Iterable
@@ -39,7 +37,11 @@ class CandidateIntelligenceViewService:
     """Build a decision brief from already-computed candidate outputs."""
 
     def build(self, report, intelligence) -> CandidateDecisionBrief:
-        official_score = get_official_candidate_score(report)
+        official_score = float(
+            getattr(report, "official_match_score", None)
+            or getattr(report, "match_score", 0.0)
+            or 0.0
+        )
         official_rank = int(
             getattr(report, "official_rank", None)
             or getattr(report, "rank", 0)
