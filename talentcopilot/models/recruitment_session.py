@@ -60,6 +60,17 @@ class CandidateAnalysisState:
         return float(self.decision_score)
 
     @property
+    def official_confidence_score(self) -> Optional[float]:
+        """Return the canonical AI confidence stored with the official score."""
+        value = (self.score_breakdown or {}).get("confidence")
+        if value is None:
+            return None
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+
+    @property
     def official_rank(self) -> Optional[int]:
         return self.rank
 

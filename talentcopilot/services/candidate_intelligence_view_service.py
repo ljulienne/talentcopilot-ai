@@ -48,15 +48,23 @@ class CandidateIntelligenceViewService:
             or 0
         )
 
-        confidence_score = int(
-            max(
-                0,
-                min(
-                    100,
-                    int(getattr(intelligence, "decision_confidence", 0) or 0),
-                ),
-            )
+        score_breakdown = dict(
+            getattr(report, "score_breakdown", {}) or {}
         )
+        canonical_confidence = score_breakdown.get("confidence")
+        if canonical_confidence is None:
+            canonical_confidence = getattr(
+                intelligence,
+                "decision_confidence",
+                0,
+            )
+
+        try:
+            confidence_score = int(
+                max(0, min(100, round(float(canonical_confidence))))
+            )
+        except (TypeError, ValueError):
+            confidence_score = 0
 
         recommendation = self._clean(
             getattr(intelligence, "recommendation", None)

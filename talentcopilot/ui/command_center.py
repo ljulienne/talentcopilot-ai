@@ -29,7 +29,7 @@ def _health_block(health):
     c2.metric("Interview Readiness", f"{health.interview_readiness}%")
 
     c3, c4 = st.columns(2)
-    c3.metric("Decision Confidence", f"{health.decision_confidence}%")
+    c3.metric("AI Confidence", f"{health.decision_confidence}%")
     c4.metric("Bias Risk", health.bias_risk)
 
     st.caption(f"Data completeness: {health.data_completeness}%")

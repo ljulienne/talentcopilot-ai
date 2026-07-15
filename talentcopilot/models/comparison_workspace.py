@@ -10,7 +10,10 @@ class ComparisonCandidate:
     recommendation: str
     key_strength: str
     key_risk: str
+    # Internal diagnostic retained for backward compatibility.
     decision_score: Optional[float] = None
+    # Canonical secondary indicator exposed in recruiter UX.
+    ai_confidence: Optional[float] = None
 
 
 @dataclass

@@ -38,6 +38,18 @@ class ComparisonWorkspaceService:
                     key_risk = "No major risk detected"
 
             score = float(getattr(analysis, "match_score", 0) or 0)
+            ai_confidence = getattr(
+                analysis,
+                "official_confidence_score",
+                None,
+            )
+            if ai_confidence is not None:
+                try:
+                    ai_confidence = float(ai_confidence)
+                except (TypeError, ValueError):
+                    ai_confidence = None
+
+            # Kept internally only; never exposed as a competing UI score.
             decision_score = getattr(
                 analysis,
                 "official_decision_score",
@@ -57,6 +69,7 @@ class ComparisonWorkspaceService:
                     candidate_name=getattr(analysis, "candidate_name", "Candidate"),
                     match_score=score,
                     decision_score=decision_score,
+                    ai_confidence=ai_confidence,
                     recommendation=str(recommendation),
                     key_strength=str(key_strength),
                     key_risk=str(key_risk),
@@ -98,7 +111,7 @@ class ComparisonWorkspaceService:
             differentiators.append(f"{candidates[0].candidate_name} leads the shortlist based on current AI ranking.")
         if len(candidates) > 1:
             differentiators.append("Compare top candidates through evidence quality, not only match score.")
-        differentiators.append("Use the Decision Board before final selection.")
+        differentiators.append("Complete a structured human review before final selection.")
 
         return ComparisonWorkspaceReport(
             role_title=getattr(session, "role_title", "Recruitment"),

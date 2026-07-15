@@ -74,7 +74,9 @@ def test_zero_decision_score_is_preserved():
     assert candidate.decision_score == 0
 
 
-def test_comparison_ui_uses_explicit_score_labels():
+def test_comparison_ui_uses_canonical_score_labels():
+    """Release 3.3 exposes one match score and one AI confidence."""
+
     ui_file = (
         Path(__file__).resolve().parents[1]
         / "talentcopilot"
@@ -84,6 +86,11 @@ def test_comparison_ui_uses_explicit_score_labels():
 
     source = ui_file.read_text(encoding="utf-8")
 
-    assert '"Role Fit"' in source
-    assert '"Decision Score"' in source
-    assert "c.decision_score" in source
+    assert '"Official Match"' in source
+    assert '"AI Confidence"' in source
+    assert "c.match_score" in source
+    assert "c.ai_confidence" in source
+
+    # Former competing score labels must not return to recruiter UX.
+    assert '"Role Fit"' not in source
+    assert '"Decision Score"' not in source

@@ -97,7 +97,7 @@ def _render_candidate_decision_brief(
             "Official session ranking",
         ),
         (
-            "Decision Confidence",
+            "AI Confidence",
             f"{brief.confidence_score}%",
             brief.confidence_label,
         ),
