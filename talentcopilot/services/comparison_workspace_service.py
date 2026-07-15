@@ -38,6 +38,17 @@ class ComparisonWorkspaceService:
                     key_risk = "No major risk detected"
 
             score = float(getattr(analysis, "match_score", 0) or 0)
+            decision_score = getattr(
+                analysis,
+                "official_decision_score",
+                None,
+            )
+
+            if decision_score is not None:
+                try:
+                    decision_score = float(decision_score)
+                except (TypeError, ValueError):
+                    decision_score = None
             scores.append(score)
 
             candidates.append(
@@ -45,6 +56,7 @@ class ComparisonWorkspaceService:
                     rank=int(getattr(analysis, "rank", 0) or 0),
                     candidate_name=getattr(analysis, "candidate_name", "Candidate"),
                     match_score=score,
+                    decision_score=decision_score,
                     recommendation=str(recommendation),
                     key_strength=str(key_strength),
                     key_risk=str(key_risk),

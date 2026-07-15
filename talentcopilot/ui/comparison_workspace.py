@@ -12,7 +12,12 @@ def _ranking_table(report):
         {
             "Rank": c.rank,
             "Candidate": c.candidate_name,
-            "Match": c.match_score,
+            "Role Fit": c.match_score,
+            "Decision Score": (
+                None
+                if c.decision_score is None
+                else c.decision_score
+            ),
             "Recommendation": c.recommendation,
             "Key Strength": c.key_strength,
             "Key Risk": c.key_risk,

@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
 
 
 @dataclass
@@ -10,6 +10,7 @@ class ComparisonCandidate:
     recommendation: str
     key_strength: str
     key_risk: str
+    decision_score: Optional[float] = None
 
 
 @dataclass
