@@ -13,12 +13,17 @@ from talentcopilot.services.upload_text_reader_service import UploadTextReaderSe
 import time
 
 
+# Increment whenever the canonical score/session contract changes.
+OFFICIAL_SCORE_CACHE_SCHEMA = "official-fit-session-v3.3.1"
+
+
 def _uploaded_bytes(uploaded_file) -> bytes:
     return bytes(uploaded_file.getvalue())
 
 
 def _analysis_request_key(job_file, candidate_files) -> str:
     components = [
+        OFFICIAL_SCORE_CACHE_SCHEMA,
         ANALYSIS_SCHEMA_VERSION,
         MATCHING_ENGINE_VERSION,
         OFFICIAL_PIPELINE,
@@ -109,7 +114,15 @@ def render_recruitment_upload_panel(current_session=None):
                 "talentcopilot_last_analysis_session"
             )
 
-            if cached_key == request_key and cached_session is not None:
+            cached_session_schema = (
+                getattr(cached_session, "metadata", {}) or {}
+            ).get("official_score_cache_schema")
+
+            if (
+                cached_key == request_key
+                and cached_session is not None
+                and cached_session_schema == OFFICIAL_SCORE_CACHE_SCHEMA
+            ):
                 set_streamlit_session(cached_session)
                 st.info(
                     "The identical documents were already analysed in this "
