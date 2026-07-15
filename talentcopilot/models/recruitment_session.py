@@ -23,7 +23,13 @@ class CandidateAnalysisState:
     candidate_name: str
     candidate_id: str = ""
     status: CandidateAnalysisStatus = CandidateAnalysisStatus.PENDING
+    # Role Fit: factual CV-to-role compatibility.
     match_score: float = 0.0
+
+    # Consolidated score used by the ranking pipeline. This remains
+    # distinct from match_score and may legitimately be zero.
+    decision_score: Optional[float] = None
+
     rank: Optional[int] = None
     score_breakdown: Dict[str, float] = field(default_factory=dict)
     governance_report: Optional[Any] = None
@@ -43,7 +49,15 @@ class CandidateAnalysisState:
 
     @property
     def official_match_score(self) -> float:
-        return self.match_score
+        """Official Role Fit score displayed as candidate match."""
+        return float(self.match_score)
+
+    @property
+    def official_decision_score(self) -> Optional[float]:
+        """Consolidated score used by the official ranking pipeline."""
+        if self.decision_score is None:
+            return None
+        return float(self.decision_score)
 
     @property
     def official_rank(self) -> Optional[int]:
