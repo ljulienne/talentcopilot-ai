@@ -661,6 +661,111 @@ def render_recruitment_decision_workspace() -> None:
     task_report = RecruitmentTasksService().build(session)
     candidate_reports = CandidateWorkspaceService().build_all(session)
     comparison_report = ComparisonWorkspaceService().build(session)
+
+    # Temporary runtime diagnostic for Release 3.3.2.
+    with st.expander("Runtime score diagnostic", expanded=True):
+        import subprocess
+        from pathlib import Path
+
+        metadata = dict(getattr(session, "metadata", {}) or {})
+
+        try:
+            deployed_commit = subprocess.run(
+                ["git", "rev-parse", "--short", "HEAD"],
+                cwd=str(Path(__file__).resolve().parents[2]),
+                text=True,
+                capture_output=True,
+                check=False,
+            ).stdout.strip() or "unknown"
+        except Exception:
+            deployed_commit = "unknown"
+
+        st.write(
+            {
+                "deployed_commit": deployed_commit,
+                "session_id": getattr(session, "session_id", None),
+                "session_type": (
+                    f"{type(session).__module__}."
+                    f"{type(session).__name__}"
+                ),
+                "source": metadata.get("source"),
+                "workflow_version": metadata.get("workflow_version"),
+                "analysis_version": metadata.get("analysis_version"),
+                "pipeline": metadata.get("pipeline"),
+                "job_filename": metadata.get("job_filename"),
+                "candidate_filenames": metadata.get(
+                    "candidate_filenames"
+                ),
+            }
+        )
+
+        raw_rows = []
+        for analysis in list(
+            getattr(session, "ranked_analyses", []) or []
+        ):
+            breakdown = dict(
+                getattr(analysis, "score_breakdown", {}) or {}
+            )
+
+            raw_rows.append(
+                {
+                    "rank": getattr(analysis, "rank", None),
+                    "candidate": getattr(
+                        analysis,
+                        "candidate_name",
+                        None,
+                    ),
+                    "raw_match_score": getattr(
+                        analysis,
+                        "match_score",
+                        None,
+                    ),
+                    "official_match_score": getattr(
+                        analysis,
+                        "official_match_score",
+                        None,
+                    ),
+                    "decision_score": getattr(
+                        analysis,
+                        "decision_score",
+                        None,
+                    ),
+                    "confidence": breakdown.get("confidence"),
+                    "official_upload_fit": breakdown.get(
+                        "official_upload_fit"
+                    ),
+                    "role_fit": breakdown.get("role_fit"),
+                    "notes": getattr(analysis, "notes", None),
+                }
+            )
+
+        st.markdown("**Raw active RecruitmentSession**")
+        st.dataframe(
+            raw_rows,
+            use_container_width=True,
+            hide_index=True,
+        )
+
+        comparison_rows = [
+            {
+                "rank": candidate.rank,
+                "candidate": candidate.candidate_name,
+                "comparison_match": candidate.match_score,
+                "comparison_confidence": candidate.ai_confidence,
+                "internal_decision_score": (
+                    candidate.decision_score
+                ),
+            }
+            for candidate in comparison_report.candidates
+        ]
+
+        st.markdown("**Comparison service output**")
+        st.dataframe(
+            comparison_rows,
+            use_container_width=True,
+            hide_index=True,
+        )
+
     interview_reports = InterviewWorkspaceService().build_all(session)
     decision_report = DecisionBoardService().build(session)
     copilot_report = RecruiterCopilotWorkspaceService().build(session)
