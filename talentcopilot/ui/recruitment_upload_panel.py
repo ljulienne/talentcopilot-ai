@@ -1,5 +1,6 @@
 """Real upload entry point embedded in the active Recruitment workflow."""
 
+import os
 from talentcopilot.services.demo_session_factory import create_demo_recruitment_session
 from talentcopilot.services.analysis_provenance import (
     ANALYSIS_SCHEMA_VERSION,
