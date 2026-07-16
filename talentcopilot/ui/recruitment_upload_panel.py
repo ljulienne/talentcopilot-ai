@@ -371,27 +371,33 @@ def render_recruitment_upload_panel(current_session=None):
                                 None,
                             )
 
-                            fit_report = getattr(
-                                decision_output,
-                                "fit_report",
-                                None,
-                            )
-
+                            # The runtime model stores the extracted role
+                            # on matching_output.role_profile and also on
+                            # matching_output.job_analysis.role_profile.
                             role = getattr(
-                                decision_output,
-                                "role",
+                                matching_output,
+                                "role_profile",
                                 None,
                             )
 
                             if role is None:
-                                role = getattr(
+                                job_analysis = getattr(
                                     matching_output,
-                                    "role",
+                                    "job_analysis",
+                                    None,
+                                )
+                                role = getattr(
+                                    job_analysis,
+                                    "role_profile",
                                     None,
                                 )
 
                             if role is not None and not traced_role:
                                 traced_role = {
+                                    "runtime_type": (
+                                        f"{type(role).__module__}."
+                                        f"{type(role).__name__}"
+                                    ),
                                     "role_title": getattr(
                                         role,
                                         "role_title",
@@ -413,9 +419,22 @@ def render_recruitment_upload_panel(current_session=None):
                                         )
                                         or []
                                     ),
+                                    "languages": list(
+                                        getattr(
+                                            role,
+                                            "languages",
+                                            [],
+                                        )
+                                        or []
+                                    ),
                                     "minimum_years_experience": getattr(
                                         role,
                                         "minimum_years_experience",
+                                        None,
+                                    ),
+                                    "extraction_status": getattr(
+                                        role,
+                                        "extraction_status",
                                         None,
                                     ),
                                 }
@@ -424,6 +443,92 @@ def render_recruitment_upload_panel(current_session=None):
                                 getattr(profile, "metadata", {})
                                 or {}
                             )
+
+                            evidence_graph = getattr(
+                                profile,
+                                "evidence_graph",
+                                None,
+                            )
+
+                            evidence_nodes = list(
+                                getattr(
+                                    evidence_graph,
+                                    "nodes",
+                                    [],
+                                )
+                                or []
+                            )
+
+                            profile_skills = [
+                                str(getattr(node, "label", "") or "")
+                                for node in evidence_nodes
+                                if str(
+                                    getattr(node, "node_type", "")
+                                    or ""
+                                ).lower() == "skill"
+                            ]
+
+                            experience_nodes = [
+                                node
+                                for node in evidence_nodes
+                                if str(
+                                    getattr(node, "node_type", "")
+                                    or ""
+                                ).lower() == "experience"
+                            ]
+
+                            profile_years = None
+
+                            for experience_node in experience_nodes:
+                                node_metadata = dict(
+                                    getattr(
+                                        experience_node,
+                                        "metadata",
+                                        {},
+                                    )
+                                    or {}
+                                )
+
+                                if node_metadata.get("years") is not None:
+                                    profile_years = node_metadata.get(
+                                        "years"
+                                    )
+                                    break
+
+                            fit_summary = str(
+                                profile_metadata.get(
+                                    "fit_summary",
+                                    "",
+                                )
+                                or ""
+                            )
+
+                            import re
+
+                            component_match = re.search(
+                                (
+                                    r"Skill match=(\d+)%.*?"
+                                    r"experience match=(\d+)%.*?"
+                                    r"achievement signal=(\d+)%"
+                                ),
+                                fit_summary,
+                                flags=re.IGNORECASE,
+                            )
+
+                            if component_match:
+                                traced_skill_match = int(
+                                    component_match.group(1)
+                                )
+                                traced_experience_match = int(
+                                    component_match.group(2)
+                                )
+                                traced_achievement_signal = int(
+                                    component_match.group(3)
+                                )
+                            else:
+                                traced_skill_match = None
+                                traced_experience_match = None
+                                traced_achievement_signal = None
 
                             trace_rows.append(
                                 {
@@ -442,45 +547,26 @@ def render_recruitment_upload_panel(current_session=None):
                                         "candidate_name",
                                         None,
                                     ),
-                                    "profile_years": getattr(
-                                        profile,
-                                        "years_experience",
-                                        profile_metadata.get(
-                                            "years_experience"
-                                        ),
-                                    ),
-                                    "profile_skills": list(
-                                        getattr(
-                                            profile,
-                                            "skills",
-                                            [],
-                                        )
-                                        or profile_metadata.get(
-                                            "skills",
-                                            []
-                                        )
-                                        or []
-                                    ),
+                                    "profile_years": profile_years,
+                                    "profile_skills": profile_skills,
                                     "fit_score": getattr(
                                         ranked,
                                         "fit_score",
                                         None,
                                     ),
-                                    "skill_match": getattr(
-                                        fit_report,
-                                        "skill_match_score",
+                                    "profile_fit_score": getattr(
+                                        profile,
+                                        "fit_score",
                                         None,
                                     ),
-                                    "experience_match": getattr(
-                                        fit_report,
-                                        "experience_match_score",
-                                        None,
+                                    "skill_match": traced_skill_match,
+                                    "experience_match": (
+                                        traced_experience_match
                                     ),
-                                    "achievement_signal": getattr(
-                                        fit_report,
-                                        "achievement_signal_score",
-                                        None,
+                                    "achievement_signal": (
+                                        traced_achievement_signal
                                     ),
+                                    "fit_summary": fit_summary,
                                     "confidence": getattr(
                                         ranked,
                                         "confidence_score",
