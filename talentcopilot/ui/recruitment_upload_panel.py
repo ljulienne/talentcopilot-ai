@@ -10,6 +10,7 @@ from talentcopilot.services.analysis_provenance import (
 )
 from talentcopilot.services.isolated_recruitment_upload_service import IsolatedRecruitmentUploadService
 from talentcopilot.services.recruitment_upload_session_service import RecruitmentUploadSessionService
+from talentcopilot.services.real_upload_ranking_service import RealUploadRankingService
 from talentcopilot.services.streamlit_session_bridge import set_streamlit_session
 from talentcopilot.services.upload_text_reader_service import UploadTextReaderService
 import time
@@ -40,6 +41,25 @@ def _analysis_request_key(job_file, candidate_files) -> str:
 
 def render_recruitment_upload_panel(current_session=None):
     import streamlit as st
+
+    fit_trace = st.session_state.get(
+        "talentcopilot_fit_component_trace"
+    )
+
+    if fit_trace:
+        with st.expander(
+            "Fit component trace",
+            expanded=True,
+        ):
+            st.markdown("**Extracted role**")
+            st.json(fit_trace.get("role", {}))
+
+            st.markdown("**Candidate profiles and fit components**")
+            st.dataframe(
+                fit_trace.get("rows", []),
+                use_container_width=True,
+                hide_index=True,
+            )
 
     parity = st.session_state.get(
         "talentcopilot_runtime_scoring_parity"
@@ -314,6 +334,175 @@ def render_recruitment_upload_panel(current_session=None):
                     # Run both paths with the exact same extracted documents.
                     # This is diagnostic only; the isolated result remains
                     # the session used by the product.
+                    intermediate_report = (
+                        RealUploadRankingService().run(
+                            job_document,
+                            candidate_documents,
+                        )
+                    )
+
+                    intermediate_output = (
+                        intermediate_report.ranking_output
+                    )
+
+                    trace_rows = []
+                    traced_role = {}
+
+                    if intermediate_output is not None:
+                        for ranked in list(
+                            intermediate_output.ranked_candidates
+                            or []
+                        ):
+                            matching_output = getattr(
+                                ranked,
+                                "matching_output",
+                                None,
+                            )
+
+                            decision_output = getattr(
+                                matching_output,
+                                "decision_output",
+                                None,
+                            )
+
+                            profile = getattr(
+                                decision_output,
+                                "profile",
+                                None,
+                            )
+
+                            fit_report = getattr(
+                                decision_output,
+                                "fit_report",
+                                None,
+                            )
+
+                            role = getattr(
+                                decision_output,
+                                "role",
+                                None,
+                            )
+
+                            if role is None:
+                                role = getattr(
+                                    matching_output,
+                                    "role",
+                                    None,
+                                )
+
+                            if role is not None and not traced_role:
+                                traced_role = {
+                                    "role_title": getattr(
+                                        role,
+                                        "role_title",
+                                        None,
+                                    ),
+                                    "required_skills": list(
+                                        getattr(
+                                            role,
+                                            "required_skills",
+                                            [],
+                                        )
+                                        or []
+                                    ),
+                                    "preferred_skills": list(
+                                        getattr(
+                                            role,
+                                            "preferred_skills",
+                                            [],
+                                        )
+                                        or []
+                                    ),
+                                    "minimum_years_experience": getattr(
+                                        role,
+                                        "minimum_years_experience",
+                                        None,
+                                    ),
+                                }
+
+                            profile_metadata = dict(
+                                getattr(profile, "metadata", {})
+                                or {}
+                            )
+
+                            trace_rows.append(
+                                {
+                                    "candidate": getattr(
+                                        ranked,
+                                        "candidate_name",
+                                        None,
+                                    ),
+                                    "filename": getattr(
+                                        ranked,
+                                        "filename",
+                                        None,
+                                    ),
+                                    "profile_name": getattr(
+                                        profile,
+                                        "candidate_name",
+                                        None,
+                                    ),
+                                    "profile_years": getattr(
+                                        profile,
+                                        "years_experience",
+                                        profile_metadata.get(
+                                            "years_experience"
+                                        ),
+                                    ),
+                                    "profile_skills": list(
+                                        getattr(
+                                            profile,
+                                            "skills",
+                                            [],
+                                        )
+                                        or profile_metadata.get(
+                                            "skills",
+                                            []
+                                        )
+                                        or []
+                                    ),
+                                    "fit_score": getattr(
+                                        ranked,
+                                        "fit_score",
+                                        None,
+                                    ),
+                                    "skill_match": getattr(
+                                        fit_report,
+                                        "skill_match_score",
+                                        None,
+                                    ),
+                                    "experience_match": getattr(
+                                        fit_report,
+                                        "experience_match_score",
+                                        None,
+                                    ),
+                                    "achievement_signal": getattr(
+                                        fit_report,
+                                        "achievement_signal_score",
+                                        None,
+                                    ),
+                                    "confidence": getattr(
+                                        ranked,
+                                        "confidence_score",
+                                        None,
+                                    ),
+                                    "recommendation": getattr(
+                                        ranked,
+                                        "recommendation",
+                                        None,
+                                    ),
+                                }
+                            )
+
+                    fit_trace_payload = {
+                        "role": traced_role,
+                        "rows": trace_rows,
+                    }
+
+                    st.session_state[
+                        "talentcopilot_fit_component_trace"
+                    ] = fit_trace_payload
+
                     direct_session = (
                         RecruitmentUploadSessionService().run(
                             job_document,
