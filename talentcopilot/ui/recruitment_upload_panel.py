@@ -594,17 +594,35 @@ def render_recruitment_upload_panel(current_session=None):
                             }
                         )
 
+                    job_text_value = str(
+                        job_document.text or ""
+                    )
+
+                    candidate_text_values = {
+                        document.filename: str(
+                            document.text or ""
+                        )
+                        for document in candidate_documents
+                    }
+
                     parity_payload = {
                         "python": platform.python_version(),
                         "pypdf": pypdf_version,
-                        "job_characters": len(
-                            str(job_document.text or "")
-                        ),
+                        "job_characters": len(job_text_value),
+                        "job_sha256": hashlib.sha256(
+                            job_text_value.encode("utf-8")
+                        ).hexdigest(),
                         "candidate_characters": {
-                            document.filename: len(
-                                str(document.text or "")
-                            )
-                            for document in candidate_documents
+                            filename: len(text)
+                            for filename, text
+                            in candidate_text_values.items()
+                        },
+                        "candidate_sha256": {
+                            filename: hashlib.sha256(
+                                text.encode("utf-8")
+                            ).hexdigest()
+                            for filename, text
+                            in candidate_text_values.items()
                         },
                         "rows": parity_rows,
                     }
