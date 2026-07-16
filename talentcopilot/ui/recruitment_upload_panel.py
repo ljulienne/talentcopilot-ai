@@ -44,6 +44,112 @@ def render_recruitment_upload_panel(current_session=None):
         "talentcopilot_runtime_scoring_parity"
     )
 
+    # Temporary environment fingerprint.
+    import hashlib
+    import importlib
+    import importlib.metadata
+    import json
+    import platform
+    import sys
+    from pathlib import Path
+
+    def _distribution_version(name):
+        try:
+            return importlib.metadata.version(name)
+        except Exception:
+            return "not-installed"
+
+    def _module_fingerprint(module_name):
+        try:
+            module = importlib.import_module(module_name)
+            module_path = getattr(module, "__file__", None)
+
+            if not module_path:
+                return {
+                    "module": module_name,
+                    "path": None,
+                    "sha256": None,
+                }
+
+            path = Path(module_path).resolve()
+            content = path.read_bytes()
+
+            return {
+                "module": module_name,
+                "path": str(path),
+                "sha256": hashlib.sha256(
+                    content
+                ).hexdigest()[:20],
+            }
+        except Exception as exc:
+            return {
+                "module": module_name,
+                "error": type(exc).__name__,
+            }
+
+    environment_fingerprint = {
+        "python": platform.python_version(),
+        "implementation": platform.python_implementation(),
+        "platform": platform.platform(),
+        "executable": sys.executable,
+        "cwd": str(Path.cwd()),
+        "packages": {
+            name: _distribution_version(name)
+            for name in [
+                "streamlit",
+                "pypdf",
+                "pydantic",
+                "openai",
+                "numpy",
+                "pandas",
+                "scikit-learn",
+                "python-dotenv",
+            ]
+        },
+        "modules": [
+            _module_fingerprint(name)
+            for name in [
+                "talentcopilot.real_ranking.pipeline",
+                "talentcopilot.decision_core.fit_intelligence_engine",
+                "talentcopilot.services.real_upload_ranking_service",
+                "talentcopilot.services.recruitment_upload_session_service",
+                "talentcopilot.services.upload_text_reader_service",
+                "talentcopilot.llm_extraction.provider",
+            ]
+        ],
+        "configuration_names": sorted(
+            name
+            for name in os.environ
+            if any(
+                marker in name.upper()
+                for marker in [
+                    "TALENTCOPILOT",
+                    "OPENAI",
+                    "LLM",
+                    "CACHE",
+                    "PYTHON",
+                    "STREAMLIT",
+                ]
+            )
+            and not any(
+                secret in name.upper()
+                for secret in [
+                    "KEY",
+                    "TOKEN",
+                    "SECRET",
+                    "PASSWORD",
+                ]
+            )
+        ),
+        "sys_path": list(sys.path),
+    }
+
+    with st.expander(
+        "Runtime environment fingerprint",
+        expanded=True,
+    ):
+        st.json(environment_fingerprint)
+
     if parity:
         with st.expander(
             "Runtime parity check",
