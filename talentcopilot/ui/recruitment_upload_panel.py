@@ -7,14 +7,14 @@ from talentcopilot.services.analysis_provenance import (
     OFFICIAL_PIPELINE,
     hash_bytes,
 )
-from talentcopilot.services.recruitment_upload_session_service import RecruitmentUploadSessionService
+from talentcopilot.services.isolated_recruitment_upload_service import IsolatedRecruitmentUploadService
 from talentcopilot.services.streamlit_session_bridge import set_streamlit_session
 from talentcopilot.services.upload_text_reader_service import UploadTextReaderService
 import time
 
 
 # Increment whenever the canonical score/session contract changes.
-OFFICIAL_SCORE_CACHE_SCHEMA = "official-fit-session-v3.3.1"
+OFFICIAL_SCORE_CACHE_SCHEMA = "isolated-fit-session-v3.4"
 
 
 def _uploaded_bytes(uploaded_file) -> bytes:
@@ -175,7 +175,7 @@ def render_recruitment_upload_panel(current_session=None):
                 started_analysis = time.perf_counter()
 
                 try:
-                    session = RecruitmentUploadSessionService().run(
+                    session = IsolatedRecruitmentUploadService().run(
                         job_document,
                         candidate_documents,
                     )
