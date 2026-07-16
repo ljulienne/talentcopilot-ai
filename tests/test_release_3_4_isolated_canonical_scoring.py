@@ -62,10 +62,16 @@ def test_streamlit_panel_uses_isolated_service():
         "IsolatedRecruitmentUploadService().run("
         in source
     )
+    # During the temporary runtime parity diagnostic, both
+    # implementations are executed with the exact same extracted
+    # documents. The isolated result must remain the product session.
+    assert "RecruitmentUploadSessionService().run(" in source
+    assert "IsolatedRecruitmentUploadService().run(" in source
     assert (
-        "RecruitmentUploadSessionService().run("
-        not in source
+        "session = IsolatedRecruitmentUploadService().run("
+        in source
     )
+    assert "direct_session = (" in source
     assert (
         "isolated-fit-session-v3.4"
         in source

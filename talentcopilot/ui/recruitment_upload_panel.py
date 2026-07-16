@@ -8,6 +8,7 @@ from talentcopilot.services.analysis_provenance import (
     hash_bytes,
 )
 from talentcopilot.services.isolated_recruitment_upload_service import IsolatedRecruitmentUploadService
+from talentcopilot.services.recruitment_upload_session_service import RecruitmentUploadSessionService
 from talentcopilot.services.streamlit_session_bridge import set_streamlit_session
 from talentcopilot.services.upload_text_reader_service import UploadTextReaderService
 import time
@@ -38,6 +39,34 @@ def _analysis_request_key(job_file, candidate_files) -> str:
 
 def render_recruitment_upload_panel(current_session=None):
     import streamlit as st
+
+    parity = st.session_state.get(
+        "talentcopilot_runtime_scoring_parity"
+    )
+
+    if parity:
+        with st.expander(
+            "Runtime parity check",
+            expanded=True,
+        ):
+            st.write(
+                {
+                    "python": parity.get("python"),
+                    "pypdf": parity.get("pypdf"),
+                    "job_characters": parity.get(
+                        "job_characters"
+                    ),
+                    "candidate_characters": parity.get(
+                        "candidate_characters"
+                    ),
+                }
+            )
+
+            st.dataframe(
+                parity.get("rows", []),
+                use_container_width=True,
+                hide_index=True,
+            )
 
     with st.expander(
         "Start or replace a recruitment",
@@ -175,10 +204,126 @@ def render_recruitment_upload_panel(current_session=None):
                 started_analysis = time.perf_counter()
 
                 try:
+                    # Run both paths with the exact same extracted documents.
+                    # This is diagnostic only; the isolated result remains
+                    # the session used by the product.
+                    direct_session = (
+                        RecruitmentUploadSessionService().run(
+                            job_document,
+                            candidate_documents,
+                        )
+                    )
+
                     session = IsolatedRecruitmentUploadService().run(
                         job_document,
                         candidate_documents,
                     )
+
+                    import platform
+
+                    try:
+                        import pypdf
+                        pypdf_version = getattr(
+                            pypdf,
+                            "__version__",
+                            "unknown",
+                        )
+                    except Exception:
+                        pypdf_version = "unavailable"
+
+                    direct_by_name = {
+                        item.candidate_name: item
+                        for item in direct_session.ranked_analyses
+                    }
+
+                    isolated_by_name = {
+                        item.candidate_name: item
+                        for item in session.ranked_analyses
+                    }
+
+                    candidate_names = sorted(
+                        set(direct_by_name)
+                        | set(isolated_by_name)
+                    )
+
+                    parity_rows = []
+
+                    for candidate_name in candidate_names:
+                        direct_item = direct_by_name.get(
+                            candidate_name
+                        )
+                        isolated_item = isolated_by_name.get(
+                            candidate_name
+                        )
+
+                        parity_rows.append(
+                            {
+                                "candidate": candidate_name,
+                                "direct_match": (
+                                    getattr(
+                                        direct_item,
+                                        "match_score",
+                                        None,
+                                    )
+                                    if direct_item
+                                    else None
+                                ),
+                                "isolated_match": (
+                                    getattr(
+                                        isolated_item,
+                                        "match_score",
+                                        None,
+                                    )
+                                    if isolated_item
+                                    else None
+                                ),
+                                "direct_confidence": (
+                                    getattr(
+                                        direct_item,
+                                        "official_confidence_score",
+                                        None,
+                                    )
+                                    if direct_item
+                                    else None
+                                ),
+                                "isolated_confidence": (
+                                    getattr(
+                                        isolated_item,
+                                        "official_confidence_score",
+                                        None,
+                                    )
+                                    if isolated_item
+                                    else None
+                                ),
+                            }
+                        )
+
+                    parity_payload = {
+                        "python": platform.python_version(),
+                        "pypdf": pypdf_version,
+                        "job_characters": len(
+                            str(job_document.text or "")
+                        ),
+                        "candidate_characters": {
+                            document.filename: len(
+                                str(document.text or "")
+                            )
+                            for document in candidate_documents
+                        },
+                        "rows": parity_rows,
+                    }
+
+                    session_metadata = dict(
+                        getattr(session, "metadata", {}) or {}
+                    )
+                    session_metadata[
+                        "runtime_scoring_parity"
+                    ] = parity_payload
+                    session.metadata = session_metadata
+
+                    st.session_state[
+                        "talentcopilot_runtime_scoring_parity"
+                    ] = parity_payload
                 except Exception as exc:
                     st.error(
                         f"The analysis could not be completed: {exc}"
