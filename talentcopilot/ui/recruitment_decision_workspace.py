@@ -766,6 +766,82 @@ def render_recruitment_decision_workspace() -> None:
             hide_index=True,
         )
 
+        # Inspect the exact job and candidate inputs stored in the active
+        # RecruitmentSession. This does not rerun extraction or scoring.
+        import hashlib
+
+        def _text_signature(value):
+            text = str(value or "")
+            return {
+                "characters": len(text),
+                "sha256": hashlib.sha256(
+                    text.encode("utf-8")
+                ).hexdigest()[:16],
+                "preview": " ".join(text[:240].split()),
+            }
+
+        job_data = dict(getattr(session, "job", {}) or {})
+        job_signature = _text_signature(
+            job_data.get("raw_text")
+        )
+
+        st.markdown("**Job input stored in active session**")
+        st.write(
+            {
+                "title": job_data.get("title"),
+                "source": job_data.get("source"),
+                "required_skills": job_data.get(
+                    "required_skills"
+                ),
+                **job_signature,
+            }
+        )
+
+        candidate_input_rows = []
+
+        for candidate in list(
+            getattr(session, "candidates", []) or []
+        ):
+            candidate_data = (
+                dict(candidate)
+                if isinstance(candidate, dict)
+                else {}
+            )
+
+            signature = _text_signature(
+                candidate_data.get("raw_text")
+            )
+
+            candidate_input_rows.append(
+                {
+                    "candidate_id": candidate_data.get(
+                        "candidate_id"
+                    ),
+                    "name": candidate_data.get("name"),
+                    "filename": candidate_data.get("filename"),
+                    "characters": signature["characters"],
+                    "sha256": signature["sha256"],
+                    "years_experience": candidate_data.get(
+                        "years_experience"
+                    ),
+                    "skills": candidate_data.get("skills"),
+                    "achievements_count": len(
+                        candidate_data.get("achievements")
+                        or []
+                    ),
+                    "preview": signature["preview"],
+                }
+            )
+
+        st.markdown(
+            "**Candidate inputs stored in active session**"
+        )
+        st.dataframe(
+            candidate_input_rows,
+            use_container_width=True,
+            hide_index=True,
+        )
+
     interview_reports = InterviewWorkspaceService().build_all(session)
     decision_report = DecisionBoardService().build(session)
     copilot_report = RecruiterCopilotWorkspaceService().build(session)
