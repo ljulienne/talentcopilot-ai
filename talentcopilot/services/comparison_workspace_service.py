@@ -4,9 +4,15 @@ from talentcopilot.models.comparison_workspace import (
     DecisionMatrixLine,
     ScoreGap,
 )
+from talentcopilot.services.candidate_decision_signal_service import (
+    CandidateDecisionSignalService,
+)
 
 
 class ComparisonWorkspaceService:
+    def __init__(self, signal_service=None):
+        self.signal_service = signal_service or CandidateDecisionSignalService()
+
     def build(self, session=None) -> ComparisonWorkspaceReport:
         if session is None or not getattr(session, "ranked_analyses", None):
             return self._empty_report()
@@ -16,73 +22,56 @@ class ComparisonWorkspaceService:
         scores = []
 
         for analysis in session.ranked_analyses[:5]:
-            decision_report = getattr(analysis, "decision_report", None)
-            recommendation = "Review"
-            key_strength = "Relevant experience"
-            key_risk = "Requires validation"
-
-            if decision_report:
-                recommendation = getattr(
-                    decision_report.recommendation,
-                    "value",
-                    decision_report.recommendation,
+            score = float(
+                getattr(
+                    analysis,
+                    "official_match_score",
+                    getattr(analysis, "match_score", 0),
                 )
-                strengths = getattr(decision_report, "strengths", []) or []
-                concerns = getattr(decision_report, "concerns", []) or []
-
-                if strengths:
-                    key_strength = getattr(strengths[0], "title", str(strengths[0]))
-                if concerns:
-                    key_risk = getattr(concerns[0], "title", str(concerns[0]))
-                else:
-                    key_risk = "No major risk detected"
-
-            score = float(getattr(analysis, "match_score", 0) or 0)
-            ai_confidence = getattr(
-                analysis,
-                "official_confidence_score",
-                None,
+                or 0
             )
-            if ai_confidence is not None:
-                try:
-                    ai_confidence = float(ai_confidence)
-                except (TypeError, ValueError):
-                    ai_confidence = None
+            rank = int(
+                getattr(
+                    analysis,
+                    "official_rank",
+                    getattr(analysis, "rank", 0),
+                )
+                or 0
+            )
+            signals = self.signal_service.build(analysis, session)
+            ai_confidence = signals.confidence
 
             # Kept internally only; never exposed as a competing UI score.
-            decision_score = getattr(
-                analysis,
-                "official_decision_score",
-                None,
-            )
-
+            decision_score = getattr(analysis, "official_decision_score", None)
             if decision_score is not None:
                 try:
                     decision_score = float(decision_score)
                 except (TypeError, ValueError):
                     decision_score = None
+
             scores.append(score)
+            candidate_name = getattr(analysis, "candidate_name", "Candidate")
 
             candidates.append(
                 ComparisonCandidate(
-                    rank=int(getattr(analysis, "rank", 0) or 0),
-                    candidate_name=getattr(analysis, "candidate_name", "Candidate"),
+                    rank=rank,
+                    candidate_name=candidate_name,
                     match_score=score,
                     decision_score=decision_score,
                     ai_confidence=ai_confidence,
-                    recommendation=str(recommendation),
-                    key_strength=str(key_strength),
-                    key_risk=str(key_risk),
+                    recommendation=signals.recommendation,
+                    key_strength=signals.key_strength,
+                    key_risk=signals.key_risk,
                 )
             )
 
             matrix.append(
                 DecisionMatrixLine(
-                    candidate_name=getattr(analysis, "candidate_name", "Candidate"),
-                    technical_fit=int(min(96, max(45, score))),
-                    leadership_fit=int(min(95, max(50, score - 3))),
-                    evidence_strength=int(min(97, max(55, score + 2))),
-                    decision_readiness=int(min(96, max(50, (score + 88) / 2))),
+                    candidate_name=candidate_name,
+                    technical_fit=int(min(100, max(0, round(score)))),
+                    leadership_fit=int(min(100, max(0, round(score - 3)))),
+                    evidence_strength=self._evidence_strength(score, ai_confidence),
+                    decision_readiness=self._decision_readiness(score, ai_confidence),
                 )
             )
 
@@ -108,10 +97,19 @@ class ComparisonWorkspaceService:
 
         differentiators = []
         if candidates:
-            differentiators.append(f"{candidates[0].candidate_name} leads the shortlist based on current AI ranking.")
+            leader = candidates[0]
+            differentiators.append(
+                f"{leader.candidate_name} leads with an official match of "
+                f"{leader.match_score:.0f}%: {leader.key_strength}."
+            )
         if len(candidates) > 1:
-            differentiators.append("Compare top candidates through evidence quality, not only match score.")
-        differentiators.append("Complete a structured human review before final selection.")
+            differentiators.append(
+                "Compare the shortlist through evidence quality and validation gaps, "
+                "not through an additional competing score."
+            )
+        differentiators.append(
+            "Complete a structured human review before final selection."
+        )
 
         return ComparisonWorkspaceReport(
             role_title=getattr(session, "role_title", "Recruitment"),
@@ -121,6 +119,15 @@ class ComparisonWorkspaceService:
             matrix=matrix,
             differentiators=differentiators,
         )
+
+    def _evidence_strength(self, score, confidence):
+        value = confidence if confidence is not None else score
+        return int(min(100, max(0, round(value))))
+
+    def _decision_readiness(self, score, confidence):
+        if confidence is None:
+            return int(min(100, max(0, round(score))))
+        return int(min(100, max(0, round(score * 0.65 + confidence * 0.35))))
 
     def _empty_report(self) -> ComparisonWorkspaceReport:
         return ComparisonWorkspaceReport(
