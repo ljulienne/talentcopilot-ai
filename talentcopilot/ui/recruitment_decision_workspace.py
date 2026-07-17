@@ -661,6 +661,239 @@ def render_recruitment_decision_workspace() -> None:
     task_report = RecruitmentTasksService().build(session)
     candidate_reports = CandidateWorkspaceService().build_all(session)
     comparison_report = ComparisonWorkspaceService().build(session)
+
+    # Temporary Release 4.2.3 diagnostic.
+    # Follow the official match value from the active session
+    # to the Comparison workspace output without recomputation.
+    with st.expander(
+        "Official score propagation trace",
+        expanded=True,
+    ):
+        import subprocess
+        from pathlib import Path
+
+        try:
+            deployed_commit = subprocess.run(
+                ["git", "rev-parse", "--short", "HEAD"],
+                cwd=str(Path(__file__).resolve().parents[2]),
+                text=True,
+                capture_output=True,
+                check=False,
+            ).stdout.strip() or "unknown"
+        except Exception:
+            deployed_commit = "unknown"
+
+        metadata = dict(
+            getattr(session, "metadata", {}) or {}
+        )
+
+        st.write(
+            {
+                "deployed_commit": deployed_commit,
+                "session_id": getattr(
+                    session,
+                    "session_id",
+                    None,
+                ),
+                "pipeline": metadata.get("pipeline"),
+                "workflow_version": metadata.get(
+                    "workflow_version"
+                ),
+                "analysis_version": metadata.get(
+                    "analysis_version"
+                ),
+                "cache_schema": metadata.get(
+                    "official_score_cache_schema"
+                ),
+                "execution_mode": metadata.get(
+                    "execution_mode"
+                ),
+                "canonical_score_contract": metadata.get(
+                    "canonical_score_contract"
+                ),
+            }
+        )
+
+        session_trace_rows = []
+
+        for analysis in list(
+            getattr(
+                session,
+                "ranked_analyses",
+                [],
+            )
+            or []
+        ):
+            breakdown = dict(
+                getattr(
+                    analysis,
+                    "score_breakdown",
+                    {},
+                )
+                or {}
+            )
+
+            session_trace_rows.append(
+                {
+                    "candidate": getattr(
+                        analysis,
+                        "candidate_name",
+                        None,
+                    ),
+                    "session_rank": getattr(
+                        analysis,
+                        "rank",
+                        None,
+                    ),
+                    "session_match_score": getattr(
+                        analysis,
+                        "match_score",
+                        None,
+                    ),
+                    "session_official_match": getattr(
+                        analysis,
+                        "official_match_score",
+                        None,
+                    ),
+                    "session_decision_score": getattr(
+                        analysis,
+                        "decision_score",
+                        None,
+                    ),
+                    "breakdown_official_upload_fit": (
+                        breakdown.get(
+                            "official_upload_fit"
+                        )
+                    ),
+                    "breakdown_role_fit": breakdown.get(
+                        "role_fit"
+                    ),
+                    "breakdown_confidence": breakdown.get(
+                        "confidence"
+                    ),
+                }
+            )
+
+        st.markdown(
+            "**1 — Active RecruitmentSession**"
+        )
+        st.dataframe(
+            session_trace_rows,
+            use_container_width=True,
+            hide_index=True,
+        )
+
+        comparison_trace_rows = []
+
+        for candidate in list(
+            getattr(
+                comparison_report,
+                "candidates",
+                [],
+            )
+            or []
+        ):
+            comparison_trace_rows.append(
+                {
+                    "candidate": getattr(
+                        candidate,
+                        "candidate_name",
+                        None,
+                    ),
+                    "comparison_rank": getattr(
+                        candidate,
+                        "rank",
+                        None,
+                    ),
+                    "comparison_match_score": getattr(
+                        candidate,
+                        "match_score",
+                        None,
+                    ),
+                    "comparison_official_match": getattr(
+                        candidate,
+                        "official_match_score",
+                        None,
+                    ),
+                    "comparison_decision_score": getattr(
+                        candidate,
+                        "decision_score",
+                        None,
+                    ),
+                    "comparison_confidence": getattr(
+                        candidate,
+                        "ai_confidence",
+                        None,
+                    ),
+                }
+            )
+
+        st.markdown(
+            "**2 — ComparisonWorkspaceService output**"
+        )
+        st.dataframe(
+            comparison_trace_rows,
+            use_container_width=True,
+            hide_index=True,
+        )
+
+        session_by_candidate = {
+            str(row.get("candidate")): row
+            for row in session_trace_rows
+        }
+
+        propagation_rows = []
+
+        for comparison_row in comparison_trace_rows:
+            name = str(
+                comparison_row.get("candidate")
+            )
+
+            session_row = session_by_candidate.get(
+                name,
+                {},
+            )
+
+            session_score = session_row.get(
+                "session_match_score"
+            )
+
+            comparison_score = comparison_row.get(
+                "comparison_match_score"
+            )
+
+            propagation_rows.append(
+                {
+                    "candidate": name,
+                    "session_score": session_score,
+                    "comparison_score": comparison_score,
+                    "delta": (
+                        None
+                        if session_score is None
+                        or comparison_score is None
+                        else round(
+                            float(comparison_score)
+                            - float(session_score),
+                            2,
+                        )
+                    ),
+                    "session_rank": session_row.get(
+                        "session_rank"
+                    ),
+                    "comparison_rank": comparison_row.get(
+                        "comparison_rank"
+                    ),
+                }
+            )
+
+        st.markdown(
+            "**3 — Propagation comparison**"
+        )
+        st.dataframe(
+            propagation_rows,
+            use_container_width=True,
+            hide_index=True,
+        )
     interview_reports = InterviewWorkspaceService().build_all(session)
     decision_report = DecisionBoardService().build(session)
     copilot_report = RecruiterCopilotWorkspaceService().build(session)
