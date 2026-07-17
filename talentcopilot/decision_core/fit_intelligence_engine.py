@@ -7,6 +7,11 @@ from talentcopilot.decision_core.fit_intelligence_models import (
 )
 from talentcopilot.decision_core.models import DecisionTraceStep, EvidenceGraph
 from talentcopilot.services.skill_normalization import canonical_skill
+from talentcopilot.services.role_skill_taxonomy import (
+    OFFICIAL_ROLE_CAPABILITIES,
+    capability_set_many,
+    ordered_capabilities,
+)
 
 
 class FitIntelligenceEngine:
@@ -20,39 +25,58 @@ class FitIntelligenceEngine:
         experience_nodes = graph.find_nodes_by_type("experience")
         achievement_nodes = graph.find_nodes_by_type("achievement")
 
-        candidate_skills = {
-            canonical_skill(node.label): node
+        # Release 4.2:
+        # compare compact business capabilities rather than requiring exact
+        # equality between a verbose job requirement and a short CV label.
+        candidate_capabilities = capability_set_many(
+            node.label
             for node in skill_nodes
             if str(node.label or "").strip()
-        }
-        required = [
-            canonical_skill(skill)
-            for skill in role.required_skills
-            if str(skill or "").strip()
-        ]
-        preferred = [
-            canonical_skill(skill)
-            for skill in role.preferred_skills
-            if str(skill or "").strip()
-        ]
+        )
 
-        matched_required = [skill for skill in required if skill in candidate_skills]
-        matched_preferred = [skill for skill in preferred if skill in candidate_skills]
+        role_capabilities = ordered_capabilities(
+            list(role.required_skills or [])
+            + list(role.preferred_skills or [])
+            + list(getattr(role, "languages", []) or [])
+        )
+
+        # A role extraction may contain detailed requirements but omit one of
+        # the stable capabilities. Only capabilities evidenced by the role are
+        # scored. Duplicated or rephrased requirements count once.
+        required = list(role_capabilities)
+
+        matched_required = [
+            capability
+            for capability in required
+            if capability in candidate_capabilities
+        ]
+        matched_preferred = []
 
         required_score = (
             int((len(matched_required) / len(required)) * 75)
             if required
             else (45 if skill_nodes else 0)
         )
-        preferred_score = (
-            int((len(matched_preferred) / max(1, len(preferred))) * 15)
-            if preferred
-            else 0
-        )
+
+        preferred_score = 0
+
         skill_match_score = min(
             100,
-            required_score + preferred_score + (10 if skill_nodes else 0),
+            required_score + (10 if skill_nodes else 0),
         )
+
+        # Keep the existing downstream helpers interoperable.
+        candidate_skills = {
+            capability: next(
+                (
+                    node
+                    for node in skill_nodes
+                    if capability in capability_set_many([node.label])
+                ),
+                None,
+            )
+            for capability in candidate_capabilities
+        }
 
         years = self._extract_years(experience_nodes)
         if role.minimum_years_experience <= 0:
@@ -85,7 +109,12 @@ class FitIntelligenceEngine:
             achievement_nodes,
             matched_required,
         )
-        gaps = self._gaps(candidate_skills, role, years)
+        gaps = self._gaps(
+            candidate_skills,
+            role,
+            years,
+            required_capabilities=required,
+        )
 
         status = self._status(fit_score)
         summary = (
@@ -172,11 +201,23 @@ class FitIntelligenceEngine:
 
         return drivers
 
-    def _gaps(self, candidate_skills, role, years):
+    def _gaps(
+        self,
+        candidate_skills,
+        role,
+        years,
+        required_capabilities=None,
+    ):
         gaps = []
 
-        for skill in role.required_skills:
-            canonical = canonical_skill(skill)
+        scored_requirements = list(
+            required_capabilities
+            if required_capabilities is not None
+            else ordered_capabilities(role.required_skills)
+        )
+
+        for skill in scored_requirements:
+            canonical = skill
             if canonical not in candidate_skills:
                 gaps.append(
                     FitGap(
