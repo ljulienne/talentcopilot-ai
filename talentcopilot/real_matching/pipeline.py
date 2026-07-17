@@ -4,17 +4,26 @@ from talentcopilot.document_intelligence.candidate_extractor import CandidateDoc
 from talentcopilot.document_intelligence.models import ExtractedCandidateProfile
 from talentcopilot.document_intelligence.pipeline import DocumentIntelligencePipeline
 from talentcopilot.job_intelligence.pipeline import JobIntelligencePipeline
+from talentcopilot.job_intelligence.role_extractor import RoleProfileExtractor
 from talentcopilot.real_matching.models import RealMatchingInput, RealMatchingOutput
 
 
 class RealMatchingPipeline:
     def run(self, data: RealMatchingInput) -> RealMatchingOutput:
-        candidate_analysis, extracted_candidate = DocumentIntelligencePipeline().analyze_text(
+        candidate_analysis, extracted_candidate = DocumentIntelligencePipeline(
+            extraction_mode=(
+                CandidateDocumentExtractor.DETERMINISTIC_MODE
+            )
+        ).analyze_text(
             data.candidate_filename,
             data.candidate_text,
         )
 
-        job_analysis = JobIntelligencePipeline().analyze_text(
+        job_analysis = JobIntelligencePipeline(
+            extraction_mode=(
+                RoleProfileExtractor.DETERMINISTIC_MODE
+            )
+        ).analyze_text(
             data.job_filename,
             data.job_text,
         )

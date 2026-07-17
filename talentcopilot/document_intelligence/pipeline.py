@@ -7,12 +7,20 @@ from talentcopilot.document_intelligence.text_cleaner import TextCleaner
 
 
 class DocumentIntelligencePipeline:
-    def __init__(self):
+    def __init__(
+        self,
+        *,
+        extraction_mode: str = (
+            CandidateDocumentExtractor.AUTO_MODE
+        ),
+    ):
         self.loader = DocumentLoader()
         self.cleaner = TextCleaner()
         self.language_detector = LanguageDetector()
         self.segmenter = CVSectionSegmenter()
-        self.extractor = CandidateDocumentExtractor()
+        self.extractor = CandidateDocumentExtractor(
+            extraction_mode=extraction_mode
+        )
 
     def analyze_text(self, filename: str, text: str) -> tuple[DocumentAnalysis, ExtractedCandidateProfile]:
         loaded = self.loader.load_text(filename, text)

@@ -14,7 +14,7 @@ from typing import Iterable, Mapping, Optional
 
 
 ANALYSIS_SCHEMA_VERSION = "3.2.1A.2.2"
-MATCHING_ENGINE_VERSION = "real-ranking-v1"
+MATCHING_ENGINE_VERSION = "real-ranking-v2-canonical-extraction"
 NORMALIZATION_VERSION = "3.1.1C"
 OFFICIAL_PIPELINE = "real-upload-ranking"
 

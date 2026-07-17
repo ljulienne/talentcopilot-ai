@@ -12,7 +12,22 @@ from talentcopilot.llm_extraction.engine import LLMExtractionEngine
 
 
 class RoleProfileExtractor:
-    def __init__(self, router: LLMRouter | None = None):
+
+    DETERMINISTIC_MODE = "deterministic"
+    ENRICHED_MODE = "enriched"
+    AUTO_MODE = "auto"
+
+    VALID_MODES = {
+        DETERMINISTIC_MODE,
+        ENRICHED_MODE,
+        AUTO_MODE,
+    }
+
+    def __init__(self, router: LLMRouter | None=None, *, extraction_mode: str=AUTO_MODE):
+        normalized_mode = str(extraction_mode or self.AUTO_MODE).strip().lower()
+        if normalized_mode not in self.VALID_MODES:
+            raise ValueError(f'Unsupported extraction mode: {extraction_mode!r}')
+        self.extraction_mode = normalized_mode
         self.router = router or LLMRouter()
         self.validator = StructuredOutputValidator()
         self.ontology = SkillsOntology()
@@ -74,12 +89,28 @@ class RoleProfileExtractor:
         )
 
     def _should_use_llm(self) -> bool:
-        flag = os.environ.get("TALENTCOPILOT_USE_LLM_EXTRACTION", "auto").lower()
+        """Return whether optional LLM enrichment is enabled."""
+
+        if self.extraction_mode == self.DETERMINISTIC_MODE:
+            return False
+
+        if self.extraction_mode == self.ENRICHED_MODE:
+            return True
+
+        flag = os.environ.get(
+            "TALENTCOPILOT_USE_LLM_EXTRACTION",
+            "auto",
+        ).strip().lower()
+
         if flag in {"true", "1", "yes"}:
             return True
+
         if flag in {"false", "0", "no", "mock"}:
             return False
-        return bool(os.environ.get("OPENAI_API_KEY"))
+
+        return bool(
+            os.environ.get("OPENAI_API_KEY")
+        )
 
     def _best_text(self, analysis: JobAnalysis) -> str:
         if not analysis.sections:

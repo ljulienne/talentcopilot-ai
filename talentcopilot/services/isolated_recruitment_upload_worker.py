@@ -1,6 +1,9 @@
+
+
 """Execute canonical recruitment scoring in an isolated process."""
 
 from __future__ import annotations
+import os
 
 from pathlib import Path
 import sys
@@ -21,6 +24,11 @@ from talentcopilot.services.recruitment_upload_session_service import (
 from talentcopilot.services.upload_text_reader_service import (
     UploadedTextDocument,
 )
+
+# Official Match must remain independent from runtime LLM secrets.
+os.environ["TALENTCOPILOT_USE_LLM_EXTRACTION"] = "false"
+os.environ.pop("OPENAI_API_KEY", None)
+
 
 
 def _document(data: dict) -> UploadedTextDocument:

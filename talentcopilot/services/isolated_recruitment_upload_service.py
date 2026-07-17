@@ -60,6 +60,10 @@ class IsolatedRecruitmentUploadService:
             )
 
             environment = os.environ.copy()
+
+            environment["TALENTCOPILOT_USE_LLM_EXTRACTION"] = "false"
+
+            environment.pop("OPENAI_API_KEY", None)
             current_pythonpath = environment.get(
                 "PYTHONPATH",
                 "",
