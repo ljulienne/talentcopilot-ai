@@ -174,6 +174,54 @@ def render_recruitment_upload_panel(current_session=None):
 
                 started_analysis = time.perf_counter()
 
+                # Temporary Release 4.2.4 diagnostic.
+                # Capture the exact production input contract immediately
+                # before the isolated scoring process.
+                import hashlib
+
+                job_upload_bytes = _uploaded_bytes(job_file)
+                job_text_value = str(job_document.text or "")
+
+                candidate_input_contract = []
+
+                for uploaded_item, document in zip(
+                    candidate_files,
+                    candidate_documents,
+                ):
+                    uploaded_bytes = _uploaded_bytes(uploaded_item)
+                    document_text = str(document.text or "")
+
+                    candidate_input_contract.append(
+                        {
+                            "filename": str(document.filename or ""),
+                            "status": str(document.status or ""),
+                            "upload_bytes": len(uploaded_bytes),
+                            "upload_sha256": hashlib.sha256(
+                                uploaded_bytes
+                            ).hexdigest(),
+                            "text_characters": len(document_text),
+                            "text_sha256": hashlib.sha256(
+                                document_text.encode("utf-8")
+                            ).hexdigest(),
+                        }
+                    )
+
+                runtime_input_contract = {
+                    "job": {
+                        "filename": str(job_document.filename or ""),
+                        "status": str(job_document.status or ""),
+                        "upload_bytes": len(job_upload_bytes),
+                        "upload_sha256": hashlib.sha256(
+                            job_upload_bytes
+                        ).hexdigest(),
+                        "text_characters": len(job_text_value),
+                        "text_sha256": hashlib.sha256(
+                            job_text_value.encode("utf-8")
+                        ).hexdigest(),
+                    },
+                    "candidates": candidate_input_contract,
+                }
+
                 try:
                     session = IsolatedRecruitmentUploadService().run(
                         job_document,
@@ -192,6 +240,7 @@ def render_recruitment_upload_panel(current_session=None):
 
                 session.metadata.update(
                     {
+                        "runtime_input_contract": runtime_input_contract,
                         "extraction_seconds": round(
                             extraction_seconds,
                             4,

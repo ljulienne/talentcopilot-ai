@@ -687,6 +687,93 @@ def render_recruitment_decision_workspace() -> None:
             getattr(session, "metadata", {}) or {}
         )
 
+        runtime_input_contract = metadata.get(
+            "runtime_input_contract",
+            {},
+        ) or {}
+
+        provenance_candidate_filenames = list(
+            metadata.get("candidate_filenames", []) or []
+        )
+        provenance_candidate_hashes = list(
+            metadata.get("candidate_document_hashes", []) or []
+        )
+
+        provenance_hash_by_filename = {
+            str(filename): str(document_hash)
+            for filename, document_hash in zip(
+                provenance_candidate_filenames,
+                provenance_candidate_hashes,
+            )
+        }
+
+        st.markdown(
+            "**0 — Production input contract**"
+        )
+
+        job_contract = dict(
+            runtime_input_contract.get("job", {}) or {}
+        )
+
+        st.write(
+            {
+                "job_filename": job_contract.get("filename"),
+                "job_status": job_contract.get("status"),
+                "job_upload_bytes": job_contract.get(
+                    "upload_bytes"
+                ),
+                "job_upload_sha256": job_contract.get(
+                    "upload_sha256"
+                ),
+                "job_text_characters": job_contract.get(
+                    "text_characters"
+                ),
+                "job_text_sha256_before_worker": (
+                    job_contract.get("text_sha256")
+                ),
+                "job_text_sha256_from_session": metadata.get(
+                    "job_document_hash"
+                ),
+                "job_hashes_equal": (
+                    job_contract.get("text_sha256")
+                    == metadata.get("job_document_hash")
+                ),
+            }
+        )
+
+        candidate_contract_rows = []
+
+        for item in list(
+            runtime_input_contract.get("candidates", []) or []
+        ):
+            item = dict(item or {})
+            filename = str(item.get("filename") or "")
+            before_hash = item.get("text_sha256")
+            session_hash = provenance_hash_by_filename.get(
+                filename
+            )
+
+            candidate_contract_rows.append(
+                {
+                    "filename": filename,
+                    "status": item.get("status"),
+                    "upload_bytes": item.get("upload_bytes"),
+                    "upload_sha256": item.get("upload_sha256"),
+                    "text_characters": item.get(
+                        "text_characters"
+                    ),
+                    "text_sha256_before_worker": before_hash,
+                    "text_sha256_from_session": session_hash,
+                    "hashes_equal": before_hash == session_hash,
+                }
+            )
+
+        st.dataframe(
+            candidate_contract_rows,
+            use_container_width=True,
+            hide_index=True,
+        )
+
         st.write(
             {
                 "deployed_commit": deployed_commit,
