@@ -13,3 +13,12 @@ data/*
 # Local release installer artifacts
 .release_backups/
 .release_*_backup_path
+
+# Local recruitment calibration documents
+/talentcopilot_calibration/
+/calibration_manifest.json
+/Blakoe Vincent.pdf
+/Loretta_CV.pdf
+/LouisJulienneResume_2026.pdf
+/Zelma O.pdf
+/offre_hris.pdf
