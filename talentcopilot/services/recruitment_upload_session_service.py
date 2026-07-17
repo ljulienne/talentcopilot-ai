@@ -123,7 +123,18 @@ class RecruitmentUploadSessionService:
                 )
             )
 
-        analyses.sort(key=lambda item: (item.rank or 9999, -item.match_score, item.candidate_id))
+        # Release 4.2.1:
+        # the official recruitment rank derives exclusively from the
+        # official match score. Decision/ranking scores remain internal
+        # decision-support signals and never determine the public order.
+        analyses.sort(
+            key=lambda item: (
+                -float(item.match_score or 0),
+                str(item.candidate_name or "").casefold(),
+                str(item.candidate_id or ""),
+            )
+        )
+
         for index, analysis in enumerate(analyses, start=1):
             analysis.rank = index
 
