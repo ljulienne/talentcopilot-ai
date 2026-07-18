@@ -4,9 +4,13 @@ from talentcopilot.services.candidate_intelligence_view_service import (
     CandidateDecisionBrief,
     CandidateIntelligenceViewService,
 )
+from talentcopilot.services.executive_decision_intelligence_service import (
+    ExecutiveDecisionIntelligenceService,
+)
+from talentcopilot.services.executive_decision_pdf_service import (
+    ExecutiveDecisionPdfService,
+)
 from talentcopilot.services.demo_session_factory import create_demo_recruitment_session
-from talentcopilot.services.executive_decision_intelligence_service import ExecutiveDecisionIntelligenceService
-from talentcopilot.reports.executive_decision_pdf import generate_executive_decision_pdf
 from talentcopilot.services.streamlit_session_bridge import get_streamlit_session, set_streamlit_session
 from talentcopilot.ui.design_system.components import enterprise_hero, insight_card, metric_grid, section_title
 from talentcopilot.ui.design_system.theme import apply_enterprise_theme
@@ -188,30 +192,60 @@ def _render_executive_advisor(brief) -> None:
 
     section_title(
         "AI Executive Advisor",
-        "Decision support derived from the official score, canonical confidence and existing evidence.",
+        "A decision-ready interpretation of canonical candidate results. Official Match and rank are never recalculated here.",
     )
+
     metric_grid([
-        ("Recommendation", brief.decision_label, brief.recommendation),
+        ("Recommendation", brief.recommendation, brief.decision_status),
+        ("Business Impact", brief.business_impact, "Expected contribution signal"),
+        ("Expected Ramp-up", brief.ramp_up, brief.ramp_up_rationale),
         ("AI Confidence", f"{brief.ai_confidence}%", "Canonical confidence"),
-        ("Business Impact", brief.business_impact, "Expected contribution"),
-        ("Expected Ramp-Up", brief.expected_ramp_up, "Qualitative estimate"),
     ])
-    insight_card("Executive Summary", brief.executive_summary, brief.recommendation)
-    why_col, action_col = st.columns(2)
-    with why_col:
-        _render_list_section("Why this candidate?", brief.why, empty_message="No supporting evidence is available.", tone="positive")
+
+    insight_card(
+        "Executive interpretation",
+        brief.executive_narrative,
+        brief.recommendation,
+    )
+
+    strengths_col, action_col = st.columns(2)
+    with strengths_col:
+        _render_list_section(
+            "Why this candidate",
+            brief.strengths,
+            empty_message="No decisive strength is documented yet.",
+            tone="positive",
+        )
     with action_col:
-        st.markdown("#### Recommended action")
-        st.info(brief.recommended_action)
-        st.markdown("#### Ramp-up rationale")
-        st.write(brief.ramp_up_rationale)
-    st.markdown("#### Hiring risk matrix")
-    st.dataframe([{"Dimension": r.name, "Level": r.level, "Rationale": r.rationale} for r in brief.risks], use_container_width=True, hide_index=True)
-    _render_list_section("Priority interview topics", brief.interview_priorities, empty_message="No interview priority is available.")
-    pdf_data = generate_executive_decision_pdf(brief)
-    safe_name = "_".join(brief.candidate_name.lower().split())
-    st.download_button("Download Executive Decision Brief (PDF)", data=pdf_data, file_name=f"talentcopilot_{safe_name}_executive_decision.pdf", mime="application/pdf")
-    st.caption("The advisor does not recalculate Official Match or rank. Final decisions remain accountable human decisions.")
+        st.markdown("#### Recommended next action")
+        st.info(brief.next_action)
+
+    st.markdown("#### Hiring Risk Matrix")
+    risk_rows = [
+        {
+            "Dimension": risk.name,
+            "Risk": risk.level,
+            "Rationale": risk.rationale,
+        }
+        for risk in brief.risks
+    ]
+    st.dataframe(risk_rows, use_container_width=True, hide_index=True)
+
+    _render_list_section(
+        "Priority interview topics",
+        brief.interview_priorities,
+        empty_message="No interview priority is currently available.",
+    )
+
+    pdf_bytes = ExecutiveDecisionPdfService().generate(brief)
+    st.download_button(
+        "Download Executive Decision Brief (PDF)",
+        data=pdf_bytes,
+        file_name=f"executive_decision_{brief.candidate_id or 'candidate'}.pdf",
+        mime="application/pdf",
+        use_container_width=True,
+    )
+    st.caption(brief.governance_note)
 
 def render_candidate_workspace():
     import streamlit as st
@@ -255,7 +289,9 @@ def render_candidate_workspace():
 
     _render_candidate_decision_brief(decision_brief)
 
-    executive_brief = ExecutiveDecisionIntelligenceService().build(report, intelligence)
+    executive_brief = ExecutiveDecisionIntelligenceService().build(
+        decision_brief
+    )
     _render_executive_advisor(executive_brief)
 
     tab_overview, tab_skills, tab_evidence, tab_risks, tab_interview = st.tabs([

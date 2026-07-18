@@ -34,11 +34,67 @@ class ExecutiveDecisionBrief:
     ramp_up_rationale: str
     evidence_summary: str
 
+    @property
+    def decision_status(self) -> str:
+        return self.decision_label
+
+    @property
+    def next_action(self) -> str:
+        return self.recommended_action
+
+    @property
+    def ramp_up(self) -> str:
+        return self.expected_ramp_up
+
+    @property
+    def executive_narrative(self) -> str:
+        return self.executive_summary
+
+    @property
+    def strengths(self) -> Tuple[str, ...]:
+        return self.why
+
+    @property
+    def governance_note(self) -> str:
+        return (
+            "Decision support only. Official Match and rank come directly from "
+            "the active recruitment session. A recruiter remains accountable "
+            "for the final decision."
+        )
+
+
+class _DecisionBriefReportAdapter:
+    def __init__(self, brief):
+        self.candidate_id = getattr(brief, "candidate_id", "")
+        self.candidate_name = getattr(brief, "candidate_name", "Candidate")
+        self.official_match_score = getattr(brief, "official_match_score", 0.0)
+        self.official_rank = getattr(brief, "official_rank", 0)
+        self.score_breakdown = {"confidence": getattr(brief, "confidence_score", 0)}
+        self.skills = []
+        self.interview_focus = tuple(getattr(brief, "interview_priorities", ()) or ())
+
+
+class _DecisionBriefIntelligenceAdapter:
+    def __init__(self, brief):
+        self.decision_confidence = getattr(brief, "confidence_score", 0)
+        self.strengths = tuple(getattr(brief, "strengths", ()) or ())
+        self.missing_evidence = tuple(getattr(brief, "missing_evidence", ()) or ())
+        self.interview_strategy = tuple(getattr(brief, "interview_priorities", ()) or ())
+        self.evidence_summary = getattr(brief, "evidence_summary", "")
+        self.risks = tuple(getattr(brief, "hiring_risks", ()) or ())
+
 
 class ExecutiveDecisionIntelligenceService:
     """Create a deterministic executive brief from existing structured outputs."""
 
-    def build(self, report, intelligence) -> ExecutiveDecisionBrief:
+    def build(self, report, intelligence=None) -> ExecutiveDecisionBrief:
+        # Release 4.5A supports both the legacy (report, intelligence) contract
+        # and the canonical CandidateDecisionBrief contract used by the UI.
+        if intelligence is None:
+            brief = report
+            report = _DecisionBriefReportAdapter(brief)
+            intelligence = _DecisionBriefIntelligenceAdapter(brief)
+
         score = float(getattr(report, 'official_match_score', None) or getattr(report, 'match_score', 0.0) or 0.0)
         rank = int(getattr(report, 'official_rank', None) or getattr(report, 'rank', 0) or 0)
         confidence = self._confidence(report, intelligence)
@@ -101,7 +157,14 @@ class ExecutiveDecisionIntelligenceService:
         ]
         if risk_items:
             first = risk_items[0]
-            output.append(HiringRiskDimension('Role-specific', 'Medium', self._clean(getattr(first, 'detail', ''), self._clean(getattr(first, 'title', ''), 'Role-specific evidence requires validation.'))))
+            if isinstance(first, str):
+                rationale = self._clean(first, 'Role-specific evidence requires validation.')
+            else:
+                rationale = self._clean(
+                    getattr(first, 'detail', ''),
+                    self._clean(getattr(first, 'title', ''), 'Role-specific evidence requires validation.'),
+                )
+            output.append(HiringRiskDimension('Role-specific', 'Medium', rationale))
         return output
 
     def _ramp_up(self, score, confidence, missing):
