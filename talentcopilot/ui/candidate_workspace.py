@@ -10,6 +10,9 @@ from talentcopilot.services.executive_decision_intelligence_service import (
 from talentcopilot.services.executive_decision_pdf_service import (
     ExecutiveDecisionPdfService,
 )
+from talentcopilot.services.executive_decision_center_service import (
+    ExecutiveDecisionCenterService,
+)
 from talentcopilot.services.demo_session_factory import create_demo_recruitment_session
 from talentcopilot.services.streamlit_session_bridge import get_streamlit_session, set_streamlit_session
 from talentcopilot.ui.design_system.components import enterprise_hero, insight_card, metric_grid, section_title
@@ -187,7 +190,7 @@ def _render_candidate_decision_brief(
 
 
 
-def _render_executive_advisor(brief) -> None:
+def _render_executive_advisor(brief, center=None) -> None:
     import streamlit as st
 
     section_title(
@@ -237,7 +240,7 @@ def _render_executive_advisor(brief) -> None:
         empty_message="No interview priority is currently available.",
     )
 
-    pdf_bytes = ExecutiveDecisionPdfService().generate(brief)
+    pdf_bytes = ExecutiveDecisionPdfService().generate(brief, center=center)
     st.download_button(
         "Download Executive Decision Brief (PDF)",
         data=pdf_bytes,
@@ -246,6 +249,74 @@ def _render_executive_advisor(brief) -> None:
         use_container_width=True,
     )
     st.caption(brief.governance_note)
+
+
+
+def _render_executive_decision_center(center) -> None:
+    import streamlit as st
+
+    section_title(
+        "Executive Decision Center",
+        "Evaluate whether the hiring decision is sufficiently documented, not whether the candidate is inherently good or bad.",
+    )
+
+    metric_grid([
+        ("Decision Readiness", f"{center.decision_readiness}%", center.readiness_label),
+        ("Official Match", f"{center.official_match_score:.0f}%", "Unchanged canonical score"),
+        ("Official Rank", f"#{center.official_rank}", "Unchanged canonical rank"),
+        ("AI Confidence", f"{center.ai_confidence}%", "Unchanged canonical confidence"),
+    ])
+
+    st.progress(max(0, min(100, center.decision_readiness)) / 100)
+    insight_card("Executive decision summary", center.executive_summary, center.recommendation)
+
+    readiness_col, confidence_col = st.columns(2)
+    with readiness_col:
+        st.markdown("#### Decision readiness gaps")
+        if center.readiness_gaps:
+            for gap in center.readiness_gaps:
+                st.warning(f"**{gap.label} — {gap.status}**\n\n{gap.rationale}")
+        else:
+            st.success("No material decision-readiness gap is documented.")
+    with confidence_col:
+        _render_list_section(
+            "Why confidence is at this level",
+            center.confidence_reasons,
+            empty_message="No confidence explanation is available.",
+        )
+
+    st.markdown("#### Evidence Quality")
+    st.dataframe(
+        [
+            {"Evidence": item.label, "Quality": item.quality, "Rationale": item.rationale}
+            for item in center.evidence_quality
+        ],
+        use_container_width=True,
+        hide_index=True,
+    )
+
+    st.markdown("#### Executive Timeline")
+    for milestone in center.timeline:
+        st.markdown(f"**{milestone.period}** — {milestone.objective}")
+
+    if center.comparison:
+        st.markdown("#### What changes versus other candidates?")
+        for peer in center.comparison:
+            with st.expander(peer.headline):
+                _render_list_section(
+                    "Relative strengths",
+                    peer.strengths,
+                    empty_message="No relative strength is documented.",
+                    tone="positive",
+                )
+                _render_list_section(
+                    "Trade-offs",
+                    peer.trade_offs,
+                    empty_message="No material trade-off is documented.",
+                    tone="risk",
+                )
+
+    st.caption(center.governance_note)
 
 def render_candidate_workspace():
     import streamlit as st
@@ -292,7 +363,14 @@ def render_candidate_workspace():
     executive_brief = ExecutiveDecisionIntelligenceService().build(
         decision_brief
     )
-    _render_executive_advisor(executive_brief)
+    decision_center = ExecutiveDecisionCenterService().build(
+        report,
+        intelligence,
+        executive_brief,
+        peer_reports=reports,
+    )
+    _render_executive_advisor(executive_brief, center=decision_center)
+    _render_executive_decision_center(decision_center)
 
     tab_overview, tab_skills, tab_evidence, tab_risks, tab_interview = st.tabs([
         "Overview",
