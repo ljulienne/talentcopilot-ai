@@ -1,13 +1,17 @@
-"""Single-page Recruitment Mission workspace for Release 6.0A."""
+"""Single-page Recruitment Mission workspace using the Enterprise Workspace Engine."""
 
 from __future__ import annotations
 
 from talentcopilot.services.demo_session_factory import create_demo_recruitment_session
-from talentcopilot.services.streamlit_session_bridge import get_streamlit_session, set_streamlit_session
+from talentcopilot.services.streamlit_session_bridge import (
+    get_streamlit_session,
+    set_streamlit_session,
+)
 from talentcopilot.ui.design_system.theme import apply_enterprise_theme
+from talentcopilot.ui.design_system.v2.workspace import render_enterprise_workspace
 from talentcopilot.ui.recruitment_upload_panel import render_recruitment_upload_panel
 
-from .layout import apply_mission_styles, render_ai_summary, render_executive_metrics, render_mission_hero
+from .enterprise_adapter import build_enterprise_workspace_model
 from .navigation import MISSION_SECTIONS
 from .sections.comparison import render_comparison
 from .sections.decision import render_decision
@@ -40,22 +44,17 @@ def _empty_state() -> None:
 
 
 def render_recruitment_mission_workspace() -> None:
-    import streamlit as st
-
     apply_enterprise_theme()
-    apply_mission_styles()
+
     session = render_recruitment_upload_panel(get_streamlit_session())
     if session is None:
         _empty_state()
         return
 
     state = build_recruitment_mission_state(session)
-    render_mission_hero(state)
-    render_executive_metrics(state)
-    render_ai_summary(state)
-
-    st.markdown("### Mission workspace")
-    st.caption("Open only the section needed for the current decision. Official scores and ranks are read directly from the active session.")
-    for section in MISSION_SECTIONS:
-        with st.expander(f"{section.label} — {section.question}", expanded=section.key in {"ranking"}):
-            _RENDERERS[section.key](state)
+    model = build_enterprise_workspace_model(
+        state,
+        section_definitions=MISSION_SECTIONS,
+        renderers=_RENDERERS,
+    )
+    render_enterprise_workspace(model)
