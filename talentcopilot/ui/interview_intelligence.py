@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+from talentcopilot.interview.pro_service import InterviewIntelligenceProService
 from talentcopilot.interview.question_service import InterviewQuestionService
 from talentcopilot.interview.workspace_service import InterviewWorkspaceService
+from talentcopilot.services.interview_report_pdf_service import InterviewReportPdfService
 from talentcopilot.services.streamlit_session_bridge import get_streamlit_session
 from talentcopilot.ui.design_system.components import enterprise_hero, insight_card, metric_grid, section_title
 from talentcopilot.ui.design_system.theme import apply_enterprise_theme
 
 
 CACHE_PREFIX = "interview_strategy_"
+OUTCOME_PREFIX = "interview_outcome_"
 
 
 def _cache_key(session, report) -> str:
@@ -45,7 +48,7 @@ def _render_strategy(report, questions):
     ]
     st.dataframe(rows, use_container_width=True, hide_index=True)
 
-    section_title("Targeted interview questions")
+    section_title("Targeted interview playbook")
     for index, question in enumerate(questions, start=1):
         with st.expander(f"{index}. {question.competency}", expanded=index == 1):
             st.markdown(f"**Question**  \n{question.question}")
@@ -64,6 +67,115 @@ def _render_strategy(report, questions):
                 st.write(f"- {item}")
 
 
+def _render_live_evaluation(session, report):
+    import streamlit as st
+
+    service = InterviewIntelligenceProService()
+    candidate_key = f"{getattr(session, 'session_id', 'session')}:{report.candidate_name}"
+    outcome_key = f"{OUTCOME_PREFIX}{candidate_key}"
+
+    section_title("Live interview evidence")
+    st.caption(
+        "Capture recruiter observations and candidate evidence. This evaluation does not alter "
+        "the official matching score, official rank, or AI confidence."
+    )
+
+    ratings = []
+    for index, competency in enumerate(report.competencies[:7]):
+        safe_key = f"{candidate_key}:{index}"
+        with st.expander(competency.name, expanded=index == 0):
+            answer = st.text_area(
+                "Candidate answer / evidence",
+                key=f"answer:{safe_key}",
+                height=130,
+                placeholder="Capture the context, personal responsibility, actions, results and measurable evidence…",
+            )
+            col1, col2 = st.columns(2)
+            with col1:
+                recruiter_score = st.slider(
+                    "Recruiter rating",
+                    min_value=1,
+                    max_value=5,
+                    value=3,
+                    key=f"rating:{safe_key}",
+                )
+            with col2:
+                confirmed = st.checkbox(
+                    "Evidence confirmed",
+                    key=f"confirmed:{safe_key}",
+                )
+            notes = st.text_input(
+                "Recruiter notes",
+                key=f"notes:{safe_key}",
+                placeholder="Optional decision-relevant note",
+            )
+
+            star = service.assess_star(answer)
+            st.progress(star.completeness_score / 100, text=f"STAR evidence completeness: {star.completeness_score}%")
+            if answer:
+                st.caption(star.evidence_summary)
+                follow_ups = service.suggest_follow_ups(star, competency.name)
+                if follow_ups:
+                    st.markdown("**Suggested follow-up questions**")
+                    for prompt in follow_ups:
+                        st.write(f"- {prompt}")
+                else:
+                    st.success("The answer covers the expected STAR and evidence dimensions.")
+
+            ratings.append(
+                service.build_rating(
+                    competency=competency.name,
+                    answer=answer,
+                    recruiter_score=recruiter_score,
+                    evidence_confirmed=confirmed,
+                    notes=notes or answer,
+                )
+            )
+
+    if st.button("Generate post-interview recommendation", type="primary", key=f"evaluate:{candidate_key}"):
+        st.session_state[outcome_key] = service.evaluate(report.candidate_name, ratings)
+
+    outcome = st.session_state.get(outcome_key)
+    if outcome is None:
+        return
+
+    section_title("Post-interview decision support")
+    metric_grid([
+        ("Recommendation", outcome.recommendation.label, "Based only on captured interview evidence"),
+        ("Interview score", f"{outcome.overall_score:.2f}/5", "Recruiter scorecard average"),
+        ("Evidence coverage", f"{outcome.evidence_coverage}%", "Competencies explicitly confirmed"),
+        ("Recommendation confidence", f"{outcome.recommendation.confidence}%", "Evidence and STAR completeness"),
+    ])
+
+    insight_card(
+        "Executive interview summary",
+        service.build_executive_summary(outcome),
+        "Explainable recommendation",
+    )
+
+    st.markdown("**Decision rationale**")
+    for item in outcome.recommendation.rationale:
+        st.write(f"- {item}")
+
+    st.markdown("**Remaining risks and missing evidence**")
+    if outcome.recommendation.remaining_risks:
+        for item in outcome.recommendation.remaining_risks:
+            st.warning(item)
+    else:
+        st.success("No material interview evidence gap remains.")
+
+    st.info(f"Recommended next step: {outcome.recommendation.next_step}")
+
+    pdf = InterviewReportPdfService().build(outcome, role_title=report.role_title)
+    st.download_button(
+        "Download Interview Intelligence Report",
+        data=pdf,
+        file_name=f"interview_intelligence_{report.candidate_name.replace(' ', '_').lower()}.pdf",
+        mime="application/pdf",
+        key=f"download:{candidate_key}",
+    )
+
+
 def render_interview_intelligence():
     import streamlit as st
 
@@ -71,9 +183,9 @@ def render_interview_intelligence():
     session = get_streamlit_session()
 
     enterprise_hero(
-        "Interview Intelligence",
-        "Prepare a focused, evidence-based interview from the active recruitment session.",
-        "Performance Hotfix 3.1.1B",
+        "Interview Intelligence Pro",
+        "Prepare, conduct and evaluate a focused, evidence-based interview from the active recruitment session.",
+        "Release 4.7",
     )
 
     if session is None or not getattr(session, "ranked_analyses", None):
@@ -105,10 +217,11 @@ def render_interview_intelligence():
         "Evidence-led strategy",
     )
 
-    tab_overview, tab_strategy, tab_scorecard = st.tabs([
+    tab_overview, tab_strategy, tab_live, tab_scorecard = st.tabs([
         "Overview",
-        "Interview Strategy",
-        "Scorecard",
+        "Interview Playbook",
+        "Live Evaluation",
+        "Preparation Scorecard",
     ])
 
     with tab_overview:
@@ -128,14 +241,14 @@ def render_interview_intelligence():
 
         if cached_questions is None:
             st.caption("Questions are generated only when requested and then reused for this candidate and mission.")
-            if st.button("Generate Interview Strategy", type="primary", key=f"generate_{key}"):
+            if st.button("Generate Interview Playbook", type="primary", key=f"generate_{key}"):
                 st.session_state[key] = report.questions
                 cached_questions = report.questions
-                st.success("Interview strategy generated and cached.")
+                st.success("Interview playbook generated and cached.")
         else:
             col1, col2 = st.columns([3, 1])
             with col1:
-                st.caption("Using the cached strategy for this candidate and mission.")
+                st.caption("Using the cached playbook for this candidate and mission.")
             with col2:
                 if st.button("Regenerate", key=f"regenerate_{key}"):
                     st.session_state[key] = report.questions
@@ -144,8 +257,11 @@ def render_interview_intelligence():
         if cached_questions is not None:
             _render_strategy(report, cached_questions)
 
+    with tab_live:
+        _render_live_evaluation(session, report)
+
     with tab_scorecard:
-        section_title("Structured scorecard")
+        section_title("Pre-interview scorecard")
         rows = [
             {
                 "Competency": item.competency,
@@ -156,3 +272,4 @@ def render_interview_intelligence():
         ]
         st.dataframe(rows, use_container_width=True, hide_index=True)
         st.metric("Decision readiness", f"{report.decision_readiness}%")
+        st.caption("This preparation scorecard is not a post-interview hiring decision.")
