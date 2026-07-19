@@ -14,7 +14,7 @@ import time
 
 
 # Increment whenever the canonical score/session contract changes.
-OFFICIAL_SCORE_CACHE_SCHEMA = "isolated-fit-session-v4.2.2"
+OFFICIAL_SCORE_CACHE_SCHEMA = "isolated-fit-session-v6.0b.3.1-universal"
 
 
 def _uploaded_bytes(uploaded_file) -> bytes:

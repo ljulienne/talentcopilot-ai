@@ -16,6 +16,10 @@ class ComparativeProfile:
     score: float
     differentiators: List[str] = field(default_factory=list)
     validation_points: List[str] = field(default_factory=list)
+    job_family: str = "general"
+    geography_required: bool = False
+    leadership_required: bool = False
+    commercial_required: bool = False
 
     def to_dict(self) -> dict:
         return asdict(self)
