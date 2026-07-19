@@ -379,6 +379,13 @@ class RecruitmentUploadSessionService:
         if comparative_score is not None:
             breakdown["comparative_scope_score"] = round(self._number(comparative_score), 2)
 
+        calibrated_score = metadata.get("calibrated_score")
+        if calibrated_score is not None:
+            breakdown["calibrated_mission_score"] = round(self._number(calibrated_score), 2)
+        calibrated_confidence = metadata.get("calibrated_confidence")
+        if calibrated_confidence is not None:
+            breakdown["calibrated_confidence"] = round(self._number(calibrated_confidence), 2)
+
         raw_comparative = metadata.get("comparative_breakdown")
         if raw_comparative:
             try:

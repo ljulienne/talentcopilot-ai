@@ -1,6 +1,7 @@
 import json
 
 from talentcopilot.comparative_ranking import ComparativeRankingEngine
+from talentcopilot.calibrated_scoring import CalibratedMissionScoringEngine
 from talentcopilot.real_matching.models import RealMatchingInput
 from talentcopilot.real_matching.pipeline import RealMatchingPipeline
 from talentcopilot.real_ranking.models import CandidateTextInput, RankedCandidate, RealRankingInput, RealRankingOutput
@@ -41,6 +42,7 @@ class RealRankingPipeline:
             outputs.append(match)
 
         comparative_engine = ComparativeRankingEngine()
+        calibration_engine = CalibratedMissionScoringEngine()
         ranked = []
         for match in outputs:
             profile = match.decision_output.profile
@@ -57,16 +59,37 @@ class RealRankingPipeline:
                 candidate_text=candidate_input.text,
                 job_text=data.job_text,
             )
-            adjusted_fit = comparative_engine.adjusted_fit(profile.fit_score, comparative)
-            profile.fit_score = adjusted_fit
+            mission_breakdown = {}
+            raw_breakdown = profile.metadata.get("mission_fit_breakdown")
+            if raw_breakdown:
+                try:
+                    mission_breakdown = json.loads(raw_breakdown) if isinstance(raw_breakdown, str) else dict(raw_breakdown)
+                except (TypeError, ValueError, json.JSONDecodeError):
+                    mission_breakdown = {}
+
+            calibrated = calibration_engine.calibrate(
+                mission_fit=profile.fit_score,
+                mission_breakdown=mission_breakdown,
+                comparative=comparative,
+                differentiators=comparative.differentiators,
+                validation_points=comparative.validation_points,
+            )
+            profile.fit_score = calibrated.score
+            profile.confidence_score = calibrated.confidence
             profile.metadata.update({
-                "profile_version": "comparative-ranking-v1.0",
-                "fit_score": str(adjusted_fit),
+                "profile_version": "calibrated-mission-scoring-v1.0",
+                "fit_score": str(calibrated.score),
                 "comparative_ranking_engine": comparative_engine.version,
                 "comparative_score": str(comparative.score),
                 "comparative_breakdown": json.dumps(comparative.to_dict(), sort_keys=True),
                 "comparative_differentiators": json.dumps(comparative.differentiators),
                 "comparative_validation_points": json.dumps(comparative.validation_points),
+                "calibrated_scoring_engine": calibration_engine.version,
+                "calibrated_score": str(calibrated.score),
+                "calibrated_confidence": str(calibrated.confidence),
+                "calibrated_band": calibrated.band,
+                "calibrated_breakdown": json.dumps(calibrated.to_dict(), sort_keys=True),
+                "calibrated_limiting_factors": json.dumps(calibrated.limiting_factors),
             })
             if comparative.differentiators:
                 profile.metadata["recommendation_rationale"] = (
