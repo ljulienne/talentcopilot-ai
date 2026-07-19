@@ -37,7 +37,7 @@ COMMAND_PAGES = [
 
 ANALYSIS_PAGES = [
     _page("Organization Intelligence", "talentcopilot.ui.organization_intelligence_preview", "render_organization_intelligence_preview", "Diagnose collaboration patterns from uploaded data.", "◉"),
-    _page("Recruitment Workspace", "talentcopilot.ui.recruitment_decision_workspace", "render_recruitment_decision_workspace", "One guided workspace from evidence to hiring decision.", "▣"),
+    _page("Recruitment Workspace", "talentcopilot.ui.recruitment_decision_workspace", "render_recruitment_decision_workspace", "Mission-centric workspace from candidate evidence to hiring decision.", "▣"),
     _page("Analytics Dashboard", "talentcopilot.ui.analytics_dashboard", "render_analytics_dashboard", icon="▥"),
 ]
 

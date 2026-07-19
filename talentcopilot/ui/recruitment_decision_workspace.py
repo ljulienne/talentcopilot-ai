@@ -635,74 +635,9 @@ def _render_report(report, service: ExecutiveReportingService) -> None:
 
 
 def render_recruitment_decision_workspace() -> None:
-    """Render the unified, decision-led recruitment experience."""
-    import streamlit as st
-
-    apply_enterprise_theme()
-    session = get_streamlit_session()
-
-    enterprise_hero(
-        "Recruitment Decision Workspace",
-        "Upload a mission and candidate CVs, then move from evidence to a confident hiring decision.",
-        "Recruitment workflow",
+    """Compatibility entry point for the Release 6.0A mission workspace."""
+    from talentcopilot.recruitment.mission.workspace import (
+        render_recruitment_mission_workspace,
     )
 
-    session = render_recruitment_upload_panel(session)
-
-    if session is None:
-        _render_empty_state()
-        return
-
-    workspace_report = RecruitmentWorkspaceService().build(session)
-    cockpit_view = RecruitmentCockpitService().build(session, workspace_report)
-    _render_cockpit(cockpit_view)
-
-    pipeline_report = RecruitmentPipelineService().build(session)
-    task_report = RecruitmentTasksService().build(session)
-    candidate_reports = CandidateWorkspaceService().build_all(session)
-    comparison_report = ComparisonWorkspaceService().build(session)
-
-    interview_reports = InterviewWorkspaceService().build_all(session)
-    decision_report = DecisionBoardService().build(session)
-    copilot_report = RecruiterCopilotWorkspaceService().build(session)
-    reporting_service = ExecutiveReportingService()
-    executive_report = reporting_service.build(session)
-
-    candidate_names = _names(candidate_reports)
-    if not candidate_names:
-        candidate_names = _names(decision_report.candidates)
-
-    if candidate_names:
-        selected_name = st.selectbox(
-            "Candidate in focus",
-            candidate_names,
-            key="recruitment_decision_candidate",
-        )
-    else:
-        selected_name = ""
-
-    selected_candidate_report = _find(candidate_reports, selected_name)
-    executive_decision = _build_executive_decision(
-        selected_candidate_report,
-        decision_report,
-    )
-    _render_executive_decision(executive_decision)
-
-    overview, candidate, compare, interview, decision, advisor, report = st.tabs(
-        ["Overview", "Candidate", "Compare", "Interview", "Decision", "AI Advisor", "Report"]
-    )
-
-    with overview:
-        _render_overview(workspace_report, pipeline_report, task_report)
-    with candidate:
-        _render_candidate(selected_candidate_report)
-    with compare:
-        _render_comparison(comparison_report)
-    with interview:
-        _render_interview(_find(interview_reports, selected_name))
-    with decision:
-        _render_decision(decision_report, selected_name)
-    with advisor:
-        _render_advisor(copilot_report, selected_name)
-    with report:
-        _render_report(executive_report, reporting_service)
+    render_recruitment_mission_workspace()
