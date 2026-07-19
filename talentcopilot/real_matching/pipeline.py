@@ -6,6 +6,8 @@ from talentcopilot.document_intelligence.pipeline import DocumentIntelligencePip
 from talentcopilot.job_intelligence.pipeline import JobIntelligencePipeline
 from talentcopilot.job_intelligence.role_extractor import RoleProfileExtractor
 from talentcopilot.real_matching.models import RealMatchingInput, RealMatchingOutput
+from talentcopilot.mission_fit_v2 import MissionFitEngineV2
+import json
 
 
 class RealMatchingPipeline:
@@ -44,6 +46,35 @@ class RealMatchingPipeline:
         )
 
         decision_output = DecisionCoreOrchestrator().analyze_candidate(decision_input)
+
+        # Release 5.0: the canonical upload score is produced by the explainable
+        # Mission Fit Engine v2 from the complete source documents. Existing
+        # Decision Core evidence, governance and trace objects remain intact.
+        mission_fit = MissionFitEngineV2().evaluate(
+            job_text=data.job_text,
+            candidate_text=data.candidate_text,
+            candidate_name=decision_output.profile.candidate_name,
+        )
+        profile = decision_output.profile
+        profile.fit_score = mission_fit.overall_score
+        profile.confidence_score = mission_fit.confidence_score
+        profile.recommendation = mission_fit.recommendation
+        profile.risk_level = mission_fit.risk_level
+        profile.metadata.update({
+            "profile_version": "mission-fit-v2.0",
+            "fit_score": str(mission_fit.overall_score),
+            "fit_summary": mission_fit.rationale,
+            "confidence_score": str(mission_fit.confidence_score),
+            "recommendation": mission_fit.recommendation,
+            "recommendation_rationale": mission_fit.rationale,
+            "risk_level": mission_fit.risk_level,
+            "mission_fit_engine": mission_fit.engine_version,
+            "mission_fit_breakdown": json.dumps(mission_fit.breakdown, sort_keys=True),
+            "mission_fit_strengths": json.dumps(mission_fit.strengths),
+            "mission_fit_gaps": json.dumps(mission_fit.gaps),
+            "mission_fit_evidence": json.dumps(mission_fit.evidence),
+            "mission_fit_dimensions": json.dumps([item.to_dict() for item in mission_fit.dimensions]),
+        })
 
         return RealMatchingOutput(
             candidate_analysis=candidate_analysis,
