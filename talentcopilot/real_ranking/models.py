@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List
+from typing import Any, Dict, List
 
 from talentcopilot.real_matching.models import RealMatchingOutput
 
@@ -29,6 +29,10 @@ class RankedCandidate:
     ranking_score: int
     rationale: str
     matching_output: RealMatchingOutput
+    comparative_score: float = 0.0
+    comparative_breakdown: Dict[str, Any] = field(default_factory=dict)
+    differentiators: List[str] = field(default_factory=list)
+    validation_points: List[str] = field(default_factory=list)
 
 
 @dataclass

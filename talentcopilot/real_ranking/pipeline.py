@@ -1,3 +1,6 @@
+import json
+
+from talentcopilot.comparative_ranking import ComparativeRankingEngine
 from talentcopilot.real_matching.models import RealMatchingInput
 from talentcopilot.real_matching.pipeline import RealMatchingPipeline
 from talentcopilot.real_ranking.models import CandidateTextInput, RankedCandidate, RealRankingInput, RealRankingOutput
@@ -23,6 +26,7 @@ class RealRankingPipeline:
 
     def run(self, data: RealRankingInput) -> RealRankingOutput:
         outputs = []
+        candidate_by_filename = {candidate.filename: candidate for candidate in data.candidates}
 
         for candidate in data.candidates:
             match = RealMatchingPipeline().run(
@@ -36,25 +40,67 @@ class RealRankingPipeline:
             )
             outputs.append(match)
 
+        comparative_engine = ComparativeRankingEngine()
         ranked = []
         for match in outputs:
             profile = match.decision_output.profile
-            ranking_score = self._ranking_score(profile)
+            filename = str(getattr(match.candidate_analysis, "filename", "") or "")
+            candidate_input = candidate_by_filename.get(filename)
+            if candidate_input is None:
+                candidate_input = next(
+                    (item for item in data.candidates if profile.candidate_name.lower() in item.text.lower()),
+                    CandidateTextInput(filename=filename or "candidate", text=""),
+                )
+
+            comparative = comparative_engine.analyse(
+                candidate_name=profile.candidate_name,
+                candidate_text=candidate_input.text,
+                job_text=data.job_text,
+            )
+            adjusted_fit = comparative_engine.adjusted_fit(profile.fit_score, comparative)
+            profile.fit_score = adjusted_fit
+            profile.metadata.update({
+                "profile_version": "comparative-ranking-v1.0",
+                "fit_score": str(adjusted_fit),
+                "comparative_ranking_engine": comparative_engine.version,
+                "comparative_score": str(comparative.score),
+                "comparative_breakdown": json.dumps(comparative.to_dict(), sort_keys=True),
+                "comparative_differentiators": json.dumps(comparative.differentiators),
+                "comparative_validation_points": json.dumps(comparative.validation_points),
+            })
+            if comparative.differentiators:
+                profile.metadata["recommendation_rationale"] = (
+                    f"{profile.metadata.get('recommendation_rationale', '')} "
+                    f"Comparative differentiators: {', '.join(comparative.differentiators[:3])}."
+                ).strip()
+
+            ranking_score = self._ranking_score(profile, comparative.score)
             ranked.append(
                 RankedCandidate(
                     rank=0,
                     candidate_name=profile.candidate_name,
                     recommendation=profile.recommendation or "No recommendation",
-                    fit_score=int(profile.fit_score or 0),
+                    fit_score=int(round(profile.fit_score or 0)),
                     confidence_score=int(profile.confidence_score or 0),
                     risk_level=profile.risk_level or "Unknown",
                     ranking_score=ranking_score,
                     rationale=profile.metadata.get("recommendation_rationale", ""),
                     matching_output=match,
+                    comparative_score=comparative.score,
+                    comparative_breakdown=comparative.to_dict(),
+                    differentiators=list(comparative.differentiators),
+                    validation_points=list(comparative.validation_points),
                 )
             )
 
-        ranked.sort(key=lambda item: item.ranking_score, reverse=True)
+        ranked.sort(
+            key=lambda item: (
+                -float(item.fit_score or 0),
+                -float(item.comparative_score or 0),
+                -float(item.ranking_score or 0),
+                str(item.candidate_name or "").casefold(),
+            )
+        )
         for index, item in enumerate(ranked, start=1):
             item.rank = index
 
@@ -65,7 +111,7 @@ class RealRankingPipeline:
             ranked_candidates=ranked,
         )
 
-    def _ranking_score(self, profile) -> int:
+    def _ranking_score(self, profile, comparative_score: float = 70.0) -> int:
         recommendation = profile.recommendation or "Review"
         rec_score = self.RECOMMENDATION_WEIGHT.get(recommendation, 40)
         fit = int(profile.fit_score or 0)
@@ -79,10 +125,11 @@ class RealRankingPipeline:
             budget = 70
 
         score = int(
-            rec_score * 0.35
+            rec_score * 0.30
             + fit * 0.35
-            + confidence * 0.20
-            + budget * 0.10
+            + confidence * 0.15
+            + budget * 0.05
+            + float(comparative_score or 0) * 0.15
             - risk_penalty
         )
         return max(0, min(100, score))
