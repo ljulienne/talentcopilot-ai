@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from ..state import RecruitmentMissionState
+from talentcopilot.services.report_export_service import ReportExportService
 
 
 def _markdown(state: RecruitmentMissionState) -> str:
@@ -15,11 +16,17 @@ def render_report(state: RecruitmentMissionState) -> None:
     import streamlit as st
 
     report = _markdown(state)
+    export = ReportExportService().from_markdown(
+        report,
+        file_name="talentcopilot_recruitment_mission.pdf",
+        title="TalentCopilot Recruitment Mission Brief",
+        subtitle=state.role_title,
+    )
     st.download_button(
-        "Download mission brief",
-        data=report,
-        file_name="talentcopilot_recruitment_mission.md",
-        mime="text/markdown",
+        "Download mission brief (PDF)",
+        data=export.data,
+        file_name=export.file_name,
+        mime=export.mime,
         key="tc60a_mission_report",
     )
     st.markdown(report)

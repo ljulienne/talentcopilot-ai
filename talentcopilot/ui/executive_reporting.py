@@ -1,5 +1,6 @@
 from talentcopilot.services.demo_session_factory import create_demo_recruitment_session
 from talentcopilot.services.executive_reporting_service import ExecutiveReportingService
+from talentcopilot.services.report_export_service import ReportExportService
 from talentcopilot.services.streamlit_session_bridge import get_streamlit_session, set_streamlit_session
 from talentcopilot.ui.design_system.components import enterprise_hero, insight_card, metric_grid, section_title
 from talentcopilot.ui.design_system.theme import apply_enterprise_theme
@@ -100,12 +101,18 @@ def render_executive_reporting():
             st.write(f"- {item}")
 
     with tab_export:
-        section_title("Markdown Export")
+        section_title("PDF Export")
         markdown_report = service.to_markdown(report)
+        export = ReportExportService().from_markdown(
+            markdown_report,
+            file_name="talentcopilot_executive_report.pdf",
+            title="TalentCopilot Executive Report",
+            subtitle=report.role_title,
+        )
         st.download_button(
-            "Download Executive Report",
-            data=markdown_report,
-            file_name="talentcopilot_executive_report.md",
-            mime="text/markdown",
+            "Download Executive Report (PDF)",
+            data=export.data,
+            file_name=export.file_name,
+            mime=export.mime,
         )
         st.markdown(markdown_report)

@@ -16,6 +16,7 @@ from talentcopilot.services.comparison_workspace_service import ComparisonWorksp
 from talentcopilot.services.decision_board_service import DecisionBoardService
 from talentcopilot.services.demo_session_factory import create_demo_recruitment_session
 from talentcopilot.services.executive_reporting_service import ExecutiveReportingService
+from talentcopilot.services.report_export_service import ReportExportService
 from talentcopilot.interview.workspace_service import InterviewWorkspaceService
 from talentcopilot.services.recruiter_copilot_workspace_service import RecruiterCopilotWorkspaceService
 from talentcopilot.services.recruitment_pipeline_service import RecruitmentPipelineService
@@ -624,11 +625,17 @@ def _render_report(report, service: ExecutiveReportingService) -> None:
             st.write(f"- {item}")
     with export:
         markdown_report = service.to_markdown(report)
+        pdf_export = ReportExportService().from_markdown(
+            markdown_report,
+            file_name="talentcopilot_executive_report.pdf",
+            title="TalentCopilot Executive Report",
+            subtitle=report.role_title,
+        )
         st.download_button(
-            "Download executive report",
-            data=markdown_report,
-            file_name="talentcopilot_executive_report.md",
-            mime="text/markdown",
+            "Download executive report (PDF)",
+            data=pdf_export.data,
+            file_name=pdf_export.file_name,
+            mime=pdf_export.mime,
             key="rdw_download_report",
         )
         st.markdown(markdown_report)
