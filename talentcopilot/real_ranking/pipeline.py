@@ -6,6 +6,7 @@ from talentcopilot.real_matching.models import RealMatchingInput
 from talentcopilot.real_matching.pipeline import RealMatchingPipeline
 from talentcopilot.real_ranking.models import CandidateTextInput, RankedCandidate, RealRankingInput, RealRankingOutput
 from talentcopilot.recruiter_intelligence import RecruiterIntelligenceEngine
+from talentcopilot.evidence_profiles import CandidateEvidenceProfileBuilder, MissionEvidenceProfileBuilder
 
 
 class RealRankingPipeline:
@@ -45,6 +46,8 @@ class RealRankingPipeline:
         comparative_engine = ComparativeRankingEngine()
         calibration_engine = CalibratedMissionScoringEngine()
         recruiter_engine = RecruiterIntelligenceEngine()
+        candidate_evidence_builder = CandidateEvidenceProfileBuilder()
+        mission_evidence_builder = MissionEvidenceProfileBuilder()
         ranked = []
         for match in outputs:
             profile = match.decision_output.profile
@@ -85,6 +88,15 @@ class RealRankingPipeline:
                 mission_fit=calibrated.score,
                 mission_breakdown=mission_breakdown,
             )
+            candidate_evidence_profile = candidate_evidence_builder.build(
+                candidate_text=candidate_input.text,
+                extracted_candidate=match.extracted_candidate,
+                candidate_name=profile.candidate_name,
+            )
+            mission_evidence_profile = mission_evidence_builder.build(
+                job_text=data.job_text,
+                role_profile=match.role_profile,
+            )
             profile.metadata.update({
                 "profile_version": "calibrated-mission-scoring-v1.0",
                 "fit_score": str(calibrated.score),
@@ -108,6 +120,11 @@ class RealRankingPipeline:
                 "recruiter_decisive_strengths": json.dumps(recruiter_assessment.decisive_strengths),
                 "recruiter_material_gaps": json.dumps(recruiter_assessment.material_gaps),
                 "recruiter_interview_focus": json.dumps(recruiter_assessment.interview_focus),
+                "evidence_profile_contract": "evidence-profile-foundation-v1.0",
+                "candidate_evidence_profile_builder": candidate_evidence_builder.version,
+                "mission_evidence_profile_builder": mission_evidence_builder.version,
+                "candidate_evidence_profile": json.dumps(candidate_evidence_profile.to_dict(), sort_keys=True),
+                "mission_evidence_profile": json.dumps(mission_evidence_profile.to_dict(), sort_keys=True),
             })
             if comparative.differentiators:
                 profile.metadata["recommendation_rationale"] = (
