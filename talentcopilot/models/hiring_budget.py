@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
 
 
 @dataclass
@@ -24,14 +24,17 @@ class CandidateCostInput:
 class CandidateBudgetAssessment:
     candidate_name: str
     fit_score: float
-    expected_salary: float
-    salary_gap: float
-    budget_fit: int
+    expected_salary: Optional[float]
+    salary_gap: Optional[float]
+    budget_fit: Optional[int]
     cost_impact: str
     feasibility: str
     recommendation: str
     rationale: str
     next_actions: List[str] = field(default_factory=list)
+    talent_recommendation: str = "Review"
+    compensation_data_status: str = "Available"
+    budget_recommendation: str = "Review"
 
 
 @dataclass

@@ -6,25 +6,32 @@ from talentcopilot.ui.design_system.components import enterprise_hero, insight_c
 from talentcopilot.ui.design_system.theme import apply_enterprise_theme
 
 
+def _money(value):
+    return "—" if value is None else f"{value:,.0f}"
+
+
+def _percent(value):
+    return "—" if value is None else f"{value}%"
+
+
 def _assessment_table(report):
     import streamlit as st
 
     rows = [
         {
             "Candidate": a.candidate_name,
-            "Fit Score": a.fit_score,
-            "Expected Salary": round(a.expected_salary, 0),
-            "Salary Gap": round(a.salary_gap, 0),
-            "Budget Fit": a.budget_fit,
-            "Cost Impact": a.cost_impact,
-            "Feasibility": a.feasibility,
-            "Recommendation": a.recommendation,
+            "Candidate Fit": f"{a.fit_score:.0f}%",
+            "Talent Recommendation": a.talent_recommendation,
+            "Compensation Data": a.compensation_data_status,
+            "Expected Salary": _money(a.expected_salary),
+            "Budget Fit": _percent(a.budget_fit),
+            "Budget Decision": a.budget_recommendation,
         }
         for a in report.assessments
     ]
 
     if rows:
-        st.dataframe(rows, use_container_width=True)
+        st.dataframe(rows, use_container_width=True, hide_index=True)
     else:
         st.info("No budget assessment available yet.")
 
@@ -39,7 +46,7 @@ def render_hiring_budget():
 
     enterprise_hero(
         "Hiring Budget",
-        "Separate candidate fit from financial feasibility and compensation risk.",
+        "Separate candidate suitability from compensation feasibility without inventing salary data.",
         "Budget Intelligence",
     )
 
@@ -68,20 +75,28 @@ def render_hiring_budget():
     with col2:
         st.caption(f"Active recruitment: {report.role_title}")
 
-    best = report.assessments[0] if report.assessments else None
+    available = [a for a in report.assessments if a.budget_fit is not None]
+    top_budget_fit = max((a.budget_fit for a in available), default=None)
 
     metric_grid([
-        ("Target Salary", f"{report.target_salary:,.0f}", "Budget"),
-        ("Max Salary", f"{report.maximum_salary:,.0f}", "Ceiling"),
-        ("Candidates", str(len(report.assessments)), "Assessed"),
-        ("Top Budget Fit", f"{best.budget_fit}%" if best else "-", best.recommendation if best else "-"),
+        ("Target Salary", f"{report.target_salary:,.0f}", "Budget assumption"),
+        ("Max Salary", f"{report.maximum_salary:,.0f}", "Approved ceiling"),
+        ("Candidates", str(len(report.assessments)), "Talent assessed"),
+        ("Budget Assessments", str(len(available)), "With salary data"),
     ])
 
     insight_card(
-        "Budget principle",
-        "Budget Fit does not modify Candidate Fit. A strong candidate can be recommended for compensation review instead of being incorrectly rejected.",
-        "Decision Rule",
+        "Decision principle",
+        "Talent recommendations come from the active RecruitmentSession. When salary expectations are missing, the budget decision remains pending rather than defaulting every candidate to Review.",
+        "Source of Truth",
     )
+
+    if report.assessments and not available:
+        st.warning(
+            "No candidate salary expectations are available. Candidate fit and official recruitment recommendations remain valid, but budget feasibility cannot yet be assessed."
+        )
+    elif top_budget_fit is not None:
+        st.caption(f"Highest available budget fit: {top_budget_fit}%")
 
     tab_assessments, tab_details, tab_actions = st.tabs([
         "Assessments",
@@ -90,7 +105,7 @@ def render_hiring_budget():
     ])
 
     with tab_assessments:
-        section_title("Budget Assessments")
+        section_title("Talent and Budget Assessments")
         _assessment_table(report)
 
     with tab_details:
@@ -101,10 +116,10 @@ def render_hiring_budget():
             selected = st.selectbox("Select candidate", names)
             a = report.assessments[names.index(selected)]
             metric_grid([
-                ("Fit Score", f"{a.fit_score:.0f}%", "Candidate fit"),
-                ("Budget Fit", f"{a.budget_fit}%", "Financial fit"),
-                ("Salary Gap", f"{a.salary_gap:,.0f}", "Vs max budget"),
-                ("Feasibility", a.feasibility, a.cost_impact),
+                ("Candidate Fit", f"{a.fit_score:.0f}%", "Official match"),
+                ("Talent Recommendation", a.talent_recommendation, "Recruitment decision"),
+                ("Budget Fit", _percent(a.budget_fit), "Financial fit"),
+                ("Budget Decision", a.budget_recommendation, a.compensation_data_status),
             ])
             st.info(a.rationale)
 
@@ -113,7 +128,9 @@ def render_hiring_budget():
             st.info("No actions available.")
         else:
             for a in report.assessments:
-                with st.expander(f"{a.candidate_name} · {a.recommendation}"):
+                with st.expander(
+                    f"{a.candidate_name} · {a.talent_recommendation} · {a.budget_recommendation}"
+                ):
                     st.write(a.rationale)
                     for action in a.next_actions:
                         st.write(f"- {action}")

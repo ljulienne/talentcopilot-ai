@@ -1,12 +1,29 @@
+from __future__ import annotations
+
+from typing import Any, Mapping, Optional
+
 from talentcopilot.models.hiring_budget import (
     CandidateBudgetAssessment,
     CandidateCostInput,
     HiringBudgetInput,
     HiringBudgetReport,
 )
+from talentcopilot.services.candidate_decision_signal_service import (
+    CandidateDecisionSignalService,
+)
 
 
 class HiringBudgetService:
+    """Keep talent suitability separate from compensation feasibility.
+
+    The service never fabricates a salary expectation. When compensation data is
+    absent, it preserves the official recruitment recommendation and reports the
+    budget decision as pending.
+    """
+
+    def __init__(self, signal_service=None):
+        self.signal_service = signal_service or CandidateDecisionSignalService()
+
     def default_budget(self) -> HiringBudgetInput:
         return HiringBudgetInput(
             target_salary=85000,
@@ -28,17 +45,36 @@ class HiringBudgetService:
             )
 
         assessments = []
-        for index, analysis in enumerate(session.ranked_analyses):
+        for analysis in session.ranked_analyses:
             fit_score = float(getattr(analysis, "match_score", 0) or 0)
-            expected_salary = self._estimate_salary(index, fit_score, budget)
+            talent_recommendation = self.signal_service.build(
+                analysis, session
+            ).recommendation
+            candidate = self._candidate_record(analysis, session)
+            expected_salary = self._expected_salary(candidate, analysis)
+
+            if expected_salary is None:
+                assessments.append(
+                    self._assessment_without_compensation(
+                        analysis=analysis,
+                        fit_score=fit_score,
+                        talent_recommendation=talent_recommendation,
+                    )
+                )
+                continue
+
             candidate_cost = CandidateCostInput(
                 candidate_name=getattr(analysis, "candidate_name", "Candidate"),
                 expected_salary=expected_salary,
-                relocation_required=index == 0 and fit_score >= 85,
-                notice_period_weeks=8 if index == 0 else 4,
-                visa_sponsorship_required=False,
+                relocation_required=bool(candidate.get("relocation_required", False)),
+                notice_period_weeks=int(candidate.get("notice_period_weeks", 0) or 0),
+                visa_sponsorship_required=bool(
+                    candidate.get("visa_sponsorship_required", False)
+                ),
             )
-            assessments.append(self.assess_candidate(candidate_cost, budget, fit_score))
+            assessment = self.assess_candidate(candidate_cost, budget, fit_score)
+            assessment.talent_recommendation = talent_recommendation
+            assessments.append(assessment)
 
         return HiringBudgetReport(
             role_title=getattr(session, "role_title", "Recruitment"),
@@ -47,14 +83,90 @@ class HiringBudgetService:
             assessments=assessments,
         )
 
-    def _estimate_salary(self, index: int, fit_score: float, budget: HiringBudgetInput) -> float:
-        if fit_score >= 90:
-            return budget.maximum_salary * 1.12
-        if fit_score >= 80:
-            return budget.maximum_salary * 0.98
-        if fit_score >= 60:
-            return budget.target_salary * 0.92
-        return budget.target_salary * 0.75
+    def _assessment_without_compensation(
+        self,
+        *,
+        analysis: Any,
+        fit_score: float,
+        talent_recommendation: str,
+    ) -> CandidateBudgetAssessment:
+        candidate_name = str(
+            getattr(analysis, "candidate_name", "Candidate") or "Candidate"
+        )
+        return CandidateBudgetAssessment(
+            candidate_name=candidate_name,
+            fit_score=fit_score,
+            expected_salary=None,
+            salary_gap=None,
+            budget_fit=None,
+            cost_impact="Not assessed",
+            feasibility="Insufficient data",
+            recommendation=talent_recommendation,
+            talent_recommendation=talent_recommendation,
+            compensation_data_status="Missing salary expectation",
+            budget_recommendation="Pending compensation data",
+            rationale=(
+                f"{candidate_name}'s talent recommendation remains "
+                f"'{talent_recommendation}'. A budget conclusion cannot be issued "
+                "because no candidate salary expectation is available."
+            ),
+            next_actions=[
+                "Collect the candidate's salary expectation and currency.",
+                "Confirm the approved salary range and total compensation assumptions.",
+                "Re-run the budget assessment without changing the official talent recommendation.",
+            ],
+        )
+
+    def _candidate_record(self, analysis: Any, session: Any) -> Mapping[str, Any]:
+        candidate_id = str(getattr(analysis, "candidate_id", "") or "")
+        candidate_name = str(
+            getattr(analysis, "candidate_name", "") or ""
+        ).casefold()
+        for item in list(getattr(session, "candidates", []) or []):
+            record = item if isinstance(item, Mapping) else {}
+            record_id = str(record.get("candidate_id", "") or "")
+            record_name = str(
+                record.get("name", record.get("candidate_name", "")) or ""
+            ).casefold()
+            if candidate_id and record_id == candidate_id:
+                return record
+            if candidate_name and record_name == candidate_name:
+                return record
+        return {}
+
+    def _expected_salary(
+        self, candidate: Mapping[str, Any], analysis: Any
+    ) -> Optional[float]:
+        sources = [
+            candidate.get("expected_salary"),
+            candidate.get("salary_expectation"),
+            candidate.get("desired_salary"),
+        ]
+        compensation = candidate.get("compensation")
+        if isinstance(compensation, Mapping):
+            sources.extend(
+                [
+                    compensation.get("expected_salary"),
+                    compensation.get("salary_expectation"),
+                ]
+            )
+        breakdown = getattr(analysis, "score_breakdown", {}) or {}
+        if isinstance(breakdown, Mapping):
+            sources.extend(
+                [
+                    breakdown.get("expected_salary"),
+                    breakdown.get("salary_expectation"),
+                ]
+            )
+
+        for value in sources:
+            try:
+                parsed = float(value)
+            except (TypeError, ValueError):
+                continue
+            if parsed > 0:
+                return parsed
+        return None
 
     def assess_candidate(
         self,
@@ -68,10 +180,16 @@ class HiringBudgetService:
             budget_fit = 100
         elif candidate.expected_salary <= budget.maximum_salary:
             span = max(1, budget.maximum_salary - budget.target_salary)
-            budget_fit = int(100 - ((candidate.expected_salary - budget.target_salary) / span) * 35)
+            budget_fit = int(
+                100
+                - ((candidate.expected_salary - budget.target_salary) / span) * 35
+            )
         else:
             over = candidate.expected_salary - budget.maximum_salary
-            budget_fit = max(0, int(60 - (over / max(1, budget.maximum_salary)) * 200))
+            budget_fit = max(
+                0,
+                int(60 - (over / max(1, budget.maximum_salary)) * 200),
+            )
 
         extra_cost = 0
         if candidate.relocation_required:
@@ -113,11 +231,13 @@ class HiringBudgetService:
 
         next_actions = []
         if recommendation == "Review Compensation Feasibility":
-            next_actions.extend([
-                "Validate salary flexibility with candidate.",
-                "Check whether additional budget can be approved.",
-                "Compare with second candidate's budget feasibility.",
-            ])
+            next_actions.extend(
+                [
+                    "Validate salary flexibility with candidate.",
+                    "Check whether additional budget can be approved.",
+                    "Compare with another high-fit candidate's budget feasibility.",
+                ]
+            )
         elif recommendation == "Proceed":
             next_actions.append("Continue with interview or decision workflow.")
         elif recommendation == "Reject":
@@ -134,6 +254,9 @@ class HiringBudgetService:
             cost_impact=cost_impact,
             feasibility=feasibility,
             recommendation=recommendation,
+            talent_recommendation=recommendation,
+            compensation_data_status="Available",
+            budget_recommendation=recommendation,
             rationale=rationale,
             next_actions=next_actions,
         )
