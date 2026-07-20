@@ -66,10 +66,15 @@ class CandidateWorkspaceService:
         return CandidateWorkspaceReport(
             candidate_name=getattr(analysis, "candidate_name", "Candidate"),
             candidate_id=getattr(analysis, "candidate_id", "") or resolve_candidate_id(candidate),
+            # Candidate Intelligence displays the canonical Mission Fit score.
+            # Its "Official Rank" must therefore use the corresponding
+            # Mission Fit rank, not the separate Decision Priority rank.
             rank=int(
-                (getattr(analysis, "score_breakdown", {}) or {}).get("decision_rank")
-                or getattr(analysis, "official_rank", None)
-                or getattr(analysis, "rank", 0)
+                (getattr(analysis, "score_breakdown", {}) or {}).get(
+                    "mission_fit_rank"
+                )
+                or getattr(analysis, "rank", None)
+                or getattr(analysis, "official_rank", 0)
                 or 0
             ),
             match_score=float(getattr(analysis, "official_match_score", getattr(analysis, "match_score", 0.0))),
