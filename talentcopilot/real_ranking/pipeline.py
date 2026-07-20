@@ -9,6 +9,7 @@ from talentcopilot.recruiter_intelligence import RecruiterIntelligenceEngine
 from talentcopilot.evidence_profiles import CandidateEvidenceProfileBuilder, MissionEvidenceProfileBuilder
 from talentcopilot.career_intelligence import CareerFitEngine
 from talentcopilot.decision_ranking import DecisionRankingPolicy
+from talentcopilot.services.candidate_name_resolver import CandidateNameResolver
 
 
 class RealRankingPipeline:
@@ -31,6 +32,7 @@ class RealRankingPipeline:
 
     def run(self, data: RealRankingInput) -> RealRankingOutput:
         outputs = []
+        name_resolver = CandidateNameResolver()
         candidate_by_filename = {candidate.filename: candidate for candidate in data.candidates}
 
         for candidate in data.candidates:
@@ -43,6 +45,17 @@ class RealRankingPipeline:
                     expected_salary=candidate.expected_salary,
                 )
             )
+            resolved_name = name_resolver.resolve(
+                text=candidate.text,
+                filename=candidate.filename,
+                extracted_name=match.decision_output.profile.candidate_name,
+            )
+            if resolved_name != "Unknown Candidate":
+                match.decision_output.profile.candidate_name = resolved_name
+                if hasattr(match.extracted_candidate, "candidate_name"):
+                    match.extracted_candidate.candidate_name = resolved_name
+                elif hasattr(match.extracted_candidate, "name"):
+                    match.extracted_candidate.name = resolved_name
             outputs.append(match)
 
         comparative_engine = ComparativeRankingEngine()
