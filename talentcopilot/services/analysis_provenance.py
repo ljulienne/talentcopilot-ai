@@ -13,8 +13,8 @@ from datetime import datetime, timezone
 from typing import Iterable, Mapping, Optional
 
 
-ANALYSIS_SCHEMA_VERSION = "3.2.1A.2.2"
-MATCHING_ENGINE_VERSION = "real-ranking-v2-canonical-extraction"
+ANALYSIS_SCHEMA_VERSION = "7.0.1"
+MATCHING_ENGINE_VERSION = "real-ranking-v2-deterministic-7.0.1"
 NORMALIZATION_VERSION = "3.1.1C"
 OFFICIAL_PIPELINE = "real-upload-ranking"
 
@@ -63,10 +63,10 @@ def build_provenance(
         matching_engine_version=MATCHING_ENGINE_VERSION,
         normalization_version=NORMALIZATION_VERSION,
         job_document_hash=hash_text(job_text),
-        candidate_document_hashes=tuple(
+        candidate_document_hashes=tuple(sorted(
             hash_text(text)
             for text in candidate_texts
-        ),
+        )),
         created_at=datetime.now(timezone.utc).isoformat(),
     )
 

@@ -24,6 +24,16 @@ from talentcopilot.services.recruitment_upload_session_service import (
 from talentcopilot.services.upload_text_reader_service import (
     UploadedTextDocument,
 )
+from talentcopilot.services.deterministic_scoring_contract import (
+    SCORING_CONTRACT_VERSION,
+    canonicalize_candidate_documents,
+    scoring_fingerprint,
+)
+from talentcopilot.recruitment_reasoning import RecruitmentReasoningEngine
+from talentcopilot.calibrated_scoring import CalibratedMissionScoringEngine
+from talentcopilot.comparative_ranking import ComparativeRankingEngine
+from talentcopilot.career_intelligence import CareerFitEngine
+from talentcopilot.decision_ranking import DecisionRankingPolicy
 
 # Official Match must remain independent from runtime LLM secrets.
 os.environ["TALENTCOPILOT_USE_LLM_EXTRACTION"] = "false"
@@ -55,10 +65,23 @@ def main() -> int:
     )
 
     job_document = _document(payload["job_document"])
-    candidate_documents = [
+    candidate_documents = canonicalize_candidate_documents(
         _document(item)
         for item in payload["candidate_documents"]
-    ]
+    )
+
+    engine_versions = (
+        RecruitmentReasoningEngine.version,
+        CalibratedMissionScoringEngine.version,
+        ComparativeRankingEngine.version,
+        CareerFitEngine.version,
+        DecisionRankingPolicy.version,
+    )
+    fingerprint = scoring_fingerprint(
+        job_document=job_document,
+        candidate_documents=candidate_documents,
+        engine_versions=engine_versions,
+    )
 
     session = RecruitmentUploadSessionService().run(
         job_document,
@@ -69,7 +92,10 @@ def main() -> int:
     metadata.update(
         {
             "execution_mode": "isolated_subprocess",
-            "canonical_score_contract": "fit-score-v1",
+            "canonical_score_contract": SCORING_CONTRACT_VERSION,
+            "official_scoring_fingerprint": fingerprint,
+            "official_scoring_engine_versions": list(engine_versions),
+            "official_scoring_hash_seed": os.environ.get("PYTHONHASHSEED", ""),
         }
     )
     session.metadata = metadata

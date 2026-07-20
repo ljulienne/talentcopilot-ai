@@ -19,7 +19,7 @@ class RecruitmentReasoningEngine:
     candidate names, benchmark-specific scores, or hard-coded ranking order.
     """
 
-    version = "recruitment-reasoning-v1.0"
+    version = "recruitment-reasoning-v1.0.1-deterministic"
 
     CATEGORY_WEIGHTS = {
         "function": 0.20,
@@ -206,9 +206,9 @@ class RecruitmentReasoningEngine:
         aliases: List[str] = []
         for group in self.TRANSFERABLE_TOOL_GROUPS:
             if concept in group:
-                for peer in group - {concept}:
+                for peer in sorted(group - {concept}):
                     aliases.extend(CONCEPTS.get(peer, ()))
-        return aliases
+        return sorted(dict.fromkeys(aliases), key=str.casefold)
 
     def _is_mandatory(self, job: str, aliases: Sequence[str]) -> bool:
         markers = ("essential", "required", "must", "minimum", "mandatory", "requis", "indispensable", "essentiel")

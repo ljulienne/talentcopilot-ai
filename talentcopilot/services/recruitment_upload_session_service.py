@@ -10,7 +10,6 @@ from __future__ import annotations
 import re
 import json
 from typing import Any, Iterable, List, Optional
-from uuid import uuid4
 
 from talentcopilot.models.recruitment_session import (
     CandidateAnalysisState,
@@ -27,6 +26,15 @@ from talentcopilot.services.real_upload_ranking_service import (
 )
 from talentcopilot.services.upload_text_reader_service import UploadedTextDocument
 from talentcopilot.recruitment_source_of_truth import RecruitmentSourceOfTruthService
+from talentcopilot.services.deterministic_scoring_contract import (
+    SCORING_CONTRACT_VERSION,
+    scoring_fingerprint,
+)
+from talentcopilot.recruitment_reasoning import RecruitmentReasoningEngine
+from talentcopilot.calibrated_scoring import CalibratedMissionScoringEngine
+from talentcopilot.comparative_ranking import ComparativeRankingEngine
+from talentcopilot.career_intelligence import CareerFitEngine
+from talentcopilot.decision_ranking import DecisionRankingPolicy
 
 
 class RecruitmentUploadSessionService:
@@ -163,8 +171,21 @@ class RecruitmentUploadSessionService:
             ],
         )
 
+        engine_versions = (
+            RecruitmentReasoningEngine.version,
+            CalibratedMissionScoringEngine.version,
+            ComparativeRankingEngine.version,
+            CareerFitEngine.version,
+            DecisionRankingPolicy.version,
+        )
+        fingerprint = scoring_fingerprint(
+            job_document=job_document,
+            candidate_documents=documents,
+            engine_versions=engine_versions,
+        )
+
         session = RecruitmentSession(
-            session_id=f"upload-{uuid4().hex[:10]}",
+            session_id=f"upload-{fingerprint[:12]}",
             job=job,
             candidates=candidates,
             status=SessionStatus.COMPLETED,
@@ -176,7 +197,10 @@ class RecruitmentUploadSessionService:
                     getattr(doc, "filename", "")
                     for doc in documents
                 ],
-                "workflow_version": "6.2C",
+                "workflow_version": "7.0.1",
+                "canonical_score_contract": SCORING_CONTRACT_VERSION,
+                "official_scoring_fingerprint": fingerprint,
+                "official_scoring_engine_versions": list(engine_versions),
                 **provenance.as_metadata(),
             },
         )

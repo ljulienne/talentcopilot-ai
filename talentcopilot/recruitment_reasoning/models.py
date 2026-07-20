@@ -49,7 +49,7 @@ class RecruitmentReasoningResult:
     strengths: List[str] = field(default_factory=list)
     gaps: List[str] = field(default_factory=list)
     rationale: str = ""
-    version: str = "recruitment-reasoning-v1.0"
+    version: str = "recruitment-reasoning-v1.0.1-deterministic"
 
     def to_dict(self) -> Dict[str, object]:
         return {

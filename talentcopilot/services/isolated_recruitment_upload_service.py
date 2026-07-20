@@ -17,6 +17,10 @@ from talentcopilot.models.recruitment_session import (
 from talentcopilot.services.upload_text_reader_service import (
     UploadedTextDocument,
 )
+from talentcopilot.services.deterministic_scoring_contract import (
+    PYTHON_HASH_SEED,
+    SCORING_CONTRACT_VERSION,
+)
 
 
 class IsolatedRecruitmentUploadService:
@@ -62,6 +66,13 @@ class IsolatedRecruitmentUploadService:
             environment = os.environ.copy()
 
             environment["TALENTCOPILOT_USE_LLM_EXTRACTION"] = "false"
+            # Python randomises set/hash iteration between processes unless a
+            # seed is fixed before interpreter startup. The scoring worker must
+            # therefore start with an explicit deterministic hash seed.
+            environment["PYTHONHASHSEED"] = PYTHON_HASH_SEED
+            environment["TZ"] = "UTC"
+            environment["LC_ALL"] = "C.UTF-8"
+            environment["TALENTCOPILOT_SCORING_CONTRACT"] = SCORING_CONTRACT_VERSION
 
             environment.pop("OPENAI_API_KEY", None)
             current_pythonpath = environment.get(

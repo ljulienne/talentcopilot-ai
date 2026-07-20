@@ -10,11 +10,12 @@ from talentcopilot.services.analysis_provenance import (
 from talentcopilot.services.isolated_recruitment_upload_service import IsolatedRecruitmentUploadService
 from talentcopilot.services.streamlit_session_bridge import set_streamlit_session
 from talentcopilot.services.upload_text_reader_service import UploadTextReaderService
+from talentcopilot.services.deterministic_scoring_contract import SCORING_CONTRACT_VERSION
 import time
 
 
 # Increment whenever the canonical score/session contract changes.
-OFFICIAL_SCORE_CACHE_SCHEMA = "isolated-fit-session-v6.0b.3.1-universal"
+OFFICIAL_SCORE_CACHE_SCHEMA = SCORING_CONTRACT_VERSION
 
 
 def _uploaded_bytes(uploaded_file) -> bytes:
@@ -29,10 +30,11 @@ def _analysis_request_key(job_file, candidate_files) -> str:
         OFFICIAL_PIPELINE,
         hash_bytes(_uploaded_bytes(job_file)),
     ]
-    components.extend(
+    # Candidate upload order is not part of the scoring identity.
+    components.extend(sorted(
         hash_bytes(_uploaded_bytes(item))
         for item in candidate_files
-    )
+    ))
     return "::".join(components)
 
 
