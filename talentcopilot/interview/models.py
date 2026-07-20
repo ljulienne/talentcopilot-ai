@@ -52,7 +52,9 @@ class InterviewScorecardItem:
 
 @dataclass
 class InterviewWorkspaceReport:
+    candidate_id: str
     candidate_name: str
+    official_rank: int
     role_title: str
     fit_score: float
     confidence_score: int

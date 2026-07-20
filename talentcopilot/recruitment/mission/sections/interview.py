@@ -12,9 +12,6 @@ def render_interview(state: RecruitmentMissionState) -> None:
         return
     for candidate in shortlist:
         with st.expander(f"{candidate.name} · validation focus"):
-            if candidate.risks:
-                for risk in candidate.risks:
-                    st.warning(risk)
-            else:
-                st.write("Validate the strongest claims, scope of ownership and measurable outcomes.")
+            for focus in candidate.validation_focus:
+                st.warning(focus)
             st.caption("Detailed interview intelligence remains available through the existing service layer.")

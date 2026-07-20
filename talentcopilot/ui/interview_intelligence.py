@@ -199,12 +199,43 @@ def render_interview_intelligence():
         st.info("No candidate analysis is available for interview preparation.")
         return
 
-    names = [report.candidate_name for report in reports]
-    selected_name = st.selectbox("Candidate", names, key="interview_intelligence_candidate")
-    report = reports[names.index(selected_name)]
+    reports = sorted(
+        reports,
+        key=lambda item: (
+            int(getattr(item, "official_rank", 9999) or 9999),
+            -float(getattr(item, "fit_score", 0) or 0),
+            item.candidate_name.casefold(),
+            str(getattr(item, "candidate_id", "")),
+        ),
+    )
+    reports_by_id = {
+        str(getattr(report, "candidate_id", "") or report.candidate_name): report
+        for report in reports
+    }
+    option_ids = list(reports_by_id)
+    selection_key = "interview_intelligence_candidate_id"
+    context_key = "interview_intelligence_candidate_context"
+    context = (
+        str(getattr(session, "session_id", "session")),
+        tuple(option_ids),
+    )
+    if st.session_state.get(context_key) != context:
+        st.session_state[context_key] = context
+        st.session_state[selection_key] = option_ids[0]
+
+    selected_id = st.selectbox(
+        "Candidate",
+        option_ids,
+        key=selection_key,
+        format_func=lambda candidate_id: (
+            f"#{reports_by_id[candidate_id].official_rank} "
+            f"{reports_by_id[candidate_id].candidate_name}"
+        ),
+    )
+    report = reports_by_id[selected_id]
 
     metric_grid([
-        ("Candidate", report.candidate_name, report.role_title),
+        ("Candidate", report.candidate_name, f"Official rank #{report.official_rank} · {report.role_title}"),
         ("Official Fit", f"{report.fit_score:.0f}%", "Same score as the recruitment session"),
         ("Evidence Confidence", f"{report.confidence_score}%", "Interview preparation basis"),
         ("Hiring Risk", report.risk_level, report.recommendation),

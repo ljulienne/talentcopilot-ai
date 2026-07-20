@@ -25,17 +25,39 @@ class InterviewWorkspaceService:
         role_title = job.get("title") or getattr(session, "role_title", "Recruitment")
         required_skills = [str(item) for item in job.get("required_skills", []) if str(item).strip()]
 
+        source_of_truth = RecruitmentSourceOfTruthService()
+        snapshot = source_of_truth.get(session)
+        analyses_by_id = {
+            str(getattr(item, "candidate_id", "")): item
+            for item in (getattr(session, "analyses", []) or [])
+        }
+        records = sorted(
+            snapshot.candidates,
+            key=lambda item: (
+                int(item.mission_rank or 9999),
+                -float(item.mission_fit_score or 0),
+                item.candidate_name.casefold(),
+                item.candidate_id,
+            ),
+        )
+
         reports = []
-        for analysis in RecruitmentSourceOfTruthService().ordered_analyses(session):
-            candidate = candidates_by_id.get(getattr(analysis, "candidate_id", None))
+        for record in records:
+            analysis = analyses_by_id.get(str(record.candidate_id))
+            if analysis is None:
+                continue
+            candidate = candidates_by_id.get(str(record.candidate_id))
             if candidate is None:
-                candidate = candidates_by_name.get(analysis.candidate_name, {})
+                candidate = candidates_by_name.get(record.candidate_name, {})
             reports.append(
                 self.build_one(
                     analysis,
                     candidate,
                     role_title,
                     required_skills=required_skills,
+                    candidate_id=str(record.candidate_id),
+                    canonical_name=str(record.candidate_name),
+                    official_rank=int(record.mission_rank or len(reports) + 1),
                 )
             )
         return reports
@@ -46,6 +68,9 @@ class InterviewWorkspaceService:
         candidate: dict,
         role_title: str,
         required_skills: list[str] | None = None,
+        candidate_id: str = "",
+        canonical_name: str = "",
+        official_rank: int = 0,
     ) -> InterviewWorkspaceReport:
         required_skills = [str(skill) for skill in (required_skills or []) if str(skill).strip()]
         candidate_skills = [str(skill) for skill in candidate.get("skills", []) if str(skill).strip()]
@@ -108,7 +133,9 @@ class InterviewWorkspaceService:
         decision_readiness = InterviewEvaluationService().decision_readiness(readiness.score, scorecard)
 
         return InterviewWorkspaceReport(
-            candidate_name=getattr(analysis, "candidate_name", "Candidate"),
+            candidate_id=candidate_id or str(getattr(analysis, "candidate_id", "") or ""),
+            candidate_name=canonical_name or str(getattr(analysis, "candidate_name", "Candidate") or "Candidate"),
+            official_rank=official_rank or int(getattr(analysis, "official_rank", 0) or 0),
             role_title=role_title,
             fit_score=match_score,
             confidence_score=confidence_score,

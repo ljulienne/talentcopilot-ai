@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Iterable, Optional, Tuple
+import re
 
 from talentcopilot.models.recruitment_session import RecruitmentSession
 
@@ -24,6 +25,7 @@ class CandidateMissionView:
     rationale: str
     strengths: Tuple[str, ...]
     risks: Tuple[str, ...]
+    validation_focus: Tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -79,6 +81,52 @@ def _recommendation_and_rationale(analysis: Any, candidate: dict) -> tuple[str, 
     return recommendation or "Review required", rationale
 
 
+
+def _canonicalize_rationale(rationale: str, canonical_name: str) -> str:
+    text = str(rationale or "").strip()
+    if not text:
+        return text
+    # Older upload rationales sometimes began with an extracted employer name
+    # (for example "Credit Suisse: 77% ...") instead of the canonical candidate.
+    prefix_match = re.match(r"^([^:]{2,80}):\s*(\d{1,3}%.*)$", text)
+    if prefix_match and prefix_match.group(1).strip().casefold() != canonical_name.casefold():
+        text = f"{canonical_name}: {prefix_match.group(2).strip()}"
+    return text
+
+
+def _validation_focus(rationale: str, strengths: Tuple[str, ...], risks: Tuple[str, ...]) -> Tuple[str, ...]:
+    focuses = []
+    for risk in risks:
+        cleaned = str(risk or "").strip()
+        if cleaned and cleaned not in focuses:
+            focuses.append(cleaned)
+
+    # Convert explicit missing-evidence statements into decision-useful interview topics.
+    for match in re.finditer(
+        r"No evidence found for\s+([^.;]+)",
+        str(rationale or ""),
+        flags=re.IGNORECASE,
+    ):
+        topic = match.group(1).strip(" :,-")
+        if topic:
+            item = f"Validate direct evidence, personal ownership and measurable outcomes for {topic}."
+            if item not in focuses:
+                focuses.append(item)
+
+    if not focuses:
+        for strength in strengths[:2]:
+            claim = str(strength or "").strip()
+            if claim:
+                focuses.append(
+                    f"Confirm the candidate's personal contribution, operating scope and measurable result behind: {claim}"
+                )
+
+    if not focuses:
+        focuses.append(
+            "Clarify the candidate's most relevant mission example, exact ownership, stakeholders and measurable result."
+        )
+    return tuple(focuses[:3])
+
 def _progress(session: RecruitmentSession) -> tuple[int, str]:
     if not session.candidate_count:
         return 10, "Mission setup"
@@ -126,12 +174,15 @@ def build_recruitment_mission_state(session: RecruitmentSession) -> RecruitmentM
             str(getattr(analysis, "candidate_name", "Candidate") or "Candidate"),
         )
         recommendation, rationale = _recommendation_and_rationale(analysis, candidate)
+        canonical_name = str(getattr(analysis, "candidate_name", "Candidate") or "Candidate")
+        rationale = _canonicalize_rationale(rationale, canonical_name)
         strengths = _clean_lines(candidate.get("achievements", []) or [])[:3]
         risks = _clean_lines(getattr(analysis, "errors", []) or [])[:3]
+        validation_focus = _validation_focus(rationale, strengths, risks)
         views.append(
             CandidateMissionView(
                 candidate_id=str(getattr(analysis, "candidate_id", "") or ""),
-                name=str(getattr(analysis, "candidate_name", "Candidate") or "Candidate"),
+                name=canonical_name,
                 rank=int(getattr(analysis, "official_rank", None) or index),
                 match_score=float(getattr(analysis, "official_match_score", 0.0) or 0.0),
                 decision_score=getattr(analysis, "official_decision_score", None),
@@ -140,6 +191,7 @@ def build_recruitment_mission_state(session: RecruitmentSession) -> RecruitmentM
                 rationale=rationale,
                 strengths=strengths,
                 risks=risks,
+                validation_focus=validation_focus,
             )
         )
 
