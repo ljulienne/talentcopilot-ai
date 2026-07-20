@@ -66,7 +66,12 @@ class CandidateWorkspaceService:
         return CandidateWorkspaceReport(
             candidate_name=getattr(analysis, "candidate_name", "Candidate"),
             candidate_id=getattr(analysis, "candidate_id", "") or resolve_candidate_id(candidate),
-            rank=int(getattr(analysis, "official_rank", None) or getattr(analysis, "rank", 0) or 0),
+            rank=int(
+                (getattr(analysis, "score_breakdown", {}) or {}).get("decision_rank")
+                or getattr(analysis, "official_rank", None)
+                or getattr(analysis, "rank", 0)
+                or 0
+            ),
             match_score=float(getattr(analysis, "official_match_score", getattr(analysis, "match_score", 0.0))),
             score_breakdown=dict(getattr(analysis, "score_breakdown", {}) or {}),
             recommendation=str(recommendation),

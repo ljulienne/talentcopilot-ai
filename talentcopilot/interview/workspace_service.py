@@ -1,3 +1,4 @@
+from talentcopilot.recruitment_source_of_truth import RecruitmentSourceOfTruthService
 from talentcopilot.interview.evaluation_service import InterviewEvaluationService
 from talentcopilot.interview.models import InterviewCompetency, InterviewWorkspaceReport
 from talentcopilot.interview.plan_service import InterviewPlanService
@@ -25,7 +26,7 @@ class InterviewWorkspaceService:
         required_skills = [str(item) for item in job.get("required_skills", []) if str(item).strip()]
 
         reports = []
-        for analysis in session.ranked_analyses:
+        for analysis in RecruitmentSourceOfTruthService().ordered_analyses(session):
             candidate = candidates_by_id.get(getattr(analysis, "candidate_id", None))
             if candidate is None:
                 candidate = candidates_by_name.get(analysis.candidate_name, {})

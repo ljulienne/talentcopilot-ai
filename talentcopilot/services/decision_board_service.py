@@ -1,3 +1,4 @@
+from talentcopilot.recruitment_source_of_truth import RecruitmentSourceOfTruthService
 from talentcopilot.models.decision_board import (
     CandidateDecisionSummary,
     DecisionBoardReport,
@@ -18,7 +19,7 @@ class DecisionBoardService:
             if candidate.get("name"):
                 candidate_lookup[candidate["name"]] = candidate
 
-        for analysis in session.ranked_analyses:
+        for analysis in RecruitmentSourceOfTruthService().ordered_analyses(session):
             candidate = candidate_lookup.get(analysis.candidate_name, {})
             decision_report = getattr(analysis, "decision_report", None)
 
@@ -58,7 +59,11 @@ class DecisionBoardService:
             candidates.append(
                 CandidateDecisionSummary(
                     candidate_name=getattr(analysis, "candidate_name", "Candidate"),
-                    rank=int(getattr(analysis, "rank", 0) or 0),
+                    rank=int(
+                        (getattr(analysis, "score_breakdown", {}) or {}).get("decision_rank")
+                        or getattr(analysis, "rank", 0)
+                        or 0
+                    ),
                     match_score=match,
                     ai_recommendation=str(ai_recommendation),
                     consensus_score=consensus,

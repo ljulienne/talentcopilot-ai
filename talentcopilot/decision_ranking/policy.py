@@ -14,7 +14,7 @@ class DecisionRankingPolicy:
     Mission Fit advantage cannot silently outweigh a material career mismatch.
     """
 
-    version = "decision-ranking-policy-v1.1"
+    version = "decision-ranking-policy-v1.2"
 
     def evaluate(
         self,
@@ -39,26 +39,26 @@ class DecisionRankingPolicy:
         # Balanced decision score: objective fit is still the largest component,
         # but career continuity has enough influence to change interview order.
         base = (
-            mission * 0.50
-            + career_fit * 0.24
-            + recent * 0.08
-            + persistence * 0.05
-            + functional * 0.04
-            + recruiter * 0.05
-            + evidence_confidence * 0.04
+            mission * 0.58
+            + career_fit * 0.16
+            + recent * 0.07
+            + persistence * 0.04
+            + functional * 0.03
+            + recruiter * 0.07
+            + evidence_confidence * 0.05
         )
 
         blockers: List[str] = []
         adjustment = 0.0
 
         if recent < 45:
-            adjustment -= 5.0
+            adjustment -= 8.0
             blockers.append("limited recent-role alignment")
         elif recent < 58:
             adjustment -= 2.0
 
         if drift > 65:
-            adjustment -= 5.0
+            adjustment -= 8.0
             blockers.append("material career drift from the target domain")
         elif drift > 52:
             adjustment -= 2.0
@@ -68,7 +68,7 @@ class DecisionRankingPolicy:
             blockers.append("limited target-domain persistence")
 
         if seniority < 45:
-            adjustment -= 3.0
+            adjustment -= 5.0
             blockers.append("material seniority mismatch")
 
         # Reward clear, recent operational continuity without creating a second
@@ -80,6 +80,13 @@ class DecisionRankingPolicy:
         if transferability < 45:
             adjustment -= 2.0
             blockers.append("limited evidence of transferability")
+
+        # A material combination of recent-role mismatch and career drift is
+        # more decision-relevant than either signal in isolation. This is a
+        # generic trajectory rule and never depends on candidate names/titles.
+        if recent < 50 and drift > 60:
+            adjustment -= 5.0
+            blockers.append("combined recent-role mismatch and domain drift")
 
         final = round(self._clamp(base + adjustment), 2)
         rationale = self._rationale(final, recent, persistence, drift, seniority, blockers)

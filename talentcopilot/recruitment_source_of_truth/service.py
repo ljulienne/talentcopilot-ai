@@ -96,13 +96,32 @@ class RecruitmentSourceOfTruthService:
             "rankings": OfficialRankingRegistry(snapshot),
         }
 
-    def ordered_analyses(self, session: Any):
+    def ordered_candidate_records(self, session: Any):
         snapshot = self.get(session)
+        return sorted(
+            snapshot.candidates,
+            key=lambda item: (
+                int(item.interview_priority or item.decision_rank or 9999),
+                int(item.decision_rank or 9999),
+                int(item.mission_rank or 9999),
+                item.candidate_name.casefold(),
+                item.candidate_id,
+            ),
+        )
+
+    def ordered_candidate_ids(self, session: Any):
+        return [item.candidate_id for item in self.ordered_candidate_records(session)]
+
+    def ordered_analyses(self, session: Any):
         by_id = {
             str(getattr(item, "candidate_id", "")): item
             for item in getattr(session, "analyses", [])
         }
-        return [by_id[item.candidate_id] for item in sorted(snapshot.candidates, key=lambda x: (x.interview_priority, x.decision_rank, x.candidate_name.casefold()))]
+        return [
+            by_id[candidate_id]
+            for candidate_id in self.ordered_candidate_ids(session)
+            if candidate_id in by_id
+        ]
 
     def _from_metadata(self, session: Any):
         payload = (getattr(session, "metadata", {}) or {}).get(self.METADATA_KEY)
