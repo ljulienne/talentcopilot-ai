@@ -1,3 +1,4 @@
+from talentcopilot.recruitment_source_of_truth import RecruitmentSourceOfTruthService
 from talentcopilot.models.candidate_workspace import (
     CandidateEvidence,
     CandidateRisk,
@@ -22,7 +23,7 @@ class CandidateWorkspaceService:
                 candidates_by_name.setdefault(name, candidate)
 
         reports = []
-        for analysis in session.ranked_analyses:
+        for analysis in RecruitmentSourceOfTruthService().ordered_analyses(session):
             candidate = candidates_by_id.get(getattr(analysis, "candidate_id", ""))
             if candidate is None:
                 candidate = candidates_by_name.get(analysis.candidate_name, {})

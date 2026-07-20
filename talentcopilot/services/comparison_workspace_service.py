@@ -1,3 +1,4 @@
+from talentcopilot.recruitment_source_of_truth import RecruitmentSourceOfTruthService
 from talentcopilot.models.comparison_workspace import (
     ComparisonCandidate,
     ComparisonWorkspaceReport,
@@ -21,7 +22,7 @@ class ComparisonWorkspaceService:
         matrix = []
         scores = []
 
-        for analysis in session.ranked_analyses[:5]:
+        for analysis in RecruitmentSourceOfTruthService().ordered_analyses(session)[:5]:
             score = float(
                 getattr(
                     analysis,

@@ -1,3 +1,4 @@
+from talentcopilot.recruitment_source_of_truth import RecruitmentSourceOfTruthService
 from talentcopilot.models.recruitment_workspace import (
     PipelineStage,
     RecruitmentWorkspaceReport,
@@ -12,7 +13,7 @@ class RecruitmentWorkspaceService:
             return self._empty_report()
 
         candidates = []
-        for analysis in getattr(session, "ranked_analyses", []):
+        for analysis in RecruitmentSourceOfTruthService().ordered_analyses(session):
             recommendation = "-"
             if getattr(analysis, "decision_report", None):
                 recommendation = getattr(

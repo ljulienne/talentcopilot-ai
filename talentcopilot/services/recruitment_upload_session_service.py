@@ -26,6 +26,7 @@ from talentcopilot.services.real_upload_ranking_service import (
     RealUploadRankingService,
 )
 from talentcopilot.services.upload_text_reader_service import UploadedTextDocument
+from talentcopilot.recruitment_source_of_truth import RecruitmentSourceOfTruthService
 
 
 class RecruitmentUploadSessionService:
@@ -156,7 +157,7 @@ class RecruitmentUploadSessionService:
             ],
         )
 
-        return RecruitmentSession(
+        session = RecruitmentSession(
             session_id=f"upload-{uuid4().hex[:10]}",
             job=job,
             candidates=candidates,
@@ -169,10 +170,12 @@ class RecruitmentUploadSessionService:
                     getattr(doc, "filename", "")
                     for doc in documents
                 ],
-                "workflow_version": "3.2.1A.2.2",
+                "workflow_version": "6.2A",
                 **provenance.as_metadata(),
             },
         )
+        RecruitmentSourceOfTruthService().freeze(session)
+        return session
 
     def _candidate_dict(self, name: str, document: Any, ranked: Any) -> dict:
         text = str(getattr(document, "text", "") or "")
