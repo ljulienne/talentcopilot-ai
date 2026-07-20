@@ -100,7 +100,8 @@ class RecruitmentUploadSessionService:
             decision_score = self._optional_number(
                 getattr(ranked, "ranking_score", None)
             )
-            rank = int(getattr(ranked, "rank", position) or position)
+            decision_rank = int(getattr(ranked, "rank", position) or position)
+            mission_fit_rank = int(getattr(ranked, "mission_fit_rank", position) or position)
             recommendation = str(getattr(ranked, "recommendation", "Review required") or "Review required")
             rationale = str(getattr(ranked, "rationale", "") or "")
 
@@ -111,11 +112,13 @@ class RecruitmentUploadSessionService:
                     status=CandidateAnalysisStatus.ANALYZED,
                     match_score=round(role_fit_score, 2),
                     decision_score=decision_score,
-                    rank=rank,
+                    rank=mission_fit_rank,
                     score_breakdown=self._score_breakdown(
                         ranked,
                         role_fit_score,
                         decision_score,
+                        decision_rank=decision_rank,
+                        mission_fit_rank=mission_fit_rank,
                     ),
                     notes=[
                         "Created from real uploaded documents.",
@@ -125,10 +128,9 @@ class RecruitmentUploadSessionService:
                 )
             )
 
-        # Release 4.2.1:
-        # the official recruitment rank derives exclusively from the
-        # official match score. Decision/ranking scores remain internal
-        # decision-support signals and never determine the public order.
+        # Mission Fit remains the objective public score and ordering.
+        # The recommended interview order is preserved independently in
+        # score_breakdown["decision_rank"] and exposed by the Source of Truth.
         analyses.sort(
             key=lambda item: (
                 -float(item.match_score or 0),
@@ -170,7 +172,7 @@ class RecruitmentUploadSessionService:
                     getattr(doc, "filename", "")
                     for doc in documents
                 ],
-                "workflow_version": "6.2A",
+                "workflow_version": "6.2B",
                 **provenance.as_metadata(),
             },
         )
@@ -350,6 +352,9 @@ class RecruitmentUploadSessionService:
         ranked: Any,
         role_fit_score: float,
         decision_score: Optional[float],
+        *,
+        decision_rank: Optional[int] = None,
+        mission_fit_rank: Optional[int] = None,
     ) -> dict:
         profile = self._profile(ranked)
         metadata = getattr(profile, "metadata", {}) or {}
@@ -367,6 +372,9 @@ class RecruitmentUploadSessionService:
             "confidence": self._number(
                 getattr(ranked, "confidence_score", None)
             ),
+            "mission_fit_rank": int(mission_fit_rank or getattr(ranked, "mission_fit_rank", 0) or 0),
+            "decision_rank": int(decision_rank or getattr(ranked, "rank", 0) or 0),
+            "interview_priority": int(decision_rank or getattr(ranked, "rank", 0) or 0),
         }
 
         raw_dimensions = metadata.get("mission_fit_breakdown")
@@ -388,6 +396,14 @@ class RecruitmentUploadSessionService:
         calibrated_confidence = metadata.get("calibrated_confidence")
         if calibrated_confidence is not None:
             breakdown["calibrated_confidence"] = round(self._number(calibrated_confidence), 2)
+
+        career_fit = metadata.get("career_fit_score", getattr(ranked, "career_fit_score", None))
+        if career_fit is not None:
+            breakdown["career_fit"] = round(self._number(career_fit), 2)
+
+        recruiter_fit = metadata.get("recruiter_strategic_fit")
+        if recruiter_fit is not None:
+            breakdown["recruiter_fit"] = round(self._number(recruiter_fit), 2)
 
         raw_comparative = metadata.get("comparative_breakdown")
         if raw_comparative:

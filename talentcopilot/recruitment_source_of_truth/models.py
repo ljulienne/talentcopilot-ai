@@ -14,6 +14,8 @@ class OfficialCandidateRecord:
     decision_rank: int
     interview_priority: int
     confidence: Optional[float] = None
+    career_fit_score: Optional[float] = None
+    recruiter_fit_score: Optional[float] = None
     score_breakdown: Dict[str, float] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:

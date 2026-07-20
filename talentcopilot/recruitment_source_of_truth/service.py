@@ -40,18 +40,25 @@ class RecruitmentSourceOfTruthService:
             start=1,
         ):
             candidate_id = str(getattr(analysis, "candidate_id", ""))
-            decision_rank = int(getattr(analysis, "rank", position) or position)
+            breakdown = dict(getattr(analysis, "score_breakdown", {}) or {})
+            decision_rank = self._optional_int(breakdown.get("decision_rank")) or int(
+                getattr(analysis, "rank", position) or position
+            )
+            interview_priority = self._optional_int(breakdown.get("interview_priority")) or decision_rank
+            mission_rank = self._optional_int(breakdown.get("mission_fit_rank")) or mission_ranks.get(candidate_id, position)
             records.append(
                 OfficialCandidateRecord(
                     candidate_id=candidate_id,
                     candidate_name=str(getattr(analysis, "candidate_name", "Candidate")),
                     mission_fit_score=round(float(getattr(analysis, "match_score", 0) or 0), 2),
                     decision_score=self._optional_float(getattr(analysis, "decision_score", None)),
-                    mission_rank=mission_ranks.get(candidate_id, position),
+                    mission_rank=mission_rank,
                     decision_rank=decision_rank,
-                    interview_priority=decision_rank,
+                    interview_priority=interview_priority,
                     confidence=self._optional_float(getattr(analysis, "official_confidence_score", None)),
-                    score_breakdown=dict(getattr(analysis, "score_breakdown", {}) or {}),
+                    career_fit_score=self._optional_float(breakdown.get("career_fit")),
+                    recruiter_fit_score=self._optional_float(breakdown.get("recruiter_fit")),
+                    score_breakdown=breakdown,
                 )
             )
 
@@ -106,6 +113,15 @@ class RecruitmentSourceOfTruthService:
     def _fingerprint(self, records: List[OfficialCandidateRecord]) -> str:
         payload = json.dumps([item.to_dict() for item in records], sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+    def _optional_int(self, value):
+        if value is None:
+            return None
+        try:
+            parsed = int(value)
+        except (TypeError, ValueError):
+            return None
+        return parsed if parsed > 0 else None
 
     def _optional_float(self, value):
         if value is None:

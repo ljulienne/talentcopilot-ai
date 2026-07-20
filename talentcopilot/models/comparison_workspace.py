@@ -14,6 +14,9 @@ class ComparisonCandidate:
     decision_score: Optional[float] = None
     # Canonical secondary indicator exposed in recruiter UX.
     ai_confidence: Optional[float] = None
+    mission_rank: int = 0
+    interview_priority: int = 0
+    career_fit_score: Optional[float] = None
 
 
 @dataclass

@@ -16,6 +16,10 @@ class WorkspaceCandidate:
     stage: str
     match_score: float
     recommendation: str
+    mission_rank: int = 0
+    interview_priority: int = 0
+    career_fit_score: float | None = None
+    confidence: float | None = None
 
 
 @dataclass

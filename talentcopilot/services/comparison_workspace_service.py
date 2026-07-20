@@ -22,57 +22,45 @@ class ComparisonWorkspaceService:
         matrix = []
         scores = []
 
-        for analysis in RecruitmentSourceOfTruthService().ordered_analyses(session)[:5]:
-            score = float(
-                getattr(
-                    analysis,
-                    "official_match_score",
-                    getattr(analysis, "match_score", 0),
-                )
-                or 0
-            )
-            rank = int(
-                getattr(
-                    analysis,
-                    "official_rank",
-                    getattr(analysis, "rank", 0),
-                )
-                or 0
-            )
+        source = RecruitmentSourceOfTruthService().get(session)
+        analyses_by_id = {
+            str(getattr(item, "candidate_id", "")): item
+            for item in getattr(session, "analyses", [])
+        }
+
+        for record in sorted(source.candidates, key=lambda item: item.interview_priority)[:5]:
+            analysis = analyses_by_id.get(record.candidate_id)
+            if analysis is None:
+                continue
+
+            score = float(record.mission_fit_score or 0)
             signals = self.signal_service.build(analysis, session)
-            ai_confidence = signals.confidence
-
-            # Kept internally only; never exposed as a competing UI score.
-            decision_score = getattr(analysis, "official_decision_score", None)
-            if decision_score is not None:
-                try:
-                    decision_score = float(decision_score)
-                except (TypeError, ValueError):
-                    decision_score = None
-
+            ai_confidence = record.confidence if record.confidence is not None else signals.confidence
             scores.append(score)
-            candidate_name = getattr(analysis, "candidate_name", "Candidate")
 
             candidates.append(
                 ComparisonCandidate(
-                    rank=rank,
-                    candidate_name=candidate_name,
+                    rank=record.interview_priority,
+                    candidate_name=record.candidate_name,
                     match_score=score,
-                    decision_score=decision_score,
+                    decision_score=record.decision_score,
                     ai_confidence=ai_confidence,
                     recommendation=signals.recommendation,
                     key_strength=signals.key_strength,
                     key_risk=signals.key_risk,
+                    mission_rank=record.mission_rank,
+                    interview_priority=record.interview_priority,
+                    career_fit_score=record.career_fit_score,
                 )
             )
 
             matrix.append(
                 DecisionMatrixLine(
-                    candidate_name=candidate_name,
+                    candidate_name=record.candidate_name,
                     technical_fit=int(min(100, max(0, round(score)))),
-                    leadership_fit=int(min(100, max(0, round(score - 3)))),
+                    leadership_fit=int(min(100, max(0, round(record.recruiter_fit_score or score - 3)))),
                     evidence_strength=self._evidence_strength(score, ai_confidence),
-                    decision_readiness=self._decision_readiness(score, ai_confidence),
+                    decision_readiness=self._decision_readiness(record.decision_score or score, ai_confidence),
                 )
             )
 
@@ -100,8 +88,8 @@ class ComparisonWorkspaceService:
         if candidates:
             leader = candidates[0]
             differentiators.append(
-                f"{leader.candidate_name} leads with an official match of "
-                f"{leader.match_score:.0f}%: {leader.key_strength}."
+                f"{leader.candidate_name} is the current interview priority. "
+                f"Mission Fit: {leader.match_score:.0f}% · {leader.key_strength}."
             )
         if len(candidates) > 1:
             differentiators.append(

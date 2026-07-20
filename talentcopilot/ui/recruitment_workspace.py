@@ -32,10 +32,13 @@ def _candidate_table(report):
 
     rows = [
         {
-            "Rank": c.rank,
+            "Interview Priority": c.interview_priority or c.rank,
+            "Mission Rank": c.mission_rank or c.rank,
             "Candidate": c.name,
+            "Mission Fit": c.match_score,
+            "Career Fit": c.career_fit_score,
+            "Confidence": c.confidence,
             "Stage": c.stage,
-            "Match": c.match_score,
             "Recommendation": c.recommendation,
         }
         for c in report.candidates
@@ -100,7 +103,7 @@ def render_recruitment_workspace():
 
     enterprise_hero(
         "Recruitment Workspace",
-        "Pilot the active recruitment from candidate analysis to hiring decision.",
+        "One recruitment, one evidence base, one consistent interview priority.",
         "Recruitment",
     )
 
@@ -134,7 +137,10 @@ def render_recruitment_workspace():
         _pipeline_deep_view(pipeline_report)
 
     with tab_candidates:
-        section_title("Candidates in this recruitment", "Candidate stage and recommendation summary.")
+        section_title(
+            "Candidates in this recruitment",
+            "Mission Fit is the objective match. Interview Priority is the recommended review order.",
+        )
         _candidate_table(workspace_report)
 
     with tab_timeline:

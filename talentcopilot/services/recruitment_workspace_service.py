@@ -13,34 +13,50 @@ class RecruitmentWorkspaceService:
             return self._empty_report()
 
         candidates = []
-        for analysis in RecruitmentSourceOfTruthService().ordered_analyses(session):
+        source = RecruitmentSourceOfTruthService().get(session)
+        analyses_by_id = {
+            str(getattr(item, "candidate_id", "")): item
+            for item in getattr(session, "analyses", [])
+        }
+        for record in sorted(source.candidates, key=lambda item: item.interview_priority):
+            analysis = analyses_by_id.get(record.candidate_id)
             recommendation = "-"
-            if getattr(analysis, "decision_report", None):
+            if analysis is not None and getattr(analysis, "decision_report", None):
                 recommendation = getattr(
                     analysis.decision_report.recommendation,
                     "value",
                     analysis.decision_report.recommendation,
                 )
+            elif analysis is not None:
+                notes = [str(item) for item in (getattr(analysis, "notes", []) or [])]
+                recommendation = next(
+                    (item.split(":", 1)[1].strip() for item in notes if item.startswith("Recommendation:")),
+                    "Review",
+                )
 
-            if getattr(analysis, "rank", 0) == 1:
-                stage = "Shortlisted"
-            elif getattr(analysis, "match_score", 0) >= 70:
-                stage = "Screening"
+            if record.interview_priority == 1:
+                stage = "Priority interview"
+            elif record.interview_priority <= 3:
+                stage = "Shortlist"
             else:
                 stage = "Review"
 
             candidates.append(
                 WorkspaceCandidate(
-                    rank=getattr(analysis, "rank", 0),
-                    name=getattr(analysis, "candidate_name", "Candidate"),
+                    rank=record.interview_priority,
+                    name=record.candidate_name,
                     stage=stage,
-                    match_score=float(getattr(analysis, "match_score", 0) or 0),
+                    match_score=record.mission_fit_score,
                     recommendation=str(recommendation),
+                    mission_rank=record.mission_rank,
+                    interview_priority=record.interview_priority,
+                    career_fit_score=record.career_fit_score,
+                    confidence=record.confidence,
                 )
             )
 
-        shortlisted = len([c for c in candidates if c.stage == "Shortlisted"])
-        screening = len([c for c in candidates if c.stage == "Screening"])
+        shortlisted = len([c for c in candidates if c.stage in {"Priority interview", "Shortlist"}])
+        screening = len([c for c in candidates if c.stage == "Shortlist"])
         review = len([c for c in candidates if c.stage == "Review"])
 
         return RecruitmentWorkspaceReport(

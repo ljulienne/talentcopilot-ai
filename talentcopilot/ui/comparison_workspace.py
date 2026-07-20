@@ -10,9 +10,11 @@ def _ranking_table(report):
 
     rows = [
         {
-            "Rank": c.rank,
+            "Interview Priority": c.interview_priority or c.rank,
+            "Mission Rank": c.mission_rank or c.rank,
             "Candidate": c.candidate_name,
-            "Official Match": c.match_score,
+            "Mission Fit": c.match_score,
+            "Career Fit": c.career_fit_score,
             "AI Confidence": (
                 None
                 if c.ai_confidence is None
@@ -73,7 +75,7 @@ def render_comparison_workspace():
 
     enterprise_hero(
         "Comparison Workspace",
-        "Compare candidates through ranking, evidence strength and decision readiness.",
+        "Compare objective Mission Fit with career alignment and recommended interview priority.",
         "Analysis",
     )
 
@@ -106,7 +108,10 @@ def render_comparison_workspace():
     ])
 
     with tab_ranking:
-        section_title("Candidate Ranking")
+        section_title(
+            "Candidate Ranking",
+            "Interview Priority may differ from Mission Rank when career evidence changes the recommended order.",
+        )
         _ranking_table(report)
 
     with tab_gaps:
