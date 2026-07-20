@@ -7,6 +7,7 @@ from talentcopilot.real_matching.pipeline import RealMatchingPipeline
 from talentcopilot.real_ranking.models import CandidateTextInput, RankedCandidate, RealRankingInput, RealRankingOutput
 from talentcopilot.recruiter_intelligence import RecruiterIntelligenceEngine
 from talentcopilot.evidence_profiles import CandidateEvidenceProfileBuilder, MissionEvidenceProfileBuilder
+from talentcopilot.career_intelligence import CareerFitEngine
 
 
 class RealRankingPipeline:
@@ -48,6 +49,7 @@ class RealRankingPipeline:
         recruiter_engine = RecruiterIntelligenceEngine()
         candidate_evidence_builder = CandidateEvidenceProfileBuilder()
         mission_evidence_builder = MissionEvidenceProfileBuilder()
+        career_engine = CareerFitEngine()
         ranked = []
         for match in outputs:
             profile = match.decision_output.profile
@@ -97,6 +99,19 @@ class RealRankingPipeline:
                 job_text=data.job_text,
                 role_profile=match.role_profile,
             )
+            career_assessment = career_engine.assess(
+                candidate_profile=candidate_evidence_profile,
+                mission_profile=mission_evidence_profile,
+                candidate_text=candidate_input.text,
+                job_text=data.job_text,
+            )
+            decision_score = self._decision_score(
+                mission_fit=calibrated.score,
+                career_fit=career_assessment.score,
+                recruiter_fit=recruiter_assessment.strategic_fit_score,
+                confidence=min(calibrated.confidence, career_assessment.confidence),
+            )
+            decision_rationale = career_assessment.summary
             profile.metadata.update({
                 "profile_version": "calibrated-mission-scoring-v1.0",
                 "fit_score": str(calibrated.score),
@@ -125,6 +140,17 @@ class RealRankingPipeline:
                 "mission_evidence_profile_builder": mission_evidence_builder.version,
                 "candidate_evidence_profile": json.dumps(candidate_evidence_profile.to_dict(), sort_keys=True),
                 "mission_evidence_profile": json.dumps(mission_evidence_profile.to_dict(), sort_keys=True),
+                "career_intelligence_engine": career_engine.version,
+                "career_intelligence": json.dumps(career_assessment.to_dict(), sort_keys=True),
+                "career_fit_score": str(career_assessment.score),
+                "career_fit_confidence": str(career_assessment.confidence),
+                "career_summary": career_assessment.summary,
+                "career_strengths": json.dumps(career_assessment.strengths),
+                "career_concerns": json.dumps(career_assessment.concerns),
+                "career_interview_focus": json.dumps(career_assessment.interview_focus),
+                "decision_ranking_contract": "decision-ranking-v1.0",
+                "decision_score": str(decision_score),
+                "decision_rationale": decision_rationale,
             })
             if comparative.differentiators:
                 profile.metadata["recommendation_rationale"] = (
@@ -148,19 +174,39 @@ class RealRankingPipeline:
                     comparative_breakdown=comparative.to_dict(),
                     differentiators=list(comparative.differentiators),
                     validation_points=list(comparative.validation_points),
+                    decision_score=decision_score,
+                    career_fit_score=career_assessment.score,
+                    decision_rationale=decision_rationale,
                 )
             )
 
-        ranked.sort(
+        mission_order = sorted(
+            ranked,
             key=lambda item: (
                 -float(item.fit_score or 0),
                 -float(item.comparative_score or 0),
                 -float(item.ranking_score or 0),
                 str(item.candidate_name or "").casefold(),
+            ),
+        )
+        for index, item in enumerate(mission_order, start=1):
+            item.mission_fit_rank = index
+            item.matching_output.decision_output.profile.metadata["mission_fit_rank"] = str(index)
+
+        ranked.sort(
+            key=lambda item: (
+                -float(item.decision_score or 0),
+                -float(item.fit_score or 0),
+                -float(item.career_fit_score or 0),
+                str(item.candidate_name or "").casefold(),
             )
         )
         for index, item in enumerate(ranked, start=1):
             item.rank = index
+            item.ranking_score = int(round(item.decision_score))
+            metadata = item.matching_output.decision_output.profile.metadata
+            metadata["decision_rank"] = str(index)
+            metadata["official_rank"] = str(index)
 
         role_title = outputs[0].role_profile.role_title if outputs else "Unknown Role"
         return RealRankingOutput(
@@ -168,6 +214,17 @@ class RealRankingPipeline:
             total_candidates=len(data.candidates),
             ranked_candidates=ranked,
         )
+
+
+    def _decision_score(self, *, mission_fit: float, career_fit: float, recruiter_fit: float, confidence: float) -> float:
+        """Recommended interview priority; Mission Fit remains the dominant input."""
+        score = (
+            float(mission_fit or 0) * 0.64
+            + float(career_fit or 0) * 0.24
+            + float(recruiter_fit or 0) * 0.09
+            + float(confidence or 0) * 0.03
+        )
+        return round(max(0.0, min(100.0, score)), 2)
 
     def _ranking_score(self, profile, comparative_score: float = 70.0) -> int:
         recommendation = profile.recommendation or "Review"

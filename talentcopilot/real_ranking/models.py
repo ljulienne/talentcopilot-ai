@@ -33,6 +33,10 @@ class RankedCandidate:
     comparative_breakdown: Dict[str, Any] = field(default_factory=dict)
     differentiators: List[str] = field(default_factory=list)
     validation_points: List[str] = field(default_factory=list)
+    mission_fit_rank: int = 0
+    decision_score: float = 0.0
+    career_fit_score: float = 0.0
+    decision_rationale: str = ""
 
 
 @dataclass
