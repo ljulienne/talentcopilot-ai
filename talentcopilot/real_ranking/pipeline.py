@@ -8,6 +8,7 @@ from talentcopilot.real_ranking.models import CandidateTextInput, RankedCandidat
 from talentcopilot.recruiter_intelligence import RecruiterIntelligenceEngine
 from talentcopilot.evidence_profiles import CandidateEvidenceProfileBuilder, MissionEvidenceProfileBuilder
 from talentcopilot.career_intelligence import CareerFitEngine
+from talentcopilot.decision_ranking import DecisionRankingPolicy
 
 
 class RealRankingPipeline:
@@ -50,6 +51,7 @@ class RealRankingPipeline:
         candidate_evidence_builder = CandidateEvidenceProfileBuilder()
         mission_evidence_builder = MissionEvidenceProfileBuilder()
         career_engine = CareerFitEngine()
+        decision_policy = DecisionRankingPolicy()
         ranked = []
         for match in outputs:
             profile = match.decision_output.profile
@@ -105,13 +107,14 @@ class RealRankingPipeline:
                 candidate_text=candidate_input.text,
                 job_text=data.job_text,
             )
-            decision_score = self._decision_score(
+            decision_assessment = decision_policy.evaluate(
                 mission_fit=calibrated.score,
-                career_fit=career_assessment.score,
+                career=career_assessment,
                 recruiter_fit=recruiter_assessment.strategic_fit_score,
                 confidence=min(calibrated.confidence, career_assessment.confidence),
             )
-            decision_rationale = career_assessment.summary
+            decision_score = decision_assessment.score
+            decision_rationale = decision_assessment.rationale
             profile.metadata.update({
                 "profile_version": "calibrated-mission-scoring-v1.0",
                 "fit_score": str(calibrated.score),
@@ -149,7 +152,12 @@ class RealRankingPipeline:
                 "career_concerns": json.dumps(career_assessment.concerns),
                 "career_interview_focus": json.dumps(career_assessment.interview_focus),
                 "decision_ranking_contract": "decision-ranking-v1.0",
+                "decision_ranking_policy": decision_policy.version,
+                "decision_ranking_assessment": json.dumps(decision_assessment.to_dict(), sort_keys=True),
                 "decision_score": str(decision_score),
+                "decision_base_score": str(decision_assessment.base_score),
+                "decision_alignment_adjustment": str(decision_assessment.alignment_adjustment),
+                "decision_blockers": json.dumps(decision_assessment.blockers),
                 "decision_rationale": decision_rationale,
             })
             if comparative.differentiators:

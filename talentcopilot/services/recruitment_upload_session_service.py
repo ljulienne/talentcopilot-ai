@@ -98,8 +98,12 @@ class RecruitmentUploadSessionService:
             )
 
             decision_score = self._optional_number(
-                getattr(ranked, "ranking_score", None)
+                getattr(ranked, "decision_score", None)
             )
+            if decision_score is None:
+                decision_score = self._optional_number(
+                    getattr(ranked, "ranking_score", None)
+                )
             decision_rank = int(getattr(ranked, "rank", position) or position)
             mission_fit_rank = int(getattr(ranked, "mission_fit_rank", position) or position)
             recommendation = str(getattr(ranked, "recommendation", "Review required") or "Review required")
@@ -172,7 +176,7 @@ class RecruitmentUploadSessionService:
                     getattr(doc, "filename", "")
                     for doc in documents
                 ],
-                "workflow_version": "6.2B",
+                "workflow_version": "6.2C",
                 **provenance.as_metadata(),
             },
         )

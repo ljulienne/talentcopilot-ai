@@ -102,7 +102,7 @@ class RecruitmentSourceOfTruthService:
             str(getattr(item, "candidate_id", "")): item
             for item in getattr(session, "analyses", [])
         }
-        return [by_id[item.candidate_id] for item in sorted(snapshot.candidates, key=lambda x: x.decision_rank)]
+        return [by_id[item.candidate_id] for item in sorted(snapshot.candidates, key=lambda x: (x.interview_priority, x.decision_rank, x.candidate_name.casefold()))]
 
     def _from_metadata(self, session: Any):
         payload = (getattr(session, "metadata", {}) or {}).get(self.METADATA_KEY)
