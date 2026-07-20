@@ -11,7 +11,12 @@ def render_interview(state: RecruitmentMissionState) -> None:
         st.info("Interview preparation becomes available after candidate analysis.")
         return
     for candidate in shortlist:
-        with st.expander(f"{candidate.name} · validation focus"):
-            for focus in candidate.validation_focus:
-                st.warning(focus)
-            st.caption("Detailed interview intelligence remains available through the existing service layer.")
+        with st.expander(f"{candidate.name} · decision-focused interview priorities"):
+            st.caption(
+                "Each priority is designed to resolve a specific uncertainty in the current evidence, "
+                "not to repeat generic interview questions."
+            )
+            for index, focus in enumerate(candidate.validation_focus, start=1):
+                st.markdown(f"**Priority {index}**")
+                st.info(focus)
+            st.caption("Detailed questions, positive signals and warning signals are available in Interview Intelligence.")

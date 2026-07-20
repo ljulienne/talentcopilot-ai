@@ -95,35 +95,46 @@ def _canonicalize_rationale(rationale: str, canonical_name: str) -> str:
 
 
 def _validation_focus(rationale: str, strengths: Tuple[str, ...], risks: Tuple[str, ...]) -> Tuple[str, ...]:
+    """Translate evidence uncertainty into candidate-specific decision questions."""
+    topics = []
+    patterns = (
+        r"No evidence found for\s+([^.;]+)",
+        r"does not provide sufficient evidence to confirm(?: the role-critical requirement for| the requirement for)?\s+([^.;]+)",
+        r"partially evidenced through transferable experience(?: in)?\s*([^.;]+)",
+    )
+    for pattern in patterns:
+        for match in re.finditer(pattern, str(rationale or ""), flags=re.IGNORECASE):
+            topic = match.group(1).strip(" :,-")
+            if topic and topic.casefold() not in {item.casefold() for item in topics}:
+                topics.append(topic)
+
     focuses = []
+    for topic in topics[:3]:
+        focuses.append(
+            f"Establish whether {topic} is a genuine capability gap or simply under-documented. "
+            "Ask for one specific example, the candidate's personal decisions, operating scope, stakeholders and measurable outcome."
+        )
+
     for risk in risks:
         cleaned = str(risk or "").strip()
-        if cleaned and cleaned not in focuses:
-            focuses.append(cleaned)
-
-    # Convert explicit missing-evidence statements into decision-useful interview topics.
-    for match in re.finditer(
-        r"No evidence found for\s+([^.;]+)",
-        str(rationale or ""),
-        flags=re.IGNORECASE,
-    ):
-        topic = match.group(1).strip(" :,-")
-        if topic:
-            item = f"Validate direct evidence, personal ownership and measurable outcomes for {topic}."
-            if item not in focuses:
-                focuses.append(item)
+        if cleaned and len(focuses) < 3:
+            focuses.append(
+                f"Resolve this recorded risk through evidence rather than assertion: {cleaned}"
+            )
 
     if not focuses:
         for strength in strengths[:2]:
             claim = str(strength or "").strip()
             if claim:
                 focuses.append(
-                    f"Confirm the candidate's personal contribution, operating scope and measurable result behind: {claim}"
+                    f"Test the depth behind the strongest claim — {claim}. Confirm what the candidate personally owned, "
+                    "what trade-offs were made and which measurable result followed."
                 )
 
     if not focuses:
         focuses.append(
-            "Clarify the candidate's most relevant mission example, exact ownership, stakeholders and measurable result."
+            "Ask the candidate to select the most comparable mission they have delivered and explain the context, "
+            "personal ownership, decisions, stakeholders, obstacles and measurable result."
         )
     return tuple(focuses[:3])
 

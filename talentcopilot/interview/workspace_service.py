@@ -117,7 +117,16 @@ class InterviewWorkspaceService:
             )
 
         confidence_score = int(sum(c.confidence for c in competencies) / max(1, len(competencies)))
-        risk_level = "Low" if match_score >= 80 else "Medium" if match_score >= 60 else "High"
+        low_evidence = sum(c.evidence_level == "Low" for c in competencies)
+        high_evidence = sum(c.evidence_level == "High" for c in competencies)
+        if match_score < 40:
+            risk_level = "High"
+        elif low_evidence >= 4 and high_evidence == 0 and confidence_score < 50:
+            risk_level = "High"
+        elif match_score >= 80 and low_evidence <= 1:
+            risk_level = "Low"
+        else:
+            risk_level = "Medium"
         recommendation = "Interview" if match_score >= 70 else "Review" if match_score >= 40 else "Reject"
 
         readiness = InterviewReadinessService().calculate(match_score, confidence_score, competencies)

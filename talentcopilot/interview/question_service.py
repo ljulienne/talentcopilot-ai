@@ -8,7 +8,7 @@ from talentcopilot.interview.models import InterviewCompetency, InterviewQuestio
 class InterviewQuestionService:
     """Build varied evidence-grounded questions without an LLM call."""
 
-    ENGINE_VERSION = "3.1.1C"
+    ENGINE_VERSION = "7.1-consultant-grade"
 
     def build(
         self,
@@ -81,8 +81,9 @@ class InterviewQuestionService:
             competency=name,
             question=question,
             objective=(
-                f"Validate {name} using a {archetype.replace('_', ' ')} lens."
-                f"{experience_note} Evidence basis: {rationale}"
+                f"Resolve the decision uncertainty around {name} using a {archetype.replace('_', ' ')} lens."
+                f"{experience_note} Current evidence position: {rationale} "
+                "The answer should distinguish personal ownership from team contribution and connect actions to a measurable outcome."
             ),
             expected_evidence=expected,
             positive_signals=positives,

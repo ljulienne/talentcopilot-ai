@@ -8,7 +8,9 @@ def render_reasoning(state: RecruitmentMissionState) -> None:
 
     for candidate in state.candidates:
         with st.expander(f"Why {candidate.name} ranks #{candidate.rank}", expanded=candidate.rank == 1):
-            st.write(candidate.rationale or candidate.recommendation)
+            rationale = candidate.rationale or candidate.recommendation
+            for paragraph in [item.strip() for item in str(rationale).split("\n\n") if item.strip()]:
+                st.write(paragraph)
             if candidate.strengths:
                 st.markdown("**Evidence highlights**")
                 for item in candidate.strengths:

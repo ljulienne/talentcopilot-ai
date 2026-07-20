@@ -19,7 +19,7 @@ class RecruitmentReasoningEngine:
     candidate names, benchmark-specific scores, or hard-coded ranking order.
     """
 
-    version = "recruitment-reasoning-v1.0.1-deterministic"
+    version = "recruitment-reasoning-v1.1.0-consultant-grade"
 
     CATEGORY_WEIGHTS = {
         "function": 0.20,
@@ -72,18 +72,20 @@ class RecruitmentReasoningEngine:
         confidence = int(max(48, min(96, 52 + evidenced * 4 + min(len(criteria), 8))))
 
         strengths = [
-            f"{item.criterion.label}: {item.evidence[0]}"
+            self._strength_statement(item)
             for item in sorted(assessments, key=lambda value: value.contribution, reverse=True)
             if item.evidence and item.evidence_score >= 0.7
         ][:8]
         gaps = [
-            item.gaps[0]
-            for item in sorted(assessments, key=lambda value: value.criterion.weight, reverse=True)
-            if item.gaps and item.evidence_score < 0.7
+            self._gap_statement(item)
+            for item in sorted(assessments, key=lambda value: (value.criterion.mandatory, value.criterion.weight), reverse=True)
+            if item.evidence_score < 0.7
         ][:10]
 
         recommendation, risk = self._decision(score, len(mandatory_gaps), confidence)
-        rationale = self._rationale(candidate_name, score, recommendation, strengths, gaps)
+        rationale = self._rationale(
+            candidate_name, score, recommendation, risk, confidence, strengths, gaps, assessments
+        )
         return RecruitmentReasoningResult(
             score=score,
             confidence=confidence,
@@ -192,7 +194,9 @@ class RecruitmentReasoningEngine:
             evidence_score, level = 0.0, "none"
             evidence = []
 
-        gaps = [] if evidence else [f"No evidence found for {criterion.label}"]
+        gaps = [] if evidence else [
+            f"The available CV does not provide sufficient evidence to confirm {criterion.label}."
+        ]
         return CriterionAssessment(
             criterion=criterion,
             evidence_level=level,
@@ -231,6 +235,7 @@ class RecruitmentReasoningEngine:
         return max(explicit, default=0)
 
     def _decision(self, score: float, mandatory_gaps: int, confidence: int) -> Tuple[str, str]:
+        """Calibrate decision risk without treating a mid-range score as high risk by default."""
         if score >= 84 and not mandatory_gaps:
             return "Strong Hire", "Low"
         if score >= 70:
@@ -238,13 +243,96 @@ class RecruitmentReasoningEngine:
         if score >= 56:
             return "More Evidence Required", "Medium"
         if score >= 40:
-            return "Review", "High"
+            risk = "High" if mandatory_gaps >= 2 and confidence < 65 else "Medium"
+            return "Review", risk
         return "Reject", "Critical" if mandatory_gaps >= 2 else "High"
 
-    def _rationale(self, name: str, score: float, recommendation: str, strengths: List[str], gaps: List[str]) -> str:
-        strength = "; ".join(strengths[:3]) or "limited directly evidenced alignment"
-        gap = "; ".join(gaps[:3]) or "no material gap identified"
-        return f"{name}: {score:.0f}% evidence-led Mission Fit. {recommendation}. Strongest evidence: {strength}. Main validation points: {gap}."
+    def _strength_statement(self, assessment: CriterionAssessment) -> str:
+        label = assessment.criterion.label
+        evidence = assessment.evidence[0] if assessment.evidence else ""
+        evidence = re.sub(r"^(Direct|Transferable) evidence:\s*", "", evidence, flags=re.I)
+        if assessment.evidence_level == "transferable":
+            return f"{label} is supported by transferable experience in {evidence}."
+        return f"{label} is directly supported by evidence of {evidence}."
+
+    def _gap_statement(self, assessment: CriterionAssessment) -> str:
+        label = assessment.criterion.label
+        if assessment.evidence_level == "transferable":
+            return (
+                f"{label} is only partially evidenced through transferable experience; "
+                "the interview should confirm direct ownership and operating depth."
+            )
+        importance = "role-critical " if assessment.criterion.mandatory else ""
+        return (
+            f"The available CV does not provide sufficient evidence to confirm the {importance}"
+            f"requirement for {label}. This is an evidence uncertainty, not a confirmed capability gap."
+        )
+
+    def _rationale(
+        self,
+        name: str,
+        score: float,
+        recommendation: str,
+        risk: str,
+        confidence: int,
+        strengths: List[str],
+        gaps: List[str],
+        assessments: List[CriterionAssessment],
+    ) -> str:
+        direct_count = sum(item.evidence_level == "direct" for item in assessments)
+        transferable_count = sum(item.evidence_level == "transferable" for item in assessments)
+        mandatory_uncertainties = [
+            item for item in assessments
+            if item.criterion.mandatory and item.evidence_score < 0.45
+        ]
+
+        if score >= 80:
+            opening = "presents a strong and well-evidenced match"
+        elif score >= 65:
+            opening = "presents a credible match with several areas requiring validation"
+        elif score >= 45:
+            opening = "presents a plausible but incomplete match"
+        else:
+            opening = "shows limited alignment with the role as currently defined"
+
+        paragraphs = [
+            f"{name} {opening}, with an official Mission Fit of {score:.0f}% and {confidence}% evidence confidence."
+        ]
+
+        if strengths:
+            paragraphs.append("The strongest evidence is that " + " ".join(strengths[:3]))
+        else:
+            paragraphs.append(
+                "The CV contains limited directly verifiable evidence against the role's most important requirements."
+            )
+
+        if gaps:
+            paragraphs.append("The main decision uncertainties are: " + " ".join(gaps[:3]))
+
+        evidence_summary = (
+            f"The assessment identified {direct_count} directly evidenced requirement(s)"
+            f" and {transferable_count} supported through transferable experience."
+        )
+        if mandatory_uncertainties:
+            evidence_summary += (
+                f" {len(mandatory_uncertainties)} mandatory requirement(s) still need explicit validation."
+            )
+        paragraphs.append(evidence_summary)
+
+        if recommendation in {"Strong Hire", "Hire"}:
+            action = "Proceed to final decision while confirming the remaining evidence points."
+        elif recommendation == "Interview":
+            action = "Proceed to a structured interview focused on the unresolved role-critical requirements."
+        elif recommendation in {"More Evidence Required", "Review"}:
+            action = (
+                "Keep the candidate under consideration, but do not make a final decision until the interview "
+                "has established direct ownership, operating scope and measurable outcomes in the uncertain areas."
+            )
+        else:
+            action = "Do not progress unless additional evidence materially changes the current assessment."
+
+        paragraphs.append(f"Recommendation: {recommendation}. Hiring risk is {risk}. {action}")
+        return "\n\n".join(paragraphs)
 
     def _contains(self, text: str, phrase: str) -> bool:
         phrase = str(phrase or "").strip()
