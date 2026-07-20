@@ -1,4 +1,5 @@
 from talentcopilot.services.candidate_workspace_service import CandidateWorkspaceService
+from talentcopilot.explainable_scoring import ExplainableScoringService
 from talentcopilot.services.candidate_intelligence import CandidateIntelligenceService
 from talentcopilot.services.candidate_intelligence_view_service import (
     CandidateDecisionBrief,
@@ -318,6 +319,53 @@ def _render_executive_decision_center(center) -> None:
 
     st.caption(center.governance_note)
 
+
+
+def _render_explainable_scoring(report) -> None:
+    import streamlit as st
+
+    explanation = ExplainableScoringService().build(report)
+    section_title(
+        "Explainable Mission Fit",
+        "Every contribution reconciles to the immutable official Mission Fit; this view never creates a second score.",
+    )
+    metric_grid([
+        ("Official Mission Fit", f"{explanation.mission_fit:.0f}%", "Canonical RecruitmentSession score"),
+        ("Reconstructed total", f"{explanation.reconstructed_score:.0f}%", "Traceability control"),
+        ("Confidence", f"{explanation.confidence:.0f}%", "Evidence confidence"),
+        ("Engine", explanation.engine_version, "Explanation layer only"),
+    ])
+    st.write(explanation.rationale)
+    st.dataframe(
+        [
+            {
+                "Dimension": item.label,
+                "Score": f"{item.score:.0f}%",
+                "Weight": f"{item.weight:.0%}",
+                "Contribution": f"{item.contribution:.1f} pts",
+                "Status": item.status,
+            }
+            for item in explanation.dimensions
+        ],
+        use_container_width=True,
+        hide_index=True,
+    )
+    left, right = st.columns(2)
+    with left:
+        _render_list_section(
+            "Positive contributions",
+            [item.detail for item in explanation.positive_contributions],
+            empty_message="No dimension-level positive contribution is available yet.",
+            tone="positive",
+        )
+    with right:
+        _render_list_section(
+            "Evidence gaps / penalties",
+            [item.detail for item in explanation.penalties],
+            empty_message="No material weighted gap is currently documented.",
+            tone="risk",
+        )
+
 def render_candidate_workspace():
     import streamlit as st
 
@@ -359,6 +407,7 @@ def render_candidate_workspace():
     )
 
     _render_candidate_decision_brief(decision_brief)
+    _render_explainable_scoring(report)
 
     executive_brief = ExecutiveDecisionIntelligenceService().build(
         decision_brief
