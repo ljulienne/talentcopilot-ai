@@ -391,9 +391,31 @@ def render_candidate_workspace():
     if not reports:
         return
 
-    candidate_names = [report.candidate_name for report in reports]
-    selected_name = st.selectbox("Select candidate", candidate_names)
-    report = reports[candidate_names.index(selected_name)]
+    # Candidate Intelligence displays the official Mission Fit percentage.
+    # Therefore, the selector is ordered by that same visible score.
+    # This is presentation logic only: it does not mutate the RecruitmentSession,
+    # official ranking, Decision Rank, or Source of Truth.
+    display_reports = sorted(
+        reports,
+        key=lambda item: (
+            -float(getattr(item, "match_score", 0.0) or 0.0),
+            int(getattr(item, "rank", 0) or 0),
+            str(getattr(item, "candidate_name", "") or "").lower(),
+        ),
+    )
+
+    candidate_options = list(range(len(display_reports)))
+
+    selected_index = st.selectbox(
+        "Select candidate",
+        candidate_options,
+        format_func=lambda index: (
+            f"{display_reports[index].candidate_name} · "
+            f"{display_reports[index].match_score:.0f}%"
+        ),
+    )
+
+    report = display_reports[selected_index]
 
     intelligence = CandidateIntelligenceService().build(report)
     decision_brief = CandidateIntelligenceViewService().build(
