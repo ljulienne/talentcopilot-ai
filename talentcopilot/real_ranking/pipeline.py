@@ -5,6 +5,7 @@ from talentcopilot.calibrated_scoring import CalibratedMissionScoringEngine
 from talentcopilot.real_matching.models import RealMatchingInput
 from talentcopilot.real_matching.pipeline import RealMatchingPipeline
 from talentcopilot.real_ranking.models import CandidateTextInput, RankedCandidate, RealRankingInput, RealRankingOutput
+from talentcopilot.recruiter_intelligence import RecruiterIntelligenceEngine
 
 
 class RealRankingPipeline:
@@ -43,6 +44,7 @@ class RealRankingPipeline:
 
         comparative_engine = ComparativeRankingEngine()
         calibration_engine = CalibratedMissionScoringEngine()
+        recruiter_engine = RecruiterIntelligenceEngine()
         ranked = []
         for match in outputs:
             profile = match.decision_output.profile
@@ -76,6 +78,13 @@ class RealRankingPipeline:
             )
             profile.fit_score = calibrated.score
             profile.confidence_score = calibrated.confidence
+            recruiter_assessment = recruiter_engine.assess(
+                candidate_name=profile.candidate_name,
+                candidate_text=candidate_input.text,
+                job_text=data.job_text,
+                mission_fit=calibrated.score,
+                mission_breakdown=mission_breakdown,
+            )
             profile.metadata.update({
                 "profile_version": "calibrated-mission-scoring-v1.0",
                 "fit_score": str(calibrated.score),
@@ -90,6 +99,15 @@ class RealRankingPipeline:
                 "calibrated_band": calibrated.band,
                 "calibrated_breakdown": json.dumps(calibrated.to_dict(), sort_keys=True),
                 "calibrated_limiting_factors": json.dumps(calibrated.limiting_factors),
+                "recruiter_intelligence_engine": recruiter_engine.version,
+                "recruiter_intelligence": json.dumps(recruiter_assessment.to_dict(), sort_keys=True),
+                "recruiter_strategic_fit": str(recruiter_assessment.strategic_fit_score),
+                "recruiter_confidence": str(recruiter_assessment.confidence_score),
+                "recruiter_summary": recruiter_assessment.recruiter_summary,
+                "candidate_dna": json.dumps(recruiter_assessment.candidate_dna.to_dict(), sort_keys=True),
+                "recruiter_decisive_strengths": json.dumps(recruiter_assessment.decisive_strengths),
+                "recruiter_material_gaps": json.dumps(recruiter_assessment.material_gaps),
+                "recruiter_interview_focus": json.dumps(recruiter_assessment.interview_focus),
             })
             if comparative.differentiators:
                 profile.metadata["recommendation_rationale"] = (
