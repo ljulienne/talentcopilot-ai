@@ -1,11 +1,14 @@
 """Deterministic, consultant-grade recruitment narratives.
 
-This presentation layer never recalculates scores, ranks or recommendations.
-It translates official evidence into concise, fluent, decision-oriented prose.
+This module is deliberately presentation-only: it never recalculates official
+scores, ranks, risks or recommendations.  Release 7.1.5 introduces a small
+structured evidence layer so prose is composed from atomic facts rather than
+nesting already-written sentences inside new templates.
 """
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import re
 from typing import Iterable, Sequence
 
@@ -61,7 +64,8 @@ _POSITIVE_MARKERS = (
     "leadership", "international", "multi-country", "measurable",
     "improved", "reduced", "increased", "adoption", "system",
     "process redesign", "data", "analytics", "vendor", "budget",
-    "hris", "sap", "successfactors", "implementation", "deployment",
+    "resource", "hris", "sap", "successfactors", "implementation",
+    "deployment",
 )
 
 _ELIGIBILITY_MARKERS = (
@@ -69,6 +73,30 @@ _ELIGIBILITY_MARKERS = (
     "required level of seniority", "education requirement", "language requirement",
 )
 
+_LEADING_CONNECTORS = (
+    "the most compelling evidence comes from",
+    "the most compelling evidence is",
+    "the case is supported by",
+    "the profile is most persuasive where it demonstrates",
+)
+
+
+@dataclass(frozen=True)
+class EvidenceAtom:
+    """A single positive fact suitable for narrative composition."""
+
+    capability: str
+    source: str = ""
+    evidence_level: str = "direct"
+    priority: int = 1
+
+    @property
+    def phrase(self) -> str:
+        capability = _natural_capability(self.capability)
+        source = _natural_source(self.source)
+        if source and source.casefold() != capability.casefold():
+            return f"{capability}, supported by evidence of {source}"
+        return capability
 
 
 def _sentences(text: str) -> list[str]:
@@ -83,15 +111,22 @@ def _sentences(text: str) -> list[str]:
     ]
 
 
-
 def _clean_fragment(value: str) -> str:
     text = re.sub(r"\s+", " ", str(value or "")).strip(" .;:-")
+    # Strip sentence-level connectors before the value is used as an atom.
+    changed = True
+    while changed:
+        changed = False
+        for connector in _LEADING_CONNECTORS:
+            updated = re.sub(rf"^{re.escape(connector)}\s+", "", text, flags=re.I)
+            if updated != text:
+                text = updated.strip(" .;:-")
+                changed = True
     text = re.sub(r"^(tool|function|skill|requirement)\s+", "", text, flags=re.I)
     text = re.sub(r"^(direct evidence of|direct evidence:|transferable evidence:)\s*", "", text, flags=re.I)
     for raw, replacement in _PROFESSIONAL_TERMS.items():
         text = re.sub(rf"\b{re.escape(raw)}\b", replacement, text, flags=re.I)
     return text
-
 
 
 def _polarity(value: str) -> str:
@@ -109,11 +144,9 @@ def _polarity(value: str) -> str:
     return "neutral"
 
 
-
 def _is_eligibility(value: str) -> bool:
     lowered = _clean_fragment(value).casefold()
     return any(marker in lowered for marker in _ELIGIBILITY_MARKERS)
-
 
 
 def _human_join(values: Sequence[str]) -> str:
@@ -131,22 +164,22 @@ def _human_join(values: Sequence[str]) -> str:
     return f"{', '.join(cleaned[:-1])}, and {cleaned[-1]}"
 
 
-
 def _topic_from_sentence(sentence: str) -> str:
     patterns = (
         r"no evidence found for\s+(.+)",
         r"does not provide sufficient evidence to confirm(?: the role-critical requirement for| the requirement for)?\s+(.+)",
         r"insufficient(?:ly)? evidenced(?: for| in)?\s+(.+)",
         r"partially evidenced through transferable experience(?: in)?\s*(.+)",
-        r"principal decision uncertainties concern\s+(.+)",
-        r"main decision uncertainties concern\s+(.+)",
+        r"principal decision uncertainties? (?:concern|concerns|is|are)\s+(.+)",
+        r"main decision uncertainties? (?:concern|concerns|is|are)\s+(.+)",
     )
     for pattern in patterns:
         match = re.search(pattern, sentence, flags=re.I)
         if match:
-            return _clean_fragment(match.group(1))
+            topic = _clean_fragment(match.group(1))
+            topic = re.sub(r"\bThis is an evidence uncertainty.*$", "", topic, flags=re.I).strip(" .")
+            return topic
     return ""
-
 
 
 def evidence_topics(rationale: str, risks: Iterable[str] = ()) -> tuple[str, ...]:
@@ -160,7 +193,6 @@ def evidence_topics(rationale: str, risks: Iterable[str] = ()) -> tuple[str, ...
         if topic and topic.casefold() not in {item.casefold() for item in topics}:
             topics.append(topic)
     return tuple(topics[:3])
-
 
 
 def _strength_priority(value: str) -> tuple[int, int]:
@@ -180,41 +212,86 @@ def _strength_priority(value: str) -> tuple[int, int]:
         return (4, -len(value))
     if any(token in lowered for token in (
         "sap", "successfactors", "power bi", "hris", "analytics", "testing",
-        "data", "process", "vendor", "budget",
+        "data", "process", "vendor", "budget", "resource",
     )):
         return (3, -len(value))
     return (1, -len(value))
 
 
+def _natural_capability(value: str) -> str:
+    text = _clean_fragment(value)
+    text = re.sub(r"\bsupports the candidate'?s capability in\b.*$", "", text, flags=re.I).strip(" .")
+    text = re.sub(r"\bcapability in\s+", "", text, flags=re.I)
+    # Capability labels read more naturally in lower case inside a sentence.
+    if text and not re.match(r"^(SAP|HRIS|API|UAT|Power BI|Led|Delivered|Implemented|Deployed|Designed|Managed|Owned)\b", text):
+        text = text[0].lower() + text[1:]
+    return text
 
-def _positive_strengths(strengths: Sequence[str], rationale: str) -> tuple[str, ...]:
-    values: list[str] = []
+
+def _natural_source(value: str) -> str:
+    text = _clean_fragment(value)
+    replacements = {
+        "project manager": "project-management responsibilities",
+        "resources": "budget and resource responsibilities",
+    }
+    normalized = replacements.get(text.casefold(), text)
+    if normalized and not re.match(r"^(SAP|HRIS|API|UAT|Power BI)\b", normalized):
+        normalized = normalized[0].lower() + normalized[1:]
+    return normalized
+
+
+def _atom_from_strength(value: str) -> EvidenceAtom | None:
+    raw = _clean_fragment(value)
+    if not raw or _is_eligibility(raw) or _polarity(raw) != "positive":
+        return None
+
+    # Current engine format: "Direct evidence of X supports ... in Y".
+    match = re.search(
+        r"(?:direct|transferable) evidence of\s+(.+?)\s+supports the candidate'?s capability in\s+(.+)$",
+        str(value or ""),
+        flags=re.I,
+    )
+    if match:
+        source = _clean_fragment(match.group(1))
+        capability = _clean_fragment(match.group(2))
+        level = "transferable" if str(value).casefold().startswith("transferable") else "direct"
+        return EvidenceAtom(capability, source, level, _strength_priority(value)[0])
+
+    # Future/clean engine format: "Y, supported by direct evidence of X".
+    match = re.search(
+        r"(.+?),?\s+supported by\s+(direct|transferable) evidence of\s+(.+)$",
+        raw,
+        flags=re.I,
+    )
+    if match:
+        return EvidenceAtom(
+            _clean_fragment(match.group(1)),
+            _clean_fragment(match.group(3)),
+            match.group(2).casefold(),
+            _strength_priority(value)[0],
+        )
+
+    return EvidenceAtom(raw, "", "direct", _strength_priority(value)[0])
+
+
+def _evidence_atoms(strengths: Sequence[str], rationale: str) -> tuple[EvidenceAtom, ...]:
+    atoms: list[EvidenceAtom] = []
     for item in strengths or ():
-        cleaned = _clean_fragment(item)
-        if not cleaned or _is_eligibility(cleaned):
-            continue
-        if _polarity(cleaned) != "positive":
-            continue
-        if cleaned.casefold() not in {entry.casefold() for entry in values}:
-            values.append(cleaned)
+        atom = _atom_from_strength(item)
+        if atom and atom.phrase.casefold() not in {entry.phrase.casefold() for entry in atoms}:
+            atoms.append(atom)
 
-    if not values:
+    if not atoms:
         for sentence in _sentences(rationale):
-            cleaned = _clean_fragment(sentence)
-            if not cleaned or _is_eligibility(cleaned):
-                continue
-            if _polarity(cleaned) != "positive":
-                continue
-            if cleaned.casefold() not in {entry.casefold() for entry in values}:
-                values.append(cleaned)
+            atom = _atom_from_strength(sentence)
+            if atom and atom.phrase.casefold() not in {entry.phrase.casefold() for entry in atoms}:
+                atoms.append(atom)
 
-    return tuple(sorted(values, key=_strength_priority, reverse=True))
-
+    return tuple(sorted(atoms, key=lambda item: (item.priority, len(item.phrase) * -1), reverse=True))
 
 
 def _strength_phrase(strengths: Sequence[str], rationale: str) -> str:
-    return _human_join(_positive_strengths(strengths, rationale)[:2])
-
+    return _human_join([atom.phrase for atom in _evidence_atoms(strengths, rationale)[:2]])
 
 
 def _fit_language(score: float) -> str:
@@ -225,7 +302,6 @@ def _fit_language(score: float) -> str:
     if score >= 50:
         return "a plausible but incomplete match"
     return "a limited match on the evidence currently available"
-
 
 
 def executive_summary(role_title: str, candidates: Sequence[object]) -> str:
@@ -243,18 +319,18 @@ def executive_summary(role_title: str, candidates: Sequence[object]) -> str:
     if strengths:
         text = (
             f"{lead.name} currently leads the {role_title} shortlist. "
-            f"The case is supported by {strengths}, rather than tenure alone."
+            f"The profile is distinguished by {strengths}, rather than tenure alone."
         )
     else:
         text = (
-            f"{lead.name} currently leads the {role_title} shortlist, "
-            "although the available evidence does not yet reveal a single clearly differentiated achievement."
+            f"{lead.name} currently leads the {role_title} shortlist, although the available evidence "
+            "does not yet reveal a clearly differentiated project or measurable achievement."
         )
 
     if topics:
         text += (
             f" The principal decision uncertainty is the depth of direct experience in {_human_join(topics)}. "
-            "This should be clarified through concrete examples of personal ownership and measurable impact."
+            "The interview should clarify this through concrete examples of personal ownership and measurable impact."
         )
     else:
         text += (
@@ -270,7 +346,6 @@ def executive_summary(role_title: str, candidates: Sequence[object]) -> str:
     return text
 
 
-
 def candidate_assessment(candidate: object) -> str:
     score = float(getattr(candidate, "match_score", 0.0) or 0.0)
     name = str(getattr(candidate, "name", "The candidate"))
@@ -279,7 +354,7 @@ def candidate_assessment(candidate: object) -> str:
 
     paragraph = f"{name} presents {_fit_language(score)} for the role, reflected in an official match of {score:.0f}%."
     if strengths:
-        paragraph += f" The most compelling evidence is {strengths}; these elements are more decision-relevant than simply meeting the minimum experience threshold."
+        paragraph += f" The strongest support comes from {strengths}; these elements are more decision-relevant than simply meeting the minimum experience threshold."
     else:
         paragraph += (
             " The profile is viable, but the available documentation does not yet provide a clearly differentiated "
@@ -287,71 +362,50 @@ def candidate_assessment(candidate: object) -> str:
         )
     if topics:
         paragraph += (
-            f" The main decision uncertainties concern {_human_join(topics)}. The evidence is not yet sufficient to determine "
-            "whether this represents a genuine capability gap or simply an under-documented area of experience."
+            f" The main decision uncertainties concern {_human_join(topics)}. The current evidence does not establish "
+            "whether these are genuine capability gaps or simply under-documented areas of experience."
         )
     return paragraph
-
-
-
-def _distinct_positive_context(candidate: object, excluded: str) -> str:
-    selected: list[str] = []
-    excluded_lower = excluded.casefold()
-    for sentence in _sentences(getattr(candidate, "rationale", "")):
-        cleaned = _clean_fragment(sentence)
-        lowered = cleaned.casefold()
-        if not cleaned or lowered in excluded_lower:
-            continue
-        if _polarity(cleaned) != "positive" or _is_eligibility(cleaned):
-            continue
-        selected.append(cleaned.rstrip(".") + ".")
-    return " ".join(selected[:1])
-
 
 
 def recruiter_reasoning(candidate: object) -> tuple[str, ...]:
     assessment = candidate_assessment(candidate)
     topics = evidence_topics(getattr(candidate, "rationale", ""), getattr(candidate, "risks", ()))
-    context = _distinct_positive_context(candidate, assessment)
     paragraphs = [assessment]
 
-    if context:
-        paragraphs.append("This evidence is particularly relevant because " + context[0].lower() + context[1:])
-
     focuses = tuple(getattr(candidate, "validation_focus", ()) or ())
-    if focuses:
-        first = _clean_fragment(focuses[0])
+    if topics:
         implication = (
-            "The practical implication is clear: the interview should " + first[0].lower() + first[1:] + ("" if first.endswith(".") else ".")
+            f"The practical implication is to examine {_human_join(topics)} through one comparable assignment. "
+            "The candidate should explain the decisions personally owned, the systems and stakeholders involved, "
+            "and the measurable outcome achieved."
         )
-    elif topics:
+    elif focuses:
+        first = _clean_fragment(focuses[0])
+        first = re.sub(r"^establish whether\s+", "clarify whether ", first, flags=re.I)
         implication = (
-            f"The practical implication is to test {_human_join(topics)} through one concrete example, establishing the candidate's "
-            "personal decisions, delivery scope, stakeholders and measurable outcome."
+            f"The practical implication is to {first[0].lower() + first[1:]}. "
+            "The discussion should establish personal ownership, delivery scope and measurable impact."
         )
     else:
         implication = (
-            "The practical implication is to validate one highly comparable assignment in depth, including the candidate's personal "
-            "decisions, operating scope, stakeholders and measurable outcome."
+            "The practical implication is to validate one highly comparable assignment in depth, including the candidate's "
+            "personal decisions, operating scope, stakeholders and measurable outcome."
         )
     paragraphs.append(implication)
     return tuple(paragraphs)
-
 
 
 def leading_candidate_insight(candidate: object) -> str:
     strengths = _strength_phrase(getattr(candidate, "strengths", ()), getattr(candidate, "rationale", ""))
     topics = evidence_topics(getattr(candidate, "rationale", ""), getattr(candidate, "risks", ()))
     if strengths and topics:
-        return (
-            f"The leading profile is differentiated by {strengths}. The principal point to validate is {_human_join(topics)}."
-        )
+        return f"The leading profile is differentiated by {strengths}. The principal point to validate is {_human_join(topics)}."
     if strengths:
         return f"The leading profile is differentiated by {strengths}."
     if topics:
         return f"The lead position is credible, but {_human_join(topics)} remains the principal point to validate."
     return "The leading profile shows the strongest overall alignment, with interview evidence now required to confirm depth of ownership and impact."
-
 
 
 def alternative_insight(lead: object, alternative: object) -> str:
@@ -365,7 +419,5 @@ def alternative_insight(lead: object, alternative: object) -> str:
     if strengths:
         return f"{alternative.name} remains the strongest alternative, supported by {strengths}."
     if topics:
-        return (
-            f"{alternative.name} remains the strongest alternative, but {_human_join(topics)} requires stronger evidence before a final decision."
-        )
+        return f"{alternative.name} remains the strongest alternative, but {_human_join(topics)} requires stronger evidence before a final decision."
     return f"{alternative.name} remains the strongest alternative and should be compared on depth of ownership and demonstrated impact."

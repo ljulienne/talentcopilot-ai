@@ -19,7 +19,7 @@ class RecruitmentReasoningEngine:
     candidate names, benchmark-specific scores, or hard-coded ranking order.
     """
 
-    version = "recruitment-reasoning-v1.1.1-evidence-prioritisation"
+    version = "recruitment-reasoning-v1.1.5-structured-narrative"
 
     CATEGORY_WEIGHTS = {
         "function": 0.20,
@@ -299,11 +299,8 @@ class RecruitmentReasoningEngine:
                 f"({evidence}), supporting role readiness without being a differentiator on its own."
             )
         if assessment.evidence_level == "transferable":
-            return (
-                f"Transferable experience in {evidence} provides credible support for {label}, "
-                "although direct ownership should still be confirmed."
-            )
-        return f"Direct evidence of {evidence} supports the candidate's capability in {label}."
+            return f"{label}, supported by transferable evidence of {evidence}."
+        return f"{label}, supported by direct evidence of {evidence}."
 
     def _professional_label(self, value: str) -> str:
         text = re.sub(r"\s+", " ", str(value or "")).strip(" .;:-")
