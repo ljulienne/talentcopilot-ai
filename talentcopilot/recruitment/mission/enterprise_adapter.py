@@ -17,6 +17,7 @@ from talentcopilot.ui.design_system.v2.workspace import (
 )
 
 from .state import RecruitmentMissionState
+from .narrative import leading_candidate_insight, alternative_insight
 
 
 def _metric_value(value: object) -> str:
@@ -81,7 +82,7 @@ def _insights(state: RecruitmentMissionState) -> tuple[WorkspaceCard, ...]:
         WorkspaceCard(
             eyebrow="Leading candidate",
             title=f"#{lead.rank} {lead.name}",
-            body=lead.rationale or lead.recommendation,
+            body=leading_candidate_insight(lead),
             footer=f"{lead.match_score:.0f}% official match",
             tone="positive",
         )
@@ -93,7 +94,7 @@ def _insights(state: RecruitmentMissionState) -> tuple[WorkspaceCard, ...]:
             WorkspaceCard(
                 eyebrow="Closest alternative",
                 title=f"#{alternative.rank} {alternative.name}",
-                body=alternative.rationale or alternative.recommendation,
+                body=alternative_insight(lead, alternative),
                 footer=f"{alternative.match_score:.0f}% official match",
                 tone="info",
             )

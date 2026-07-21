@@ -11,6 +11,7 @@ from typing import Any, Iterable, Optional, Tuple
 import re
 
 from talentcopilot.models.recruitment_session import RecruitmentSession
+from .narrative import executive_summary
 
 
 @dataclass(frozen=True)
@@ -152,24 +153,7 @@ def _progress(session: RecruitmentSession) -> tuple[int, str]:
 
 
 def _summary(role_title: str, candidates: Tuple[CandidateMissionView, ...]) -> str:
-    if not candidates:
-        return (
-            f"The {role_title} mission is ready for candidate documents. "
-            "Upload the job description and CVs to begin the official analysis."
-        )
-
-    lead = candidates[0]
-    alternative = candidates[1] if len(candidates) > 1 else None
-    message = (
-        f"{lead.name} is currently the leading candidate with an official match of "
-        f"{lead.match_score:.0f}%. {lead.rationale or lead.recommendation}"
-    )
-    if alternative:
-        message += (
-            f" {alternative.name} is the closest alternative at "
-            f"{alternative.match_score:.0f}%."
-        )
-    return message
+    return executive_summary(role_title, candidates)
 
 
 def build_recruitment_mission_state(session: RecruitmentSession) -> RecruitmentMissionState:
