@@ -7,6 +7,9 @@ class CandidateSkill:
     name: str
     level: int
     evidence: str = ""
+    status: str = "Moderate evidence"
+    confidence: str = "Moderate"
+    requirement_type: str = "Candidate capability"
 
 
 @dataclass
@@ -14,6 +17,12 @@ class CandidateEvidence:
     title: str
     detail: str
     strength: str = "Medium"
+    requirement: str = ""
+    source: str = "Candidate CV"
+    ownership: str = "Not established"
+    outcome: str = "Not quantified"
+    confidence: str = "Moderate"
+    evidence_type: str = "Indirect evidence"
 
 
 @dataclass
@@ -21,6 +30,10 @@ class CandidateRisk:
     title: str
     detail: str
     severity: str = "Medium"
+    classification: str = "Validation point"
+    related_requirement: str = ""
+    interview_question: str = ""
+    evidence_basis: str = ""
 
 
 @dataclass
@@ -36,6 +49,9 @@ class CandidateWorkspaceReport:
     interview_focus: List[str] = field(default_factory=list)
     candidate_id: str = ""
     score_breakdown: Dict[str, float] = field(default_factory=dict)
+    recommendation_label: str = ""
+    recommendation_rationale: str = ""
+    next_action: str = ""
 
     @property
     def official_match_score(self) -> float:

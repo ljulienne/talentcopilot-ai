@@ -27,8 +27,17 @@ def _render_skill_bars(report):
         st.info("No skills available.")
         return
 
+    st.caption(
+        "Each bar is a presentation-level evidence assessment for that specific "
+        "capability. It does not replace or recalculate the official Mission Fit."
+    )
     for skill in report.skills:
-        st.write(f"**{skill.name}**")
+        left, right = st.columns([4, 1])
+        with left:
+            st.markdown(f"**{skill.name}**")
+            st.caption(f"{skill.requirement_type} · {skill.status} · Confidence: {skill.confidence}")
+        with right:
+            st.markdown(f"**{skill.level}%**")
         st.progress(max(0, min(100, skill.level)) / 100)
         if skill.evidence:
             st.caption(skill.evidence)
@@ -41,21 +50,70 @@ def _render_evidence(report):
         st.info("No evidence available.")
         return
 
+    st.caption(
+        "Evidence is organised by requirement, source, ownership, outcome and "
+        "confidence so that the assessment remains auditable."
+    )
     for item in report.evidence:
-        with st.expander(f"{item.title} · {item.strength}"):
+        with st.expander(f"{item.title} · {item.strength} · {item.evidence_type}"):
             st.write(item.detail)
+            st.markdown(f"**Requirement:** {item.requirement or 'Not specified'}")
+            st.markdown(f"**Source:** {item.source}")
+            st.markdown(f"**Ownership:** {item.ownership}")
+            st.markdown(f"**Outcome:** {item.outcome}")
+            st.markdown(f"**Confidence:** {item.confidence}")
 
 
 def _render_risks(report):
     import streamlit as st
 
     if not report.risks:
-        st.success("No major risk detected in the current candidate report.")
+        st.success(
+            "No material candidate-specific risk was identified from the available "
+            "evidence. Selected role requirements may still require interview validation."
+        )
         return
 
+    st.caption(
+        "A missing CV detail is treated as a validation point, not automatically "
+        "as a confirmed deficiency."
+    )
     for risk in report.risks:
-        st.warning(f"**{risk.title}** — {risk.detail}")
+        with st.expander(f"{risk.title} · {risk.severity} · {risk.classification}", expanded=True):
+            st.write(risk.detail)
+            st.markdown(f"**Related requirement:** {risk.related_requirement or 'Decision criterion'}")
+            st.markdown(f"**Evidence basis:** {risk.evidence_basis or 'Current structured profile'}")
+            st.info(f"Interview validation: {risk.interview_question}")
 
+
+def _render_interview_focus(report):
+    import streamlit as st
+
+    if not report.interview_focus:
+        st.info("No interview focus is currently available.")
+        return
+
+    priority = [item for item in report.interview_focus if item.startswith("Priority validation")]
+    evidence = [item for item in report.interview_focus if item.startswith("Evidence depth") or item.startswith("Achievement verification")]
+    signals = [item for item in report.interview_focus if item.startswith("Positive signals") or item.startswith("Warning signals")]
+    other = [item for item in report.interview_focus if item not in priority + evidence + signals]
+
+    _render_list_section(
+        "Priority validation areas",
+        priority or other[:3],
+        empty_message="No priority validation area is documented.",
+        tone="risk",
+    )
+    _render_list_section(
+        "Evidence-based questions and probes",
+        evidence or other[3:6],
+        empty_message="No evidence-based probe is documented.",
+    )
+    _render_list_section(
+        "Decision signals",
+        signals,
+        empty_message="No decision signal guidance is documented.",
+    )
 
 
 
@@ -452,26 +510,45 @@ def render_candidate_workspace():
     ])
 
     with tab_overview:
-        section_title("Candidate Overview")
-        st.write(f"**Recommendation:** {report.recommendation}")
-        st.write(f"**Match score:** {report.match_score:.0f}%")
+        section_title(
+            "Candidate Overview",
+            "A decision-oriented recommendation derived from the canonical result and the supporting evidence views.",
+        )
+        metric_grid([
+            ("Recommendation", report.recommendation_label, report.recommendation),
+            ("Official Match", f"{report.match_score:.0f}%", "Canonical session score"),
+            ("Official Rank", f"#{report.rank}", "Canonical session rank"),
+            ("Material Risks", str(len(report.risks)), "Candidate-specific validation items"),
+        ])
+        insight_card(
+            report.recommendation_label,
+            report.recommendation_rationale,
+            "Candidate Intelligence recommendation",
+        )
+        st.markdown("#### Executive summary")
+        st.write(report.executive_summary)
+        strengths = [skill.name for skill in report.skills if skill.level >= 70][:2]
+        _render_list_section(
+            "Principal strengths",
+            strengths,
+            empty_message="No principal strength is sufficiently evidenced yet.",
+            tone="positive",
+        )
+        st.markdown("#### Recommended next action")
+        st.info(report.next_action)
 
     with tab_skills:
-        section_title("Skills")
+        section_title("Skills", "Distinct evidence assessments by capability.")
         _render_skill_bars(report)
 
     with tab_evidence:
-        section_title("Evidence")
+        section_title("Evidence", "Traceable evidence supporting each capability assessment.")
         _render_evidence(report)
 
     with tab_risks:
-        section_title("Risks")
+        section_title("Risks", "Candidate-specific risks, uncertainties and validation points.")
         _render_risks(report)
 
     with tab_interview:
-        section_title("Interview Focus")
-        if report.interview_focus:
-            for item in report.interview_focus:
-                st.write(f"- {item}")
-        else:
-            st.info("No interview focus generated yet.")
+        section_title("Interview Focus", "A personalised validation plan linked to evidence and risk signals.")
+        _render_interview_focus(report)
