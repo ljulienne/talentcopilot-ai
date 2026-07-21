@@ -1,9 +1,9 @@
 """Deterministic, consultant-grade recruitment narratives.
 
 This module is deliberately presentation-only: it never recalculates official
-scores, ranks, risks or recommendations.  Release 7.1.5 introduces a small
-structured evidence layer so prose is composed from atomic facts rather than
-nesting already-written sentences inside new templates.
+scores, ranks, risks or recommendations.  Release 7.1.6 adds narrative compression and semantic variation so related
+facts are merged before composition and each narrative block serves a distinct
+decision purpose without recalculating business outputs.
 """
 
 from __future__ import annotations
@@ -92,12 +92,154 @@ class EvidenceAtom:
 
     @property
     def phrase(self) -> str:
+        """Return an atomic professional phrase, never a sentence template."""
         capability = _natural_capability(self.capability)
         source = _natural_source(self.source)
         if source and source.casefold() != capability.casefold():
-            return f"{capability}, supported by evidence of {source}"
+            return _compress_atom_phrase(capability, source)
         return capability
 
+
+
+_SEMANTIC_GROUPS = {
+    "project_delivery": (
+        "project management", "project manager", "programme", "program",
+        "project delivery", "implementation", "deployment", "transformation",
+    ),
+    "resource_governance": (
+        "budget", "resource", "vendor", "governance", "commercial",
+    ),
+    "systems": (
+        "sap", "successfactors", "hris", "system", "integration", "migration",
+    ),
+    "process": ("process design", "process redesign", "operating model", "workflow"),
+    "data": ("power bi", "analytics", "data", "reporting", "dashboard"),
+    "leadership": (
+        "stakeholder", "leadership", "international", "multi-country",
+        "change management", "team",
+    ),
+}
+
+
+def _semantic_group(value: str) -> str:
+    lowered = _clean_fragment(value).casefold()
+    # Specific technologies and process capabilities take precedence over generic
+    # words such as implementation, project or programme.
+    priority = ("systems", "process", "data", "resource_governance", "leadership", "project_delivery")
+    for group in priority:
+        if any(marker in lowered for marker in _SEMANTIC_GROUPS[group]):
+            return group
+    return "other"
+
+
+def _compress_atom_phrase(capability: str, source: str) -> str:
+    combined = f"{capability} {source}".casefold()
+    group = _semantic_group(combined)
+    if group == "project_delivery":
+        return "project delivery"
+    if group == "resource_governance":
+        if "budget" in combined or "resource" in combined:
+            return "responsibility for budgets and resources"
+        return "operational governance"
+    if group == "systems":
+        terms = [term for term in ("SAP SuccessFactors", "SAP", "HRIS") if term.casefold() in combined]
+        return f"hands-on experience with {_human_join(terms)}" if terms else capability
+    if group == "process":
+        return "end-to-end process design"
+    if group == "data":
+        return "data and analytics delivery"
+    if group == "leadership":
+        return "cross-functional leadership"
+    return capability if capability else source
+
+
+def _compressed_strength_phrases(strengths: Sequence[str], rationale: str) -> tuple[str, ...]:
+    """Merge only redundant structured atoms while preserving specific achievements."""
+    atoms = _evidence_atoms(strengths, rationale)
+    phrases: list[str] = []
+    structured_groups: dict[str, list[EvidenceAtom]] = {}
+
+    for atom in atoms:
+        # Complete achievements already carry useful specificity and should not
+        # be reduced to a generic taxonomy label.
+        if not atom.source:
+            phrase = _clean_fragment(atom.capability)
+            if phrase and phrase.casefold() not in {item.casefold() for item in phrases}:
+                phrases.append(phrase)
+            continue
+        group = _semantic_group(f"{atom.capability} {atom.source}")
+        structured_groups.setdefault(group, []).append(atom)
+
+    # The common project + resources pair is expressed once, without repeating
+    # the same evidence connector or paraphrasing both internal labels.
+    if "project_delivery" in structured_groups and "resource_governance" in structured_groups:
+        phrases.append("project management with budget and resource ownership")
+        structured_groups.pop("project_delivery")
+        structured_groups.pop("resource_governance")
+
+    for group, group_atoms in structured_groups.items():
+        atom = group_atoms[0]
+        capability = _natural_capability(atom.capability)
+        source = _natural_source(atom.source)
+        if group == "project_delivery":
+            phrase = "project management"
+        elif group == "resource_governance":
+            phrase = "budget and resource management"
+        elif group == "systems":
+            phrase = _human_join((source, capability))
+        elif group == "process":
+            phrase = _human_join((source, capability)) or "process design"
+        elif group == "data":
+            phrase = _human_join((source, capability))
+        elif group == "leadership":
+            phrase = _human_join((source, capability))
+        else:
+            phrase = _human_join((source, capability))
+        if phrase and phrase.casefold() not in {item.casefold() for item in phrases}:
+            phrases.append(phrase)
+
+    return tuple(phrases)
+
+def _candidate_possessive(name: str) -> str:
+    return f"{name}'" if name.rstrip().endswith("s") else f"{name}'s"
+
+
+def _sentence_word_overlap(first: str, second: str) -> float:
+    stop = {
+        "the", "a", "an", "and", "or", "of", "to", "in", "on", "for",
+        "with", "is", "are", "was", "were", "this", "that", "by", "from",
+    }
+    words_a = {w for w in re.findall(r"[a-z0-9]+", first.casefold()) if w not in stop and len(w) > 2}
+    words_b = {w for w in re.findall(r"[a-z0-9]+", second.casefold()) if w not in stop and len(w) > 2}
+    if not words_a or not words_b:
+        return 0.0
+    return len(words_a & words_b) / min(len(words_a), len(words_b))
+
+
+def narrative_quality_issues(text: str) -> tuple[str, ...]:
+    """Return deterministic lexical-quality warnings for regression tests."""
+    issues: list[str] = []
+    lowered = str(text or "").casefold()
+    for phrase in (
+        "supported by evidence of",
+        "the most compelling evidence is the",
+        "the most compelling evidence comes from the",
+        "the case is supported by the",
+    ):
+        if lowered.count(phrase) > 0:
+            issues.append(f"forbidden connector: {phrase}")
+    sentences = _sentences(text)
+    for index, sentence in enumerate(sentences):
+        words = re.findall(r"[a-z]+", sentence.casefold())
+        for size in (3, 4):
+            grams = [tuple(words[i:i+size]) for i in range(max(0, len(words)-size+1))]
+            if len(grams) != len(set(grams)):
+                issues.append(f"repeated {size}-gram in sentence {index + 1}")
+                break
+    for index in range(len(sentences) - 1):
+        if _sentence_word_overlap(sentences[index], sentences[index + 1]) >= 0.65:
+            issues.append(f"high lexical overlap between sentences {index + 1} and {index + 2}")
+    return tuple(dict.fromkeys(issues))
 
 def _sentences(text: str) -> list[str]:
     normalized = re.sub(r"\s+", " ", str(text or "")).strip()
@@ -170,8 +312,8 @@ def _topic_from_sentence(sentence: str) -> str:
         r"does not provide sufficient evidence to confirm(?: the role-critical requirement for| the requirement for)?\s+(.+)",
         r"insufficient(?:ly)? evidenced(?: for| in)?\s+(.+)",
         r"partially evidenced through transferable experience(?: in)?\s*(.+)",
-        r"principal decision uncertainties? (?:concern|concerns|is|are)\s+(.+)",
-        r"main decision uncertainties? (?:concern|concerns|is|are)\s+(.+)",
+        r"principal decision uncert(?:ainty|ainties) (?:concern|concerns|is|are)\s+(.+)",
+        r"main decision uncert(?:ainty|ainties) (?:concern|concerns|is|are)\s+(.+)",
     )
     for pattern in patterns:
         match = re.search(pattern, sentence, flags=re.I)
@@ -291,7 +433,7 @@ def _evidence_atoms(strengths: Sequence[str], rationale: str) -> tuple[EvidenceA
 
 
 def _strength_phrase(strengths: Sequence[str], rationale: str) -> str:
-    return _human_join([atom.phrase for atom in _evidence_atoms(strengths, rationale)[:2]])
+    return _human_join(_compressed_strength_phrases(strengths, rationale)[:2])
 
 
 def _fit_language(score: float) -> str:
@@ -329,21 +471,29 @@ def executive_summary(role_title: str, candidates: Sequence[object]) -> str:
 
     if topics:
         text += (
-            f" The principal decision uncertainty is the depth of direct experience in {_human_join(topics)}. "
-            "The interview should clarify this through concrete examples of personal ownership and measurable impact."
+            f" The principal decision uncertainty concerns {_human_join(topics)}. "
+            "A focused interview should test these areas through specific examples of personal ownership and measurable results."
         )
     else:
         text += (
-            " The interview should now confirm the candidate's personal ownership, delivery scope and measurable impact "
+            " A focused interview should confirm personal ownership, delivery scope and measurable results "
             "behind the most relevant claims."
         )
 
     if alternative:
         text += (
-            f" {alternative.name} remains the closest alternative, so the final decision should rest on the quality "
-            "and specificity of the interview evidence rather than on ranking alone."
+            f" {alternative.name} remains the closest alternative; the final choice should therefore depend on "
+            "the specificity and credibility of the examples provided at interview, not the ranking alone."
         )
     return text
+
+
+def _reasoning_strength_phrase(value: str) -> str:
+    """Vary generic compressed wording in the reasoning block."""
+    normalized = _clean_fragment(value)
+    if normalized.casefold() == "project management with budget and resource ownership":
+        return "project management accountability with budget and resource control"
+    return normalized
 
 
 def candidate_assessment(candidate: object) -> str:
@@ -354,16 +504,20 @@ def candidate_assessment(candidate: object) -> str:
 
     paragraph = f"{name} presents {_fit_language(score)} for the role, reflected in an official match of {score:.0f}%."
     if strengths:
-        paragraph += f" The strongest support comes from {strengths}; these elements are more decision-relevant than simply meeting the minimum experience threshold."
+        reasoning_strengths = _reasoning_strength_phrase(strengths)
+        paragraph += (
+            f" The strongest support comes from {reasoning_strengths}; these elements are more decision-relevant than simply meeting "
+            "the minimum experience threshold."
+        )
     else:
         paragraph += (
-            " The profile is viable, but the available documentation does not yet provide a clearly differentiated "
-            "project, implementation or measurable achievement to anchor the case."
+            " The available documentation does not yet provide a clearly differentiated project, implementation or "
+            "measurable achievement on which to anchor the case."
         )
     if topics:
         paragraph += (
-            f" The main decision uncertainties concern {_human_join(topics)}. The current evidence does not establish "
-            "whether these are genuine capability gaps or simply under-documented areas of experience."
+            f" The remaining decision uncertainties are {_human_join(topics)}. They should be treated as questions "
+            "for verification, not established gaps."
         )
     return paragraph
 
@@ -376,21 +530,21 @@ def recruiter_reasoning(candidate: object) -> tuple[str, ...]:
     focuses = tuple(getattr(candidate, "validation_focus", ()) or ())
     if topics:
         implication = (
-            f"The practical implication is to examine {_human_join(topics)} through one comparable assignment. "
-            "The candidate should explain the decisions personally owned, the systems and stakeholders involved, "
-            "and the measurable outcome achieved."
+            "The practical implication is to test these unresolved areas through one comparable assignment. "
+            "Ask the candidate to separate personal decisions from team contribution, describe the systems and "
+            "stakeholders involved, and quantify the result."
         )
     elif focuses:
         first = _clean_fragment(focuses[0])
         first = re.sub(r"^establish whether\s+", "clarify whether ", first, flags=re.I)
         implication = (
             f"The practical implication is to {first[0].lower() + first[1:]}. "
-            "The discussion should establish personal ownership, delivery scope and measurable impact."
+            "Probe personal decisions, delivery scope, trade-offs and measurable outcomes."
         )
     else:
         implication = (
-            "The practical implication is to validate one highly comparable assignment in depth, including the candidate's "
-            "personal decisions, operating scope, stakeholders and measurable outcome."
+            "The practical implication is to explore one highly comparable assignment in depth, covering personal "
+            "decisions, operating scope, stakeholder complexity, trade-offs and measurable outcomes."
         )
     paragraphs.append(implication)
     return tuple(paragraphs)
