@@ -1,7 +1,8 @@
 """Deterministic, consultant-grade recruitment narratives.
 
-This presentation layer does not recalculate scores, ranks or recommendations.
-It translates existing official evidence into concise decision-oriented prose.
+This presentation layer never recalculates scores, ranks or recommendations.
+It translates the official evidence into concise, fluent and decision-oriented
+prose while keeping eligibility evidence separate from true differentiators.
 """
 
 from __future__ import annotations
@@ -16,19 +17,44 @@ _ROBOTIC_PREFIXES = (
     "the resume does not provide sufficient evidence to confirm ",
 )
 
+_ELIGIBILITY_MARKERS = (
+    "years of experience",
+    "years evidenced",
+    "minimum ",
+    "required level of seniority",
+    "education requirement",
+    "language requirement",
+)
+
+_PROFESSIONAL_TERMS = {
+    "sap": "SAP",
+    "sap successfactors": "SAP SuccessFactors",
+    "power bi": "Power BI",
+    "hris": "HRIS",
+    "api": "API",
+    "uat": "UAT",
+    "core hr": "Core HR",
+}
+
 
 def _sentences(text: str) -> list[str]:
     normalized = re.sub(r"\s+", " ", str(text or "")).strip()
     if not normalized:
         return []
-    # Remove an old candidate/employer prefix while retaining the substantive text.
     normalized = re.sub(r"^[^:]{2,80}:\s*(?=\d{1,3}%\b)", "", normalized)
-    return [item.strip(" -") for item in re.split(r"(?<=[.!?])\s+|\s*;\s*", normalized) if item.strip(" -")]
+    return [
+        item.strip(" -")
+        for item in re.split(r"(?<=[.!?])\s+|\s*;\s*", normalized)
+        if item.strip(" -")
+    ]
 
 
 def _clean_fragment(value: str) -> str:
     text = re.sub(r"\s+", " ", str(value or "")).strip(" .;:-")
     text = re.sub(r"^(tool|function|skill|requirement)\s+", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"^(direct evidence of|direct evidence:|transferable evidence:)\s*", "", text, flags=re.I)
+    for raw, replacement in _PROFESSIONAL_TERMS.items():
+        text = re.sub(rf"\b{re.escape(raw)}\b", replacement, text, flags=re.I)
     return text
 
 
@@ -38,6 +64,7 @@ def _topic_from_sentence(sentence: str) -> str:
         r"does not provide sufficient evidence to confirm(?: the role-critical requirement for| the requirement for)?\s+(.+)",
         r"insufficient(?:ly)? evidenced(?: for| in)?\s+(.+)",
         r"partially evidenced through transferable experience(?: in)?\s*(.+)",
+        r"principal decision uncertainties concern\s+(.+)",
     )
     for pattern in patterns:
         match = re.search(pattern, sentence, flags=re.IGNORECASE)
@@ -70,19 +97,73 @@ def _human_join(values: Sequence[str]) -> str:
     return f"{', '.join(cleaned[:-1])}, and {cleaned[-1]}"
 
 
-def _strength_phrase(strengths: Sequence[str], rationale: str) -> str:
-    items = [_clean_fragment(item) for item in strengths if _clean_fragment(item)]
-    if items:
-        return _human_join(items[:2])
+def _is_eligibility_strength(value: str) -> bool:
+    lowered = _clean_fragment(value).casefold()
+    return any(marker in lowered for marker in _ELIGIBILITY_MARKERS)
 
-    positive = []
+
+def _rank_strengths(strengths: Sequence[str]) -> tuple[str, ...]:
+    """Prioritise capability and achievement evidence over eligibility checks."""
+    cleaned: list[str] = []
+    for item in strengths or ():
+        value = _clean_fragment(item)
+        if value and value.casefold() not in {entry.casefold() for entry in cleaned}:
+            cleaned.append(value)
+
+    def priority(value: str) -> tuple[int, int]:
+        lowered = value.casefold()
+        if _is_eligibility_strength(value):
+            return (0, len(value))
+        if any(token in lowered for token in (
+            "led", "delivered", "implemented", "deployed", "transformation",
+            "migration", "integration", "governance", "project", "programme",
+            "measurable", "improved", "reduced", "increased", "adoption",
+        )):
+            return (4, len(value))
+        if any(token in lowered for token in (
+            "ownership", "managed", "leadership", "stakeholder", "international",
+            "multi-country", "operating scope",
+        )):
+            return (3, len(value))
+        if any(token in lowered for token in (
+            "SAP", "successfactors", "power bi", "HRIS", "analytics", "testing",
+            "data", "process", "vendor", "budget",
+        )):
+            return (2, len(value))
+        return (1, len(value))
+
+    return tuple(sorted(cleaned, key=priority, reverse=True))
+
+
+def _strength_phrase(strengths: Sequence[str], rationale: str) -> str:
+    ranked = _rank_strengths(strengths)
+    differentiators = [item for item in ranked if not _is_eligibility_strength(item)]
+    if differentiators:
+        return _human_join(differentiators[:2])
+
+    positive: list[str] = []
     for sentence in _sentences(rationale):
         lowered = sentence.casefold()
-        if not any(prefix in lowered for prefix in _ROBOTIC_PREFIXES) and not any(
-            word in lowered for word in ("insufficient", "uncertain", "missing", "gap")
-        ):
-            positive.append(_clean_fragment(sentence))
+        if any(prefix in lowered for prefix in _ROBOTIC_PREFIXES):
+            continue
+        if any(word in lowered for word in ("insufficient", "uncertain", "missing", "gap")):
+            continue
+        if re.search(r"\bofficial (mission fit|match)\b|\bevidence confidence\b", lowered):
+            continue
+        cleaned = _clean_fragment(sentence)
+        if cleaned and not _is_eligibility_strength(cleaned):
+            positive.append(cleaned)
     return _human_join(positive[:1])
+
+
+def _fit_language(score: float) -> str:
+    if score >= 80:
+        return "a strong and credible match"
+    if score >= 65:
+        return "a credible match with material points to validate"
+    if score >= 50:
+        return "a plausible but incomplete match"
+    return "a limited match on the evidence currently available"
 
 
 def executive_summary(role_title: str, candidates: Sequence[object]) -> str:
@@ -97,28 +178,34 @@ def executive_summary(role_title: str, candidates: Sequence[object]) -> str:
     strengths = _strength_phrase(getattr(lead, "strengths", ()), getattr(lead, "rationale", ""))
     topics = evidence_topics(getattr(lead, "rationale", ""), getattr(lead, "risks", ()))
 
-    opening = (
+    text = (
         f"{lead.name} currently leads the {role_title} shortlist with an official match of "
         f"{lead.match_score:.0f}%."
     )
-    support = (
-        f" The position is supported by evidence of {strengths}."
-        if strengths
-        else " The current lead reflects the strongest overall alignment in the available evidence."
-    )
-    uncertainty = (
-        f" The principal decision uncertainty concerns {_human_join(topics)}, which should be tested through targeted evidence rather than treated as a confirmed capability gap."
-        if topics
-        else " The remaining decision should focus on validating the depth of ownership, operating scope and measurable outcomes behind the strongest claims."
-    )
-    comparison = ""
+    if strengths:
+        text += f" The lead position is primarily supported by {strengths}, rather than tenure alone."
+    else:
+        text += " The lead position reflects the strongest overall alignment in the evidence currently available."
+
+    if topics:
+        text += (
+            f" The principal decision uncertainty concerns {_human_join(topics)}. This should be tested through "
+            "specific examples of ownership and impact rather than treated as a confirmed capability gap."
+        )
+    else:
+        text += (
+            " The remaining decision should focus on the depth of personal ownership, operating scope "
+            "and measurable outcomes behind the strongest claims."
+        )
+
     if alternative:
         gap = max(0.0, float(lead.match_score) - float(alternative.match_score))
-        comparison = (
+        text += (
             f" {alternative.name} is the closest alternative at {alternative.match_score:.0f}%, "
-            f"a {gap:.0f}-point gap, so the final choice should be based on the quality of evidence gathered in interview rather than score alone."
+            f"a {gap:.0f}-point gap. The final choice should therefore be based on the quality of evidence "
+            "gathered in interview, not on the score alone."
         )
-    return opening + support + uncertainty + comparison
+    return text
 
 
 def candidate_assessment(candidate: object) -> str:
@@ -128,49 +215,67 @@ def candidate_assessment(candidate: object) -> str:
     strengths = _strength_phrase(getattr(candidate, "strengths", ()), getattr(candidate, "rationale", ""))
     topics = evidence_topics(getattr(candidate, "rationale", ""), getattr(candidate, "risks", ()))
 
-    if score >= 80:
-        fit = "a strong and credible match"
-    elif score >= 65:
-        fit = "a credible match with material points to validate"
-    elif score >= 50:
-        fit = "a plausible but incomplete match"
-    else:
-        fit = "a limited match on the evidence currently available"
-
-    paragraph = f"{name} presents {fit}, reflected in an official match of {score:.0f}% and a recommendation of {recommendation}."
+    paragraph = (
+        f"{name} presents {_fit_language(score)} for the role. The official match is {score:.0f}%, "
+        f"supporting a current recommendation of {recommendation}."
+    )
     if strengths:
-        paragraph += f" The strongest support for the profile comes from {strengths}."
+        paragraph += (
+            f" The profile is most persuasive where it demonstrates {strengths}; these elements are more "
+            "decision-relevant than simply meeting the minimum experience threshold."
+        )
     if topics:
         paragraph += (
-            f" Confidence is constrained by limited evidence concerning {_human_join(topics)}. "
-            "These points should be treated as decision uncertainties until the candidate provides concrete examples of personal ownership and impact."
+            f" The main decision uncertainties concern {_human_join(topics)}. The available documentation does not yet "
+            "show whether this reflects a genuine capability gap or experience that is simply under-documented."
         )
     else:
         paragraph += (
-            " The interview should now test the depth of the evidence already identified, with particular attention to personal ownership, decision scope and measurable outcomes."
+            " The interview should now test the depth of the strongest evidence, especially the candidate's "
+            "personal decisions, operating scope and measurable contribution."
         )
     return paragraph
 
 
+def _substantive_evidence(candidate: object) -> str:
+    assessment = candidate_assessment(candidate).casefold()
+    candidates: list[str] = []
+    for sentence in _sentences(getattr(candidate, "rationale", "")):
+        cleaned = _clean_fragment(sentence)
+        lowered = cleaned.casefold()
+        if not cleaned or len(cleaned) <= 30:
+            continue
+        if lowered in assessment:
+            continue
+        if re.search(r"\bofficial (mission fit|match)\b|\bevidence confidence\b", lowered):
+            continue
+        if lowered.startswith(("recommendation:", "the current recommendation")):
+            continue
+        if any(prefix in lowered for prefix in _ROBOTIC_PREFIXES):
+            continue
+        candidates.append(cleaned.rstrip(".") + ".")
+    return " ".join(candidates[:2])
+
+
 def recruiter_reasoning(candidate: object) -> tuple[str, ...]:
     assessment = candidate_assessment(candidate)
-    rationale_sentences = _sentences(getattr(candidate, "rationale", ""))
-    substantive = []
-    for sentence in rationale_sentences:
-        cleaned = _clean_fragment(sentence)
-        if cleaned and cleaned.casefold() not in assessment.casefold() and len(cleaned) > 20:
-            substantive.append(cleaned + ("" if cleaned.endswith((".", "!", "?")) else "."))
+    strengths = _strength_phrase(getattr(candidate, "strengths", ()), getattr(candidate, "rationale", ""))
+    topics = evidence_topics(getattr(candidate, "rationale", ""), getattr(candidate, "risks", ()))
+    evidence = _substantive_evidence(candidate)
 
-    evidence = ""
-    if substantive:
-        evidence = (
-            "The underlying evidence indicates that "
-            + " ".join(substantive[:2])[0].lower()
-            + " ".join(substantive[:2])[1:]
+    paragraphs = [assessment]
+
+    if evidence:
+        paragraphs.append(
+            "The evidence base adds useful context: " + evidence[0].lower() + evidence[1:]
+        )
+    elif strengths:
+        paragraphs.append(
+            f"From a recruiter's perspective, the strongest case rests on {strengths}. "
+            "This is the evidence that should carry the most weight in comparing the candidate with the rest of the shortlist."
         )
 
     focuses = tuple(getattr(candidate, "validation_focus", ()) or ())
-    implication = ""
     if focuses:
         first = _clean_fragment(focuses[0])
         implication = (
@@ -179,8 +284,19 @@ def recruiter_reasoning(candidate: object) -> tuple[str, ...]:
             + first[1:]
             + ("" if first.endswith(".") else ".")
         )
+    elif topics:
+        implication = (
+            f"The practical implication is to test {_human_join(topics)} through one concrete example. "
+            "The interviewer should establish the candidate's personal decisions, delivery scope, stakeholders and measurable outcome."
+        )
+    else:
+        implication = (
+            "The practical implication is to validate the strongest claims through one detailed example, "
+            "including the candidate's personal decisions, operating scope, stakeholders and measurable outcome."
+        )
+    paragraphs.append(implication)
 
-    return tuple(item for item in (assessment, evidence, implication) if item)
+    return tuple(paragraphs)
 
 
 def leading_candidate_insight(candidate: object) -> str:
@@ -188,14 +304,22 @@ def leading_candidate_insight(candidate: object) -> str:
 
 
 def alternative_insight(lead: object, alternative: object) -> str:
-    gap = max(0.0, float(getattr(lead, "match_score", 0.0)) - float(getattr(alternative, "match_score", 0.0)))
+    gap = max(
+        0.0,
+        float(getattr(lead, "match_score", 0.0)) - float(getattr(alternative, "match_score", 0.0)),
+    )
     topics = evidence_topics(getattr(alternative, "rationale", ""), getattr(alternative, "risks", ()))
     text = (
         f"{alternative.name} is the strongest alternative at {alternative.match_score:.0f}%, "
         f"{gap:.0f} points behind {lead.name}."
     )
     if topics:
-        text += f" The comparison turns primarily on whether the candidate can substantiate {_human_join(topics)}."
+        text += (
+            f" The comparison turns primarily on whether the candidate can substantiate {_human_join(topics)} "
+            "with direct ownership and measurable impact."
+        )
     else:
-        text += " The comparison should focus on depth of ownership and demonstrated impact in the most role-critical areas."
+        text += (
+            " The comparison should focus on depth of ownership and demonstrated impact in the most role-critical areas."
+        )
     return text

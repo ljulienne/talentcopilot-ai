@@ -19,7 +19,7 @@ class RecruitmentReasoningEngine:
     candidate names, benchmark-specific scores, or hard-coded ranking order.
     """
 
-    version = "recruitment-reasoning-v1.1.0-consultant-grade"
+    version = "recruitment-reasoning-v1.1.1-evidence-prioritisation"
 
     CATEGORY_WEIGHTS = {
         "function": 0.20,
@@ -73,7 +73,7 @@ class RecruitmentReasoningEngine:
 
         strengths = [
             self._strength_statement(item)
-            for item in sorted(assessments, key=lambda value: value.contribution, reverse=True)
+            for item in sorted(assessments, key=self._evidence_priority, reverse=True)
             if item.evidence and item.evidence_score >= 0.7
         ][:8]
         gaps = [
@@ -247,13 +247,77 @@ class RecruitmentReasoningEngine:
             return "Review", risk
         return "Reject", "Critical" if mandatory_gaps >= 2 else "High"
 
+
+    def _evidence_priority(self, assessment: CriterionAssessment) -> tuple[float, float, float, str]:
+        """Rank evidence for advisory writing without changing the official score.
+
+        The matching score remains weight-based.  This separate presentation
+        ranking prevents eligibility checks such as tenure from being described
+        as the candidate's most compelling differentiator.
+        """
+        category_priority = {
+            "capability": 7.0,
+            "tool": 6.5,
+            "leadership": 5.5,
+            "function": 5.0,
+            "context": 4.0,
+            "language": 2.5,
+            "education": 2.0,
+            "experience": 1.0,
+        }
+        key = assessment.criterion.key
+        label = assessment.criterion.label.casefold()
+        achievement_bonus = 0.0
+        if any(token in label for token in (
+            "implementation", "deployment", "transformation", "migration",
+            "integration", "governance", "analytics", "adoption", "testing",
+            "project", "platform", "data quality", "vendor", "budget",
+        )):
+            achievement_bonus = 1.0
+        ownership_bonus = 0.5 if assessment.criterion.mandatory else 0.0
+        # Explicitly demote minimum tenure: it establishes viability, not
+        # differentiated fit.
+        eligibility_penalty = -3.0 if key == "minimum_experience" else 0.0
+        return (
+            category_priority.get(assessment.criterion.category, 3.0)
+            + achievement_bonus
+            + ownership_bonus
+            + eligibility_penalty,
+            assessment.evidence_score,
+            assessment.contribution,
+            assessment.criterion.label.casefold(),
+        )
+
     def _strength_statement(self, assessment: CriterionAssessment) -> str:
-        label = assessment.criterion.label
+        label = self._professional_label(assessment.criterion.label)
         evidence = assessment.evidence[0] if assessment.evidence else ""
         evidence = re.sub(r"^(Direct|Transferable) evidence:\s*", "", evidence, flags=re.I)
+        evidence = self._professional_label(evidence)
+        if assessment.criterion.key == "minimum_experience":
+            return (
+                f"The profile clearly meets the required level of seniority "
+                f"({evidence}), supporting role readiness without being a differentiator on its own."
+            )
         if assessment.evidence_level == "transferable":
-            return f"{label} is supported by transferable experience in {evidence}."
-        return f"{label} is directly supported by evidence of {evidence}."
+            return (
+                f"Transferable experience in {evidence} provides credible support for {label}, "
+                "although direct ownership should still be confirmed."
+            )
+        return f"Direct evidence of {evidence} supports the candidate's capability in {label}."
+
+    def _professional_label(self, value: str) -> str:
+        text = re.sub(r"\s+", " ", str(value or "")).strip(" .;:-")
+        text = re.sub(r"^(tool|function|skill|requirement)\s+", "", text, flags=re.I)
+        replacements = {
+            "sap": "SAP",
+            "sap successfactors": "SAP SuccessFactors",
+            "power bi": "Power BI",
+            "hris": "HRIS",
+            "api": "API",
+            "uat": "UAT",
+        }
+        lowered = text.casefold()
+        return replacements.get(lowered, text)
 
     def _gap_statement(self, assessment: CriterionAssessment) -> str:
         label = assessment.criterion.label
@@ -287,52 +351,75 @@ class RecruitmentReasoningEngine:
         ]
 
         if score >= 80:
-            opening = "presents a strong and well-evidenced match"
+            opening = "is a strong, credible match for the role"
         elif score >= 65:
-            opening = "presents a credible match with several areas requiring validation"
+            opening = "is a credible match, with several points that require validation"
         elif score >= 45:
-            opening = "presents a plausible but incomplete match"
+            opening = "is a plausible but incomplete match"
         else:
-            opening = "shows limited alignment with the role as currently defined"
+            opening = "shows limited alignment with the role on the evidence currently available"
 
         paragraphs = [
-            f"{name} {opening}, with an official Mission Fit of {score:.0f}% and {confidence}% evidence confidence."
+            f"{name} {opening}. The official Mission Fit is {score:.0f}%, with {confidence}% evidence confidence."
         ]
 
-        if strengths:
-            paragraphs.append("The strongest evidence is that " + " ".join(strengths[:3]))
+        differentiators = [item for item in strengths if "meets the required level of seniority" not in item.casefold()]
+        eligibility = [item for item in strengths if item not in differentiators]
+        if differentiators:
+            paragraphs.append(
+                "The most compelling evidence comes from "
+                + self._join_sentences(differentiators[:3])
+            )
+        elif eligibility:
+            paragraphs.append(
+                self._join_sentences(eligibility[:1])
+                + " The available CV otherwise offers limited differentiated evidence against the role's core capabilities."
+            )
         else:
             paragraphs.append(
-                "The CV contains limited directly verifiable evidence against the role's most important requirements."
+                "The CV contains limited directly verifiable evidence against the role's most important capabilities."
             )
 
         if gaps:
-            paragraphs.append("The main decision uncertainties are: " + " ".join(gaps[:3]))
+            paragraphs.append(
+                "The principal decision uncertainties concern "
+                + self._join_sentences(gaps[:3])
+            )
 
         evidence_summary = (
-            f"The assessment identified {direct_count} directly evidenced requirement(s)"
-            f" and {transferable_count} supported through transferable experience."
+            f"Across the assessment, {direct_count} requirement(s) are directly evidenced and "
+            f"{transferable_count} are supported through transferable experience."
         )
         if mandatory_uncertainties:
             evidence_summary += (
-                f" {len(mandatory_uncertainties)} mandatory requirement(s) still need explicit validation."
+                f" {len(mandatory_uncertainties)} mandatory requirement(s) still require explicit validation."
             )
         paragraphs.append(evidence_summary)
 
         if recommendation in {"Strong Hire", "Hire"}:
-            action = "Proceed to final decision while confirming the remaining evidence points."
+            action = "Proceed, while using the interview to confirm the remaining role-critical uncertainties."
         elif recommendation == "Interview":
-            action = "Proceed to a structured interview focused on the unresolved role-critical requirements."
+            action = "Proceed to a structured interview focused on direct ownership, operating depth and demonstrated impact."
         elif recommendation in {"More Evidence Required", "Review"}:
             action = (
-                "Keep the candidate under consideration, but do not make a final decision until the interview "
-                "has established direct ownership, operating scope and measurable outcomes in the uncertain areas."
+                "Keep the candidate under consideration, but defer a final decision until the interview has established "
+                "direct ownership, operating scope and measurable outcomes in the uncertain areas."
             )
         else:
-            action = "Do not progress unless additional evidence materially changes the current assessment."
+            action = "Do not progress unless materially stronger evidence changes the current assessment."
 
-        paragraphs.append(f"Recommendation: {recommendation}. Hiring risk is {risk}. {action}")
+        paragraphs.append(f"The current recommendation is {recommendation}, with {risk.lower()} hiring risk. {action}")
         return "\n\n".join(paragraphs)
+
+    def _join_sentences(self, values: Sequence[str]) -> str:
+        cleaned = [str(value).strip().rstrip(".") for value in values if str(value).strip()]
+        if not cleaned:
+            return ""
+        if len(cleaned) == 1:
+            return cleaned[0] + "."
+        if len(cleaned) == 2:
+            return cleaned[0] + "; and " + cleaned[1][0].lower() + cleaned[1][1:] + "."
+        return "; ".join(cleaned[:-1]) + "; and " + cleaned[-1][0].lower() + cleaned[-1][1:] + "."
 
     def _contains(self, text: str, phrase: str) -> bool:
         phrase = str(phrase or "").strip()
