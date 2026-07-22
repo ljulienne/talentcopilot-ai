@@ -272,7 +272,7 @@ def render_interview_intelligence():
 
         if cached_questions is None:
             st.caption("Questions are generated only when requested and then reused for this candidate and mission.")
-            if st.button("Generate Interview Playbook", type="primary", key=f"generate_{key}"):
+            if st.button("Generate Interview Strategy", type="primary", key=f"generate_{key}"):
                 st.session_state[key] = report.questions
                 cached_questions = report.questions
                 st.success("Interview playbook generated and cached.")

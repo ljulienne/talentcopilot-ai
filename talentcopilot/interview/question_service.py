@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Iterable, Optional
+import re
 
 from talentcopilot.interview.models import InterviewCompetency, InterviewQuestion
 
@@ -8,7 +9,20 @@ from talentcopilot.interview.models import InterviewCompetency, InterviewQuestio
 class InterviewQuestionService:
     """Build varied evidence-grounded questions without an LLM call."""
 
-    ENGINE_VERSION = "7.1-consultant-grade"
+    ENGINE_VERSION = "7.2.1-evidence-grounding"
+
+    _INTERNAL_EVIDENCE_LABELS = {
+        "management scope",
+        "project ownership",
+        "budget responsibility",
+        "tool exposure",
+        "measurable impact",
+        "leadership scope",
+        "stakeholder complexity",
+        "technical depth",
+        "process design",
+        "governance exposure",
+    }
 
     def build(
         self,
@@ -24,9 +38,10 @@ class InterviewQuestionService:
             for item in (mission_requirements or [])
             if str(item).strip()
         ]
-        achievements = [
+        achievements = self._candidate_evidence_lines(candidate)
+        candidate_skills = [
             str(item).strip()
-            for item in candidate.get("achievements", [])
+            for item in candidate.get("skills", [])
             if str(item).strip()
         ]
         years = candidate.get("years_experience", 0)
@@ -41,6 +56,7 @@ class InterviewQuestionService:
                 role_title=role_title,
                 requirements=requirements,
                 achievements=achievements,
+                candidate_skills=candidate_skills,
                 years=years,
                 index=index,
             )
@@ -54,12 +70,17 @@ class InterviewQuestionService:
         role_title: str,
         requirements: list[str],
         achievements: list[str],
+        candidate_skills: list[str],
         years,
         index: int,
     ) -> InterviewQuestion:
         name = competency.name
         requirement = self._matching_requirement(name, requirements) or name
-        evidence = self._matching_evidence(name, achievements)
+        evidence, evidence_type = self._grounded_evidence(
+            name,
+            achievements=achievements,
+            candidate_skills=candidate_skills,
+        )
         archetype = self._archetype(name, index)
 
         question, expected, positives, warnings, follow_ups = self._question_pack(
@@ -67,6 +88,7 @@ class InterviewQuestionService:
             competency=name,
             requirement=requirement,
             evidence=evidence,
+            evidence_type=evidence_type,
             role_title=role_title,
         )
 
@@ -98,12 +120,14 @@ class InterviewQuestionService:
         competency: str,
         requirement: str,
         evidence: str,
+        evidence_type: str,
         role_title: str,
     ):
-        prefix = (
-            f"Your CV states: ‘{self._shorten(evidence, 155)}’. "
-            if evidence
-            else f"The mission requires {requirement}. "
+        prefix = self._evidence_prefix(
+            competency=competency,
+            requirement=requirement,
+            evidence=evidence,
+            evidence_type=evidence_type,
         )
 
         if archetype == "technical":
@@ -340,17 +364,96 @@ class InterviewQuestionService:
                 return requirement
         return ""
 
-    def _matching_evidence(self, competency: str, achievements: list[str]) -> str:
-        tokens = {
-            token
-            for token in competency.lower().replace("/", " ").split()
-            if len(token) > 3
+    def _candidate_evidence_lines(self, candidate: dict) -> list[str]:
+        lines: list[str] = []
+        for key in ("achievements", "responsibilities", "experience", "experiences"):
+            value = candidate.get(key, [])
+            if isinstance(value, str):
+                value = [value]
+            if not isinstance(value, (list, tuple)):
+                continue
+            for item in value:
+                if isinstance(item, dict):
+                    for field in ("description", "summary", "responsibilities", "achievements"):
+                        nested = item.get(field)
+                        if isinstance(nested, str):
+                            lines.append(nested.strip())
+                        elif isinstance(nested, (list, tuple)):
+                            lines.extend(str(entry).strip() for entry in nested if str(entry).strip())
+                elif str(item).strip():
+                    lines.append(str(item).strip())
+        return list(dict.fromkeys(line for line in lines if line))
+
+    def _grounded_evidence(
+        self,
+        competency: str,
+        *,
+        achievements: list[str],
+        candidate_skills: list[str],
+    ) -> tuple[str, str]:
+        tokens = self._tokens(competency)
+        matching = [
+            item for item in achievements
+            if tokens and any(token in item.casefold() for token in tokens)
+        ]
+        for item in matching:
+            if self._is_verbatim_evidence(item):
+                return item, "verbatim"
+
+        skill_match = any(
+            self._concepts_overlap(competency, skill)
+            for skill in candidate_skills
+        )
+        if skill_match or matching:
+            return competency, "inference"
+        return "", "gap"
+
+    def _evidence_prefix(
+        self,
+        *,
+        competency: str,
+        requirement: str,
+        evidence: str,
+        evidence_type: str,
+    ) -> str:
+        if evidence_type == "verbatim":
+            return f"Your CV states: ‘{self._shorten(evidence, 155)}’. "
+        if evidence_type == "inference":
+            return (
+                f"Your experience suggests exposure to {competency}, but the available "
+                "evidence does not yet establish the exact scope or personal ownership. "
+            )
+        return (
+            f"The CV provides limited detail about {requirement or competency}. "
+        )
+
+    def _is_verbatim_evidence(self, value: str) -> bool:
+        clean = " ".join(str(value).split()).strip(" .:;,-")
+        normalized = clean.casefold()
+        if not clean or normalized in self._INTERNAL_EVIDENCE_LABELS:
+            return False
+        if len(clean.split()) < 5:
+            return False
+        if normalized.endswith(" scope") and len(clean.split()) <= 4:
+            return False
+        # A genuine CV line normally contains an action, context, result, or metric.
+        return bool(
+            re.search(r"\b(led|managed|delivered|implemented|designed|developed|owned|coordinated|improved|reduced|increased|supported|responsible|achieved|created|launched|transformed)\b", normalized)
+            or re.search(r"\d", clean)
+        )
+
+    def _tokens(self, value: str) -> set[str]:
+        return {
+            token for token in re.findall(r"[a-z0-9]+", value.casefold())
+            if len(token) > 3 and token not in {"management", "experience", "responsibility"}
         }
-        for achievement in achievements:
-            lower = achievement.lower()
-            if tokens and any(token in lower for token in tokens):
-                return achievement
-        return achievements[0] if achievements else ""
+
+    def _concepts_overlap(self, left: str, right: str) -> bool:
+        left_tokens = self._tokens(left)
+        right_tokens = self._tokens(right)
+        if left.casefold() == right.casefold():
+            return True
+        return bool(left_tokens and right_tokens and left_tokens.intersection(right_tokens))
 
     def _shorten(self, value: str, limit: int) -> str:
         clean = " ".join(str(value).split())
