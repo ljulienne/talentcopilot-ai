@@ -5,7 +5,14 @@ from talentcopilot.interview.question_service import InterviewQuestionService
 from talentcopilot.interview.workspace_service import InterviewWorkspaceService
 from talentcopilot.services.interview_report_pdf_service import InterviewReportPdfService
 from talentcopilot.services.streamlit_session_bridge import get_streamlit_session
-from talentcopilot.services.recruitment_workflow_state import get_workflow_context, save_workflow_context, select_workflow_candidate
+from talentcopilot.services.recruitment_workflow_state import (
+    get_workflow_context,
+    save_interview_evaluation,
+    save_workflow_context,
+    select_workflow_candidate,
+    set_workflow_finalists,
+)
+from talentcopilot.ui.navigation_actions import request_page
 from talentcopilot.ui.design_system.components import enterprise_hero, insight_card, metric_grid, section_title
 from talentcopilot.ui.design_system.theme import apply_enterprise_theme
 
@@ -68,11 +75,11 @@ def _render_strategy(report, questions):
                 st.write(f"- {item}")
 
 
-def _render_live_evaluation(session, report):
+def _render_live_evaluation(session, report, candidate_id: str):
     import streamlit as st
 
     service = InterviewIntelligenceProService()
-    candidate_key = f"{getattr(session, 'session_id', 'session')}:{report.candidate_name}"
+    candidate_key = f"{getattr(session, 'session_id', 'session')}:{candidate_id or report.candidate_name}"
     outcome_key = f"{OUTCOME_PREFIX}{candidate_key}"
 
     section_title("Live interview evidence")
@@ -134,7 +141,23 @@ def _render_live_evaluation(session, report):
             )
 
     if st.button("Generate post-interview recommendation", type="primary", key=f"evaluate:{candidate_key}"):
-        st.session_state[outcome_key] = service.evaluate(report.candidate_name, ratings)
+        outcome = service.evaluate(report.candidate_name, ratings)
+        st.session_state[outcome_key] = outcome
+        save_interview_evaluation(
+            candidate_id,
+            {
+                "candidate_id": candidate_id,
+                "candidate_name": report.candidate_name,
+                "recommendation": outcome.recommendation.label,
+                "overall_score": outcome.overall_score,
+                "evidence_coverage": outcome.evidence_coverage,
+                "confidence": outcome.recommendation.confidence,
+                "rationale": list(outcome.recommendation.rationale),
+                "remaining_risks": list(outcome.recommendation.remaining_risks),
+                "next_step": outcome.recommendation.next_step,
+            },
+        )
+        st.success("Interview assessment saved to the active recruitment workflow.")
 
     outcome = st.session_state.get(outcome_key)
     if outcome is None:
@@ -166,6 +189,20 @@ def _render_live_evaluation(session, report):
         st.success("No material interview evidence gap remains.")
 
     st.info(f"Recommended next step: {outcome.recommendation.next_step}")
+
+    workflow_context = get_workflow_context(session, current_page="Interview Intelligence")
+    default_finalists = list(workflow_context.finalist_candidate_ids or workflow_context.shortlisted_candidate_ids)
+    if candidate_id not in default_finalists:
+        default_finalists.append(candidate_id)
+    if st.button(
+        "Save assessment and compare →",
+        type="primary",
+        key=f"compare:{candidate_key}",
+        use_container_width=True,
+    ):
+        set_workflow_finalists(default_finalists)
+        request_page("Comparison", reason="Interview assessment saved. Review the finalist comparison.")
+        st.rerun()
 
     pdf = InterviewReportPdfService().build(outcome, role_title=report.role_title)
     st.download_button(
@@ -248,6 +285,18 @@ def render_interview_intelligence():
         ("Hiring Risk", report.risk_level, report.recommendation),
     ])
 
+    workflow_context = get_workflow_context(session, current_page="Interview Intelligence")
+    saved_evaluation = workflow_context.interview_evaluations.get(selected_id)
+    if saved_evaluation:
+        st.success(
+            f"Saved interview assessment: {saved_evaluation.get('recommendation', 'Recorded')} · "
+            f"evidence coverage {saved_evaluation.get('evidence_coverage', 0)}%."
+        )
+    elif selected_id in workflow_context.interview_prepared_candidate_ids:
+        st.info("Interview preparation is complete. Record evidence in Live Evaluation to continue.")
+    else:
+        st.info("Generate the interview playbook, then record evidence before comparison.")
+
     insight_card(
         "Interview focus",
         f"Readiness is {report.readiness.status.lower()} ({report.readiness.score}%). "
@@ -301,7 +350,7 @@ def render_interview_intelligence():
             _render_strategy(report, cached_questions)
 
     with tab_live:
-        _render_live_evaluation(session, report)
+        _render_live_evaluation(session, report, selected_id)
 
     with tab_scorecard:
         section_title("Pre-interview scorecard")

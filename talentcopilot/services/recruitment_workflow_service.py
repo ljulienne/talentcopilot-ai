@@ -82,6 +82,7 @@ class RecruitmentWorkflowService:
         has_selected = bool(context.selected_candidate_id or context.selected_candidate_name)
         interview_prepared = bool(context.interview_prepared_candidate_ids)
         interview_assessed = bool(context.interview_assessed_candidate_ids)
+        finalist_count = len(context.finalist_candidate_ids or context.shortlisted_candidate_ids)
 
         completion = {
             "setup": has_session,
@@ -91,7 +92,7 @@ class RecruitmentWorkflowService:
             "candidate": has_selected or "candidate" in explicit,
             "prepare": interview_prepared or "prepare" in explicit,
             "assess": interview_assessed or "assess" in explicit,
-            "compare": context.finalists_compared or "compare" in explicit,
+            "compare": (context.finalists_compared and finalist_count >= 2) or "compare" in explicit,
             "decide": context.decision_recorded or "decide" in explicit,
         }
 
@@ -103,7 +104,7 @@ class RecruitmentWorkflowService:
             "candidate": "Select and review a candidate.",
             "prepare": "Select a candidate before preparing the interview.",
             "assess": "Prepare the interview before recording findings.",
-            "compare": "Save at least one interview assessment before comparison.",
+            "compare": "Select at least two finalists and save interview evidence before comparison.",
             "decide": "Compare finalists before recording the decision.",
         }
 
