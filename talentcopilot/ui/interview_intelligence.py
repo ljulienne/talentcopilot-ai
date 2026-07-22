@@ -5,6 +5,7 @@ from talentcopilot.interview.question_service import InterviewQuestionService
 from talentcopilot.interview.workspace_service import InterviewWorkspaceService
 from talentcopilot.services.interview_report_pdf_service import InterviewReportPdfService
 from talentcopilot.services.streamlit_session_bridge import get_streamlit_session
+from talentcopilot.services.recruitment_workflow_state import get_workflow_context, save_workflow_context, select_workflow_candidate
 from talentcopilot.ui.design_system.components import enterprise_hero, insight_card, metric_grid, section_title
 from talentcopilot.ui.design_system.theme import apply_enterprise_theme
 
@@ -215,13 +216,18 @@ def render_interview_intelligence():
     option_ids = list(reports_by_id)
     selection_key = "interview_intelligence_candidate_id"
     context_key = "interview_intelligence_candidate_context"
+    workflow_context = get_workflow_context(session, current_page="Interview Intelligence")
+    preferred_id = workflow_context.selected_candidate_id
+    preferred_option = preferred_id if preferred_id in option_ids else option_ids[0]
     context = (
         str(getattr(session, "session_id", "session")),
         tuple(option_ids),
     )
     if st.session_state.get(context_key) != context:
         st.session_state[context_key] = context
-        st.session_state[selection_key] = option_ids[0]
+        st.session_state[selection_key] = preferred_option
+    elif preferred_id in option_ids and st.session_state.get(selection_key) not in option_ids:
+        st.session_state[selection_key] = preferred_id
 
     selected_id = st.selectbox(
         "Candidate",
@@ -233,6 +239,7 @@ def render_interview_intelligence():
         ),
     )
     report = reports_by_id[selected_id]
+    select_workflow_candidate(selected_id, report.candidate_name)
 
     metric_grid([
         ("Candidate", report.candidate_name, f"Official rank #{report.official_rank} · {report.role_title}"),
@@ -275,6 +282,11 @@ def render_interview_intelligence():
             if st.button("Generate Interview Strategy", type="primary", key=f"generate_{key}"):
                 st.session_state[key] = report.questions
                 cached_questions = report.questions
+                workflow_context = get_workflow_context(session, current_page="Interview Intelligence")
+                if selected_id not in workflow_context.interview_prepared_candidate_ids:
+                    workflow_context.interview_prepared_candidate_ids.append(selected_id)
+                workflow_context.mark_completed("prepare")
+                save_workflow_context(workflow_context)
                 st.success("Interview playbook generated and cached.")
         else:
             col1, col2 = st.columns([3, 1])

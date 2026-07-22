@@ -17,6 +17,7 @@ from talentcopilot.services.executive_decision_center_service import (
 )
 from talentcopilot.services.demo_session_factory import create_demo_recruitment_session
 from talentcopilot.services.streamlit_session_bridge import get_streamlit_session, set_streamlit_session
+from talentcopilot.services.recruitment_workflow_state import get_workflow_context, select_workflow_candidate
 from talentcopilot.ui.design_system.components import enterprise_hero, insight_card, metric_grid, section_title
 from talentcopilot.ui.design_system.theme import apply_enterprise_theme
 
@@ -524,10 +525,30 @@ def render_candidate_workspace():
     )
 
     candidate_options = list(range(len(display_reports)))
+    workflow_context = get_workflow_context(session, current_page="Candidate Intelligence")
+    preferred_id = workflow_context.selected_candidate_id
+    default_index = 0
+    if preferred_id:
+        for index, item in enumerate(display_reports):
+            item_id = str(getattr(item, "candidate_id", "") or item.candidate_name)
+            if item_id == preferred_id:
+                default_index = index
+                break
+
+    selection_key = "candidate_intelligence_candidate_index"
+    selection_context_key = "candidate_intelligence_selection_context"
+    selection_context = (
+        str(getattr(session, "session_id", "session")),
+        tuple(str(getattr(item, "candidate_id", "") or item.candidate_name) for item in display_reports),
+    )
+    if st.session_state.get(selection_context_key) != selection_context:
+        st.session_state[selection_context_key] = selection_context
+        st.session_state[selection_key] = default_index
 
     selected_index = st.selectbox(
         "Select candidate",
         candidate_options,
+        key=selection_key,
         format_func=lambda index: (
             f"{display_reports[index].candidate_name} · "
             f"{display_reports[index].match_score:.0f}%"
@@ -535,6 +556,8 @@ def render_candidate_workspace():
     )
 
     report = display_reports[selected_index]
+    report_id = str(getattr(report, "candidate_id", "") or report.candidate_name)
+    select_workflow_candidate(report_id, report.candidate_name)
 
     intelligence = CandidateIntelligenceService().build(report)
     decision_brief = CandidateIntelligenceViewService().build(

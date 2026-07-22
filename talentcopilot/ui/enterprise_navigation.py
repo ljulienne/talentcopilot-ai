@@ -37,18 +37,22 @@ COMMAND_PAGES = [
 
 ANALYSIS_PAGES = [
     _page("Organization Intelligence", "talentcopilot.ui.organization_intelligence_preview", "render_organization_intelligence_preview", "Diagnose collaboration patterns from uploaded data.", "◉"),
-    _page("Recruitment Workspace", "talentcopilot.ui.recruitment_decision_workspace", "render_recruitment_decision_workspace", "Mission-centric workspace from candidate evidence to hiring decision.", "▣"),
+    _page("Recruitment Workspace", "talentcopilot.ui.recruitment_decision_workspace", "render_recruitment_decision_workspace", "Pilot the active recruitment and move the workflow forward.", "▣"),
+    _page("Candidate Intelligence", "talentcopilot.ui.candidate_workspace", "render_candidate_workspace", "Review one candidate's recommendation, competencies, evidence and risks.", "◆"),
+    _page("Interview Intelligence", "talentcopilot.ui.interview_intelligence", "render_interview_intelligence", "Prepare and record evidence from a focused interview.", "?"),
     _page("Analytics Dashboard", "talentcopilot.ui.analytics_dashboard", "render_analytics_dashboard", icon="▥"),
 ]
 
 DECISION_PAGES = [
+    # Comparison and Decision Board remain contextually reachable through
+    # LEGACY_PAGES and the recruitment workflow shell, but are intentionally
+    # hidden from the primary navigation until the consolidated decision
+    # experience is delivered.
     _page("Hiring Budget", "talentcopilot.ui.hiring_budget", "render_hiring_budget", icon="¤"),
     _page("Enterprise Demo Final", "talentcopilot.ui.enterprise_demo_final", "render_enterprise_demo_final", icon="▶"),
 ]
 
 ADMINISTRATION_PAGES = [
-    _page("Candidate Intelligence", "talentcopilot.ui.candidate_workspace", "render_candidate_workspace", icon="◆"),
-    _page("Interview Intelligence", "talentcopilot.ui.interview_intelligence", "render_interview_intelligence", icon="?"),
     _page("Executive Copilot", "talentcopilot.ui.executive_copilot_workspace", "render_executive_copilot_workspace", "Ask evidence-grounded executive HR questions.", "✧"),
 ]
 
