@@ -20,6 +20,8 @@ from talentcopilot.services.streamlit_session_bridge import get_streamlit_sessio
 from talentcopilot.services.recruitment_workflow_state import get_workflow_context, select_workflow_candidate
 from talentcopilot.ui.design_system.components import enterprise_hero, insight_card, metric_grid, section_title
 from talentcopilot.ui.design_system.theme import apply_enterprise_theme
+from talentcopilot.ui.navigation_actions import request_page
+from talentcopilot.ui.recruitment_workflow_shell import render_recruitment_workflow_shell
 
 
 def _render_skill_bars(report):
@@ -486,6 +488,155 @@ def _render_explainable_scoring(report) -> None:
             tone="risk",
         )
 
+def _render_candidate_header(report, decision_brief) -> None:
+    import streamlit as st
+
+    recommendation = (
+        getattr(decision_brief, "recommendation_label", "")
+        or getattr(report, "recommendation_label", "")
+        or "Human review required"
+    )
+    confidence = int(getattr(decision_brief, "confidence_score", 0) or 0)
+    evidence_coverage = int(getattr(decision_brief, "evidence_coverage", 0) or 0)
+
+    st.markdown(
+        """
+        <style>
+        .tc-candidate-header {border:1px solid rgba(128,128,128,.18);border-radius:20px;padding:20px 22px;margin:4px 0 16px;background:rgba(255,255,255,.025)}
+        .tc-candidate-kicker {font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;opacity:.62;font-weight:700}
+        .tc-candidate-name {font-size:1.75rem;line-height:1.15;font-weight:800;margin:.25rem 0 .35rem}
+        .tc-candidate-meta {font-size:.9rem;opacity:.74}
+        .tc-candidate-status {display:inline-block;margin-top:.7rem;padding:.35rem .7rem;border-radius:999px;border:1px solid rgba(72,120,255,.3);background:rgba(72,120,255,.09);font-weight:700;font-size:.82rem}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    left, right = st.columns([3.2, 1.2])
+    with left:
+        st.markdown(
+            f'''<div class="tc-candidate-header">
+            <div class="tc-candidate-kicker">Candidate decision profile</div>
+            <div class="tc-candidate-name">{report.candidate_name}</div>
+            <div class="tc-candidate-meta">Official rank #{report.rank} · Active recruitment session</div>
+            <div class="tc-candidate-status">{recommendation}</div>
+            </div>''',
+            unsafe_allow_html=True,
+        )
+    with right:
+        st.metric("Official Match", f"{report.match_score:.0f}%", "Canonical score")
+        if st.button(
+            "Prepare interview →",
+            type="primary",
+            use_container_width=True,
+            key=f"candidate_prepare_interview_{getattr(report, 'candidate_id', report.candidate_name)}",
+        ):
+            request_page(
+                "Interview Intelligence",
+                reason=f"Preparing the interview for {report.candidate_name}.",
+            )
+            st.rerun()
+
+    metric_grid([
+        ("Official Rank", f"#{report.rank}", "Canonical ranking"),
+        ("AI Confidence", f"{confidence}%", getattr(decision_brief, "confidence_label", "Evidence confidence")),
+        ("Evidence Coverage", f"{evidence_coverage}%", "Available evidence"),
+        ("Validation Items", str(len(getattr(report, "risks", []) or [])), "Risks and uncertainties"),
+    ])
+
+
+def _render_decision_snapshot(report, brief) -> None:
+    import streamlit as st
+
+    summary = (
+        getattr(brief, "executive_summary", "")
+        or getattr(report, "executive_summary", "")
+        or "No executive summary is available yet."
+    )
+    rationale = (
+        getattr(brief, "recommendation_explanation", "")
+        or getattr(report, "recommendation_rationale", "")
+        or "The recommendation requires human validation."
+    )
+
+    section_title(
+        "Decision snapshot",
+        "The decision-relevant signals first; detailed evidence remains available below.",
+    )
+    insight_card(
+        getattr(brief, "recommendation_label", "Candidate recommendation"),
+        rationale,
+        getattr(brief, "recommendation", "AI recommendation"),
+    )
+    st.write(summary)
+
+    strengths_col, validation_col = st.columns(2)
+    with strengths_col:
+        _render_list_section(
+            "Strongest fit signals",
+            list(getattr(brief, "strengths", ()) or ())[:4],
+            empty_message="No sufficiently evidenced strength is available yet.",
+            tone="positive",
+        )
+    with validation_col:
+        validation_items = list(getattr(brief, "missing_evidence", ()) or ())[:2]
+        validation_items += list(getattr(brief, "hiring_risks", ()) or ())[:2]
+        _render_list_section(
+            "Validate before decision",
+            validation_items,
+            empty_message="No material validation item is currently documented.",
+            tone="risk",
+        )
+
+    priorities = list(getattr(brief, "interview_priorities", ()) or ())[:3]
+    with st.expander("Interview priorities", expanded=False):
+        _render_list_section(
+            "Priority probes",
+            priorities,
+            empty_message="No interview priority is currently available.",
+        )
+
+
+def _render_competency_overview(report, session) -> None:
+    import streamlit as st
+
+    matrix = CompetencyMatrixService().build(report, session)
+    demonstrated = sum(
+        1 for item in matrix.competencies
+        if item.effective_level() >= item.required_level
+    )
+    partial = sum(
+        1 for item in matrix.competencies
+        if 0 < item.required_level - item.effective_level() <= 1
+    )
+    missing = max(0, len(matrix.competencies) - demonstrated - partial)
+
+    metric_grid([
+        ("Demonstrated", str(demonstrated), "At or above required level"),
+        ("Partial", str(partial), "Within one level"),
+        ("To validate", str(missing), "Material gap or missing evidence"),
+    ])
+
+    for item in matrix.competencies:
+        gap = item.effective_level() - item.required_level
+        if gap >= 0:
+            status = "Demonstrated"
+            symbol = "✓"
+        elif gap >= -1:
+            status = "Partial"
+            symbol = "◐"
+        else:
+            status = "To validate"
+            symbol = "!"
+        st.markdown(
+            f"**{symbol} {item.competency_name}**  \n"
+            f"{status} · Effective {item.effective_level():.1f}/5 · Required {item.required_level:.1f}/5 · Confidence {item.confidence}"
+        )
+        st.progress(max(0.0, min(1.0, item.effective_level() / 5.0)))
+        if item.evidence:
+            st.caption(item.evidence)
+
+
 def render_candidate_workspace():
     import streamlit as st
 
@@ -496,7 +647,7 @@ def render_candidate_workspace():
 
     enterprise_hero(
         "Candidate Intelligence",
-        "Understand the official match, supporting evidence, uncertainties and interview priorities.",
+        "Review the decision first, then open only the evidence needed to validate it.",
         "Recruitment Decision Support",
     )
 
@@ -511,10 +662,11 @@ def render_candidate_workspace():
     if not reports:
         return
 
-    # Candidate Intelligence displays the official Mission Fit percentage.
-    # Therefore, the selector is ordered by that same visible score.
-    # This is presentation logic only: it does not mutate the RecruitmentSession,
-    # official ranking, Decision Rank, or Source of Truth.
+    render_recruitment_workflow_shell(
+        session,
+        current_page="Candidate Intelligence",
+    )
+
     display_reports = sorted(
         reports,
         key=lambda item: (
@@ -524,8 +676,10 @@ def render_candidate_workspace():
         ),
     )
 
-    candidate_options = list(range(len(display_reports)))
-    workflow_context = get_workflow_context(session, current_page="Candidate Intelligence")
+    workflow_context = get_workflow_context(
+        session,
+        current_page="Candidate Intelligence",
+    )
     preferred_id = workflow_context.selected_candidate_id
     default_index = 0
     if preferred_id:
@@ -545,99 +699,73 @@ def render_candidate_workspace():
         st.session_state[selection_context_key] = selection_context
         st.session_state[selection_key] = default_index
 
-    selected_index = st.selectbox(
-        "Select candidate",
-        candidate_options,
-        key=selection_key,
-        format_func=lambda index: (
-            f"{display_reports[index].candidate_name} · "
-            f"{display_reports[index].match_score:.0f}%"
-        ),
-    )
+    selector_col, context_col = st.columns([2.4, 1])
+    with selector_col:
+        selected_index = st.selectbox(
+            "Candidate",
+            list(range(len(display_reports))),
+            key=selection_key,
+            format_func=lambda index: (
+                f"#{display_reports[index].rank} · {display_reports[index].candidate_name} · "
+                f"{display_reports[index].match_score:.0f}%"
+            ),
+        )
+    with context_col:
+        st.caption("Selection is preserved across the recruitment workflow.")
 
     report = display_reports[selected_index]
     report_id = str(getattr(report, "candidate_id", "") or report.candidate_name)
     select_workflow_candidate(report_id, report.candidate_name)
 
     intelligence = CandidateIntelligenceService().build(report)
-    decision_brief = CandidateIntelligenceViewService().build(
-        report,
-        intelligence,
-    )
+    decision_brief = CandidateIntelligenceViewService().build(report, intelligence)
 
-    section_title(
-        report.candidate_name,
-        f"Official candidate #{report.rank} in the active recruitment session.",
-    )
+    _render_candidate_header(report, decision_brief)
+    _render_decision_snapshot(report, decision_brief)
 
-    _render_candidate_decision_brief(decision_brief)
-    _render_explainable_scoring(report)
-
-    executive_brief = ExecutiveDecisionIntelligenceService().build(
-        decision_brief
-    )
-    decision_center = ExecutiveDecisionCenterService().build(
-        report,
-        intelligence,
-        executive_brief,
-        peer_reports=reports,
-    )
-    _render_executive_advisor(executive_brief, center=decision_center)
-    _render_executive_decision_center(decision_center)
-
-    tab_overview, tab_skills, tab_matrix, tab_evidence, tab_risks, tab_interview = st.tabs([
-        "Overview",
-        "Skills",
-        "Competency Matrix",
-        "Evidence",
-        "Risks",
-        "Interview Focus",
+    tab_competencies, tab_evidence, tab_governance = st.tabs([
+        "Competencies",
+        "Evidence & validation",
+        "Decision governance",
     ])
 
-    with tab_overview:
+    with tab_competencies:
         section_title(
-            "Candidate Overview",
-            "A decision-oriented recommendation derived from the canonical result and the supporting evidence views.",
+            "Competency readiness",
+            "A compact view of demonstrated, partial and unvalidated competencies.",
         )
-        metric_grid([
-            ("Recommendation", report.recommendation_label, report.recommendation),
-            ("Official Match", f"{report.match_score:.0f}%", "Canonical session score"),
-            ("Official Rank", f"#{report.rank}", "Canonical session rank"),
-            ("Material Risks", str(len(report.risks)), "Candidate-specific validation items"),
-        ])
-        insight_card(
-            report.recommendation_label,
-            report.recommendation_rationale,
-            "Candidate Intelligence recommendation",
-        )
-        st.markdown("#### Executive summary")
-        st.write(report.executive_summary)
-        strengths = [skill.name for skill in report.skills if skill.level >= 70][:2]
-        _render_list_section(
-            "Principal strengths",
-            strengths,
-            empty_message="No principal strength is sufficiently evidenced yet.",
-            tone="positive",
-        )
-        st.markdown("#### Recommended next action")
-        st.info(report.next_action)
-
-    with tab_skills:
-        section_title("Skills", "Distinct evidence assessments by capability.")
-        _render_skill_bars(report)
-
-    with tab_matrix:
-        section_title("Competency Matrix", "Editable pre-interview, interview and consolidated competency assessment.")
-        _render_competency_matrix(report, session)
+        _render_competency_overview(report, session)
+        with st.expander("Open full dynamic competency matrix", expanded=False):
+            _render_competency_matrix(report, session)
+        with st.expander("Open detailed skill evidence", expanded=False):
+            _render_skill_bars(report)
 
     with tab_evidence:
-        section_title("Evidence", "Traceable evidence supporting each capability assessment.")
-        _render_evidence(report)
+        evidence_tab, risks_tab, interview_tab = st.tabs([
+            "Evidence",
+            "Risks",
+            "Interview focus",
+        ])
+        with evidence_tab:
+            _render_evidence(report)
+        with risks_tab:
+            _render_risks(report)
+        with interview_tab:
+            _render_interview_focus(report)
 
-    with tab_risks:
-        section_title("Risks", "Candidate-specific risks, uncertainties and validation points.")
-        _render_risks(report)
+    with tab_governance:
+        with st.expander("Explainable Mission Fit", expanded=True):
+            _render_explainable_scoring(report)
 
-    with tab_interview:
-        section_title("Interview Focus", "A personalised validation plan linked to evidence and risk signals.")
-        _render_interview_focus(report)
+        executive_brief = ExecutiveDecisionIntelligenceService().build(decision_brief)
+        decision_center = ExecutiveDecisionCenterService().build(
+            report,
+            intelligence,
+            executive_brief,
+            peer_reports=reports,
+        )
+
+        with st.expander("AI Executive Advisor", expanded=False):
+            _render_executive_advisor(executive_brief, center=decision_center)
+        with st.expander("Executive Decision Center", expanded=False):
+            _render_executive_decision_center(decision_center)
