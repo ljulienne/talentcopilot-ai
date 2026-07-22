@@ -21,9 +21,6 @@ from talentcopilot.services.recruitment_workflow_state import get_workflow_conte
 from talentcopilot.ui.design_system.components import enterprise_hero, insight_card, metric_grid, section_title
 from talentcopilot.ui.design_system.theme import apply_enterprise_theme
 from talentcopilot.ui.navigation_actions import request_page
-from talentcopilot.ui.recruitment_workflow_shell import render_recruitment_workflow_shell
-
-
 def _render_skill_bars(report):
     import streamlit as st
 
@@ -662,10 +659,6 @@ def render_candidate_workspace():
     if not reports:
         return
 
-    render_recruitment_workflow_shell(
-        session,
-        current_page="Candidate Intelligence",
-    )
 
     display_reports = sorted(
         reports,

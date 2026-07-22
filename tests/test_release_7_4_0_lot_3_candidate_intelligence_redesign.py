@@ -23,7 +23,7 @@ def _report():
 def test_candidate_intelligence_uses_decision_first_structure():
     assert 'Decision snapshot' in SOURCE
     assert 'Prepare interview →' in SOURCE
-    assert 'render_recruitment_workflow_shell' in SOURCE
+    assert 'render_recruitment_workflow_shell' not in SOURCE
     assert 'current_page="Candidate Intelligence"' in SOURCE
 
 
