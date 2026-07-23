@@ -2,6 +2,11 @@ from talentcopilot.ui.design_system.foundations import COLORS, RADIUS, SHADOWS, 
 
 
 def apply_enterprise_theme():
+    """Apply the shared premium presentation layer.
+
+    The function is intentionally import-safe outside Streamlit and contains no
+    business logic.
+    """
     try:
         import streamlit as st
     except ImportError:
@@ -12,57 +17,180 @@ def apply_enterprise_theme():
         <style>
         :root {{
             --tc-primary: {COLORS["primary"]};
+            --tc-primary-strong: {COLORS["primary_strong"]};
             --tc-secondary: {COLORS["secondary"]};
             --tc-ai: {COLORS["ai"]};
+            --tc-success: {COLORS["success"]};
+            --tc-warning: {COLORS["warning"]};
+            --tc-danger: {COLORS["danger"]};
+            --tc-info: {COLORS["info"]};
             --tc-bg: {COLORS["background"]};
             --tc-surface: {COLORS["surface"]};
+            --tc-surface-subtle: {COLORS["surface_subtle"]};
             --tc-text: {COLORS["text"]};
             --tc-muted: {COLORS["muted"]};
             --tc-border: {COLORS["border"]};
+            --tc-border-strong: {COLORS["border_strong"]};
         }}
-        html, body, [class*="css"] {{ font-family: {TYPOGRAPHY["font_family"]}; }}
+        html, body, [class*="css"] {{
+            font-family: {TYPOGRAPHY["font_family"]};
+            color: var(--tc-text);
+        }}
         .stApp {{
-            background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 32rem),
-                        linear-gradient(180deg, #F8FAFC 0%, #EEF2FF 100%);
+            background:
+                radial-gradient(circle at 6% 0%, rgba(79,70,229,.08), transparent 30rem),
+                radial-gradient(circle at 94% 5%, rgba(14,165,233,.07), transparent 28rem),
+                linear-gradient(180deg, #FAFBFF 0%, var(--tc-bg) 100%);
         }}
-        .block-container {{ max-width: 1280px; padding-top: 1.4rem; padding-bottom: 3rem; }}
+        .block-container {{
+            max-width: 1240px;
+            padding-top: 1.15rem;
+            padding-bottom: 3.5rem;
+        }}
+        [data-testid="stSidebar"] {{
+            border-right: 1px solid var(--tc-border);
+            background: rgba(255,255,255,.96);
+        }}
+        [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {{
+            color: var(--tc-muted);
+        }}
+        h1, h2, h3 {{ letter-spacing: -.025em; }}
+        p, li {{ line-height: 1.58; }}
         .tc-card {{
-            background: var(--tc-surface);
+            background: rgba(255,255,255,.96);
             border: 1px solid var(--tc-border);
             border-radius: {RADIUS["lg"]};
-            box-shadow: {SHADOWS["md"]};
-            padding: 1.15rem;
+            box-shadow: {SHADOWS["sm"]};
+            padding: 1.15rem 1.2rem;
             margin-bottom: 1rem;
         }}
+        .tc-card:hover {{
+            border-color: var(--tc-border-strong);
+            box-shadow: {SHADOWS["md"]};
+        }}
         .tc-hero {{
-            background: linear-gradient(135deg, #0F172A 0%, #1D4ED8 58%, #7C3AED 100%);
+            position: relative;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 85% 20%, rgba(255,255,255,.18), transparent 16rem),
+                linear-gradient(135deg, #111827 0%, #312E81 52%, #4F46E5 100%);
             color: white;
-            border-radius: 26px;
-            padding: 1.8rem;
-            margin-bottom: 1.25rem;
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: {RADIUS["xl"]};
+            padding: 1.65rem 1.75rem;
+            margin-bottom: 1.15rem;
             box-shadow: {SHADOWS["lg"]};
         }}
-        .tc-hero h1 {{ margin: 0 0 0.35rem 0; font-size: {TYPOGRAPHY["h1"]}; letter-spacing: -0.045em; }}
-        .tc-hero p {{ margin: 0; opacity: 0.88; font-size: 1rem; max-width: 780px; }}
-        .tc-badge {{
-            display: inline-flex; align-items: center; border-radius: 999px;
-            padding: 0.25rem 0.7rem; background: rgba(255,255,255,0.14);
-            border: 1px solid rgba(255,255,255,0.18); font-size: 0.78rem;
-            font-weight: 700; margin-bottom: 0.75rem;
+        .tc-hero h1 {{
+            margin: 0 0 .38rem 0;
+            font-size: {TYPOGRAPHY["h1"]};
+            line-height: 1.08;
+            letter-spacing: -.045em;
         }}
-        .tc-section-title {{ font-size: 1.05rem; font-weight: 800; color: var(--tc-text); margin: 1.15rem 0 0.6rem 0; }}
+        .tc-hero p {{
+            margin: 0;
+            opacity: .88;
+            font-size: .98rem;
+            max-width: 790px;
+        }}
+        .tc-badge, .tc-status {{
+            display: inline-flex;
+            align-items: center;
+            gap: .36rem;
+            border-radius: {RADIUS["pill"]};
+            padding: .28rem .68rem;
+            font-size: .76rem;
+            font-weight: 750;
+            line-height: 1.2;
+            border: 1px solid transparent;
+        }}
+        .tc-badge {{
+            margin-bottom: .7rem;
+            background: rgba(255,255,255,.13);
+            border-color: rgba(255,255,255,.18);
+        }}
+        .tc-section-title {{
+            font-size: {TYPOGRAPHY["h3"]};
+            font-weight: 800;
+            color: var(--tc-text);
+            margin: 1.25rem 0 .2rem 0;
+        }}
+        .tc-section-subtitle {{
+            color: var(--tc-muted);
+            font-size: .86rem;
+            margin: 0 0 .72rem 0;
+        }}
         .tc-muted {{ color: var(--tc-muted); }}
         .tc-insight {{
-            border-left: 4px solid var(--tc-ai); background: white; border-radius: 16px;
-            padding: 0.95rem 1rem; margin-bottom: 0.65rem;
-            border-top: 1px solid var(--tc-border); border-right: 1px solid var(--tc-border);
+            position: relative;
+            border: 1px solid #DDD6FE;
+            background: linear-gradient(135deg, #FFFFFF 0%, #FAF5FF 100%);
+            border-radius: {RADIUS["lg"]};
+            padding: 1rem 1.05rem;
+            margin-bottom: .75rem;
+            box-shadow: {SHADOWS["sm"]};
+        }}
+        .tc-insight:before {{
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 14px;
+            bottom: 14px;
+            width: 4px;
+            border-radius: 0 999px 999px 0;
+            background: linear-gradient(180deg, var(--tc-ai), var(--tc-primary));
+        }}
+        .tc-activity {{
+            display: flex;
+            gap: .75rem;
+            padding: .8rem 0;
             border-bottom: 1px solid var(--tc-border);
         }}
-        .tc-activity {{ display: flex; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--tc-border); }}
-        .tc-status {{
-            display: inline-flex; align-items: center; padding: 0.22rem 0.55rem;
-            border-radius: 999px; font-weight: 700; font-size: 0.78rem;
+        div[data-testid="stMetric"] {{
+            background: rgba(255,255,255,.94);
             border: 1px solid var(--tc-border);
+            border-radius: {RADIUS["md"]};
+            padding: .85rem .95rem;
+            box-shadow: {SHADOWS["sm"]};
+        }}
+        div[data-testid="stMetric"] label {{ color: var(--tc-muted); }}
+        div[data-testid="stMetricValue"] {{ letter-spacing: -.035em; }}
+        div[data-testid="stExpander"] {{
+            border: 1px solid var(--tc-border);
+            border-radius: {RADIUS["md"]};
+            background: rgba(255,255,255,.9);
+            overflow: hidden;
+        }}
+        div[data-testid="stDataFrame"] {{
+            border: 1px solid var(--tc-border);
+            border-radius: {RADIUS["md"]};
+            overflow: hidden;
+        }}
+        .stButton > button {{
+            border-radius: 11px;
+            min-height: 2.55rem;
+            font-weight: 750;
+            transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+        }}
+        .stButton > button:hover {{ transform: translateY(-1px); }}
+        .stButton > button[kind="primary"] {{
+            background: linear-gradient(135deg, var(--tc-primary-strong), var(--tc-primary));
+            border: 0;
+            box-shadow: 0 8px 22px rgba(79,70,229,.23);
+        }}
+        .stButton > button:focus-visible {{ box-shadow: {SHADOWS["focus"]}; }}
+        .stTabs [data-baseweb="tab-list"] {{
+            gap: .35rem;
+            border-bottom: 1px solid var(--tc-border);
+        }}
+        .stTabs [data-baseweb="tab"] {{
+            border-radius: 10px 10px 0 0;
+            font-weight: 700;
+        }}
+        @media (max-width: 760px) {{
+            .block-container {{ padding-left: 1rem; padding-right: 1rem; }}
+            .tc-hero {{ padding: 1.3rem 1.2rem; border-radius: 19px; }}
+            .tc-card {{ padding: 1rem; }}
         }}
         </style>
         ''',

@@ -3,9 +3,9 @@ from talentcopilot.ui.design_system.theme import apply_enterprise_theme
 
 
 def test_design_system_tokens():
-    assert COLORS["primary"] == "#2563EB"
+    assert COLORS["primary"] == "#4F46E5"
     assert COLORS["ai"] == "#7C3AED"
-    assert COLORS["background"] == "#F8FAFC"
+    assert COLORS["background"] == '#F6F7FB'
 
 
 def test_design_system_theme_callable():
