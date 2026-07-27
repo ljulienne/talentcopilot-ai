@@ -77,6 +77,7 @@ def _render_strategy(report, questions):
 
 def _render_live_evaluation(session, report, candidate_id: str):
     import streamlit as st
+    from talentcopilot.ui.competency_star import render_competency_star
 
     service = InterviewIntelligenceProService()
     candidate_key = f"{getattr(session, 'session_id', 'session')}:{candidate_id or report.candidate_name}"
@@ -87,6 +88,9 @@ def _render_live_evaluation(session, report, candidate_id: str):
         "Capture recruiter observations and candidate evidence. This evaluation does not alter "
         "the official matching score, official rank, or AI confidence."
     )
+
+    competency_star_slot = st.empty()
+    live_assessments = []
 
     ratings = []
     for index, competency in enumerate(report.competencies[:7]):
@@ -130,6 +134,16 @@ def _render_live_evaluation(session, report, candidate_id: str):
                 else:
                     st.success("The answer covers the expected STAR and evidence dimensions.")
 
+            live_assessments.append(
+                {
+                    "competency": competency.name,
+                    "score": recruiter_score,
+                    "evidence_confirmed": confirmed,
+                    "answer": answer,
+                    "notes": notes,
+                }
+            )
+
             ratings.append(
                 service.build_rating(
                     competency=competency.name,
@@ -139,6 +153,14 @@ def _render_live_evaluation(session, report, candidate_id: str):
                     notes=notes or answer,
                 )
             )
+
+    with competency_star_slot.container():
+        st.markdown("### Competency Star")
+        render_competency_star(
+            report.competencies,
+            live_assessments=live_assessments,
+            key=f"competency-star:{candidate_key}",
+        )
 
     if st.button("Generate post-interview recommendation", type="primary", key=f"evaluate:{candidate_key}"):
         outcome = service.evaluate(report.candidate_name, ratings)
