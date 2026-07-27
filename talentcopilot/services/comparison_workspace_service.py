@@ -1,4 +1,5 @@
 from talentcopilot.recruitment_source_of_truth import RecruitmentSourceOfTruthService
+from talentcopilot.services.candidate_ordering import sort_by_official_rank
 from talentcopilot.models.comparison_workspace import (
     ComparisonCandidate,
     ComparisonWorkspaceReport,
@@ -28,8 +29,8 @@ class ComparisonWorkspaceService:
             for item in getattr(session, "analyses", [])
         }
 
-        for record in sorted(source.candidates, key=lambda item: item.interview_priority)[:5]:
-            analysis = analyses_by_id.get(record.candidate_id)
+        for record in sort_by_official_rank(source.candidates)[:5]:
+            analysis = analyses_by_id.get(str(record.candidate_id))
             if analysis is None:
                 continue
 
@@ -40,7 +41,7 @@ class ComparisonWorkspaceService:
 
             candidates.append(
                 ComparisonCandidate(
-                    rank=record.interview_priority,
+                    rank=int(record.mission_rank or 0),
                     candidate_name=record.candidate_name,
                     match_score=score,
                     decision_score=record.decision_score,

@@ -1,7 +1,12 @@
 from talentcopilot.services.decision_board_service import DecisionBoardService
 from talentcopilot.services.demo_session_factory import create_demo_recruitment_session
 from talentcopilot.services.streamlit_session_bridge import get_streamlit_session, set_streamlit_session
-from talentcopilot.services.recruitment_workflow_state import get_workflow_context, save_final_decision
+from talentcopilot.services.recruitment_workflow_state import (
+    get_workflow_context,
+    save_final_decision,
+    select_workflow_candidate,
+)
+from talentcopilot.services.candidate_ordering import sort_by_official_rank
 from talentcopilot.ui.design_system.components import enterprise_hero, insight_card, metric_grid, section_title
 from talentcopilot.ui.design_system.theme import apply_enterprise_theme
 
@@ -34,27 +39,162 @@ def render_decision_board():
         st.info("Complete candidate analysis and finalist comparison before recording a decision.")
         return
 
-    context = get_workflow_context(session, current_page="Decision Board")
-    ids_by_name = _candidate_id_by_name(session)
-    finalists = set(context.finalist_candidate_ids or context.shortlisted_candidate_ids)
-    candidates = [item for item in report.candidates if not finalists or ids_by_name.get(item.candidate_name) in finalists]
+    context = get_workflow_context(
+        session,
+        current_page="Decision Board",
+    )
+
+    ids_by_name = _candidate_id_by_name(
+        session
+    )
+
+    finalists = set(
+        context.finalist_candidate_ids
+        or context.shortlisted_candidate_ids
+    )
+
+    candidates = [
+        candidate
+        for candidate in report.candidates
+        if (
+            not finalists
+            or ids_by_name.get(
+                candidate.candidate_name
+            ) in finalists
+        )
+    ]
+
+    candidates = sort_by_official_rank(
+        candidates
+    )
 
     if len(candidates) < 1:
-        st.warning("No finalist is available. Return to Comparison and select finalists first.")
+        st.warning(
+            "No finalist is available. "
+            "Return to Comparison and select "
+            "finalists first."
+        )
         return
-    if not context.finalists_compared:
-        st.warning("The finalist comparison has not been confirmed yet. You can review evidence, but the final decision remains incomplete.")
 
-    names = [item.candidate_name for item in candidates]
-    default_index = 0
-    if context.final_decision_candidate_id:
-        selected_name = next((name for name in names if ids_by_name.get(name) == context.final_decision_candidate_id), None)
-        if selected_name:
-            default_index = names.index(selected_name)
-    selected = st.selectbox("Decision candidate", names, index=default_index, key="decision_candidate_name")
-    candidate = candidates[names.index(selected)]
-    candidate_id = ids_by_name.get(selected, "")
-    evaluation = context.interview_evaluations.get(candidate_id, {})
+    if not context.finalists_compared:
+        st.warning(
+            "The finalist comparison has not "
+            "been confirmed yet. You can review "
+            "evidence, but the final decision "
+            "remains incomplete."
+        )
+
+    candidates_by_id = {
+        ids_by_name.get(
+            candidate.candidate_name,
+            "",
+        ): candidate
+        for candidate in candidates
+        if ids_by_name.get(
+            candidate.candidate_name,
+            "",
+        )
+    }
+
+    option_ids = list(
+        candidates_by_id
+    )
+
+    if not option_ids:
+        st.error(
+            "The finalist candidate identities "
+            "could not be resolved."
+        )
+        return
+
+    preferred_id = (
+        context.final_decision_candidate_id
+        if (
+            context.final_decision_candidate_id
+            in option_ids
+        )
+        else context.selected_candidate_id
+        if (
+            context.selected_candidate_id
+            in option_ids
+        )
+        else option_ids[0]
+    )
+
+    selection_key = (
+        "decision_candidate_id"
+    )
+
+    selection_context_key = (
+        "decision_candidate_context"
+    )
+
+    selection_context = (
+        str(
+            getattr(
+                session,
+                "session_id",
+                "session",
+            )
+        ),
+        tuple(option_ids),
+        preferred_id,
+    )
+
+    if (
+        st.session_state.get(
+            selection_context_key
+        )
+        != selection_context
+    ):
+        st.session_state[
+            selection_context_key
+        ] = selection_context
+
+        st.session_state[
+            selection_key
+        ] = preferred_id
+
+    elif (
+        st.session_state.get(
+            selection_key
+        )
+        not in option_ids
+    ):
+        st.session_state[
+            selection_key
+        ] = preferred_id
+
+    candidate_id = st.selectbox(
+        "Decision candidate",
+        option_ids,
+        key=selection_key,
+        format_func=lambda selected_id: (
+            f"#{candidates_by_id[selected_id].rank} "
+            f"{candidates_by_id[selected_id].candidate_name}"
+        ),
+    )
+
+    candidate_id = str(
+        candidate_id
+    )
+
+    candidate = candidates_by_id[
+        candidate_id
+    ]
+
+    select_workflow_candidate(
+        candidate_id,
+        candidate.candidate_name,
+        source_widget_key=selection_key,
+    )
+
+    evaluation = (
+        context.interview_evaluations.get(
+            candidate_id,
+            {},
+        )
+    )
 
     metric_grid([
         ("Candidate", candidate.candidate_name, f"Official rank #{candidate.rank}"),

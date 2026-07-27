@@ -5,6 +5,7 @@ from talentcopilot.interview.question_service import InterviewQuestionService
 from talentcopilot.interview.workspace_service import InterviewWorkspaceService
 from talentcopilot.services.interview_report_pdf_service import InterviewReportPdfService
 from talentcopilot.services.streamlit_session_bridge import get_streamlit_session
+from talentcopilot.services.candidate_ordering import sort_by_official_rank
 from talentcopilot.services.recruitment_workflow_state import (
     get_workflow_context,
     save_interview_evaluation,
@@ -259,14 +260,8 @@ def render_interview_intelligence():
         st.info("No candidate analysis is available for interview preparation.")
         return
 
-    reports = sorted(
-        reports,
-        key=lambda item: (
-            int(getattr(item, "official_rank", 9999) or 9999),
-            -float(getattr(item, "fit_score", 0) or 0),
-            item.candidate_name.casefold(),
-            str(getattr(item, "candidate_id", "")),
-        ),
+    reports = sort_by_official_rank(
+        reports
     )
     reports_by_id = {
         str(getattr(report, "candidate_id", "") or report.candidate_name): report
@@ -278,15 +273,41 @@ def render_interview_intelligence():
     workflow_context = get_workflow_context(session, current_page="Interview Intelligence")
     preferred_id = workflow_context.selected_candidate_id
     preferred_option = preferred_id if preferred_id in option_ids else option_ids[0]
-    context = (
-        str(getattr(session, "session_id", "session")),
+    selection_context = (
+        str(
+            getattr(
+                session,
+                "session_id",
+                "session",
+            )
+        ),
         tuple(option_ids),
+        preferred_option,
     )
-    if st.session_state.get(context_key) != context:
-        st.session_state[context_key] = context
-        st.session_state[selection_key] = preferred_option
-    elif preferred_id in option_ids and st.session_state.get(selection_key) not in option_ids:
-        st.session_state[selection_key] = preferred_id
+
+    if (
+        st.session_state.get(
+            context_key
+        )
+        != selection_context
+    ):
+        st.session_state[
+            context_key
+        ] = selection_context
+
+        st.session_state[
+            selection_key
+        ] = preferred_option
+
+    elif (
+        st.session_state.get(
+            selection_key
+        )
+        not in option_ids
+    ):
+        st.session_state[
+            selection_key
+        ] = preferred_option
 
     selected_id = st.selectbox(
         "Candidate",
@@ -297,8 +318,43 @@ def render_interview_intelligence():
             f"{reports_by_id[candidate_id].candidate_name}"
         ),
     )
-    report = reports_by_id[selected_id]
-    select_workflow_candidate(selected_id, report.candidate_name)
+    selected_id = str(
+        selected_id
+    )
+
+    report = reports_by_id.get(
+        selected_id
+    )
+
+    if report is None:
+        st.error(
+            "The selected candidate could not "
+            "be resolved from the active "
+            "recruitment session."
+        )
+        return
+
+    resolved_report_id = str(
+        getattr(
+            report,
+            "candidate_id",
+            "",
+        )
+        or report.candidate_name
+    )
+
+    if resolved_report_id != selected_id:
+        st.error(
+            "Candidate context mismatch detected. "
+            "Reload the active recruitment session."
+        )
+        return
+
+    select_workflow_candidate(
+        selected_id,
+        report.candidate_name,
+        source_widget_key=selection_key,
+    )
 
     metric_grid([
         ("Candidate", report.candidate_name, f"Official rank #{report.official_rank} · {report.role_title}"),

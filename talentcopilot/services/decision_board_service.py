@@ -1,4 +1,5 @@
 from talentcopilot.recruitment_source_of_truth import RecruitmentSourceOfTruthService
+from talentcopilot.services.candidate_ordering import sort_by_official_rank
 from talentcopilot.models.decision_board import (
     CandidateDecisionSummary,
     DecisionBoardReport,
@@ -77,6 +78,10 @@ class DecisionBoardService:
                     risks=risks,
                 )
             )
+
+        candidates = sort_by_official_rank(
+            candidates
+        )
 
         return DecisionBoardReport(
             role_title=getattr(session, "role_title", "Recruitment"),

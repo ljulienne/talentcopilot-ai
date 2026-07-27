@@ -39,19 +39,74 @@ def save_workflow_context(context: RecruitmentWorkflowContext) -> RecruitmentWor
     return context
 
 
-def select_workflow_candidate(candidate_id: str, candidate_name: str = "") -> None:
+def select_workflow_candidate(
+    candidate_id: str,
+    candidate_name: str = "",
+    *,
+    source_widget_key: str = "",
+) -> None:
+    """
+    Synchronize the canonical workflow candidate.
+
+    A widget that already exists in the current
+    Streamlit run may reject a session-state
+    assignment. Such a failure must not block
+    synchronization of the other workspaces.
+    """
+
     try:
         import streamlit as st
-        context = st.session_state.get(WORKFLOW_CONTEXT_KEY)
-        if not isinstance(context, RecruitmentWorkflowContext):
-            context = RecruitmentWorkflowContext()
-        context.select_candidate(candidate_id, candidate_name)
-        context.mark_completed("candidate")
-        st.session_state[WORKFLOW_CONTEXT_KEY] = context
-        st.session_state["candidate_intelligence_candidate_id"] = candidate_id
-        st.session_state["interview_intelligence_candidate_id"] = candidate_id
     except Exception:
-        pass
+        return
+
+    context = st.session_state.get(
+        WORKFLOW_CONTEXT_KEY
+    )
+
+    if not isinstance(
+        context,
+        RecruitmentWorkflowContext,
+    ):
+        context = (
+            RecruitmentWorkflowContext()
+        )
+
+    candidate_id = str(
+        candidate_id or ""
+    )
+
+    candidate_name = str(
+        candidate_name or ""
+    )
+
+    context.select_candidate(
+        candidate_id,
+        candidate_name,
+    )
+
+    context.mark_completed(
+        "candidate"
+    )
+
+    st.session_state[
+        WORKFLOW_CONTEXT_KEY
+    ] = context
+
+    destination_keys = (
+        "candidate_intelligence_candidate_id",
+        "interview_intelligence_candidate_id",
+    )
+
+    for widget_key in destination_keys:
+        if widget_key == source_widget_key:
+            continue
+
+        try:
+            st.session_state[
+                widget_key
+            ] = candidate_id
+        except Exception:
+            continue
 
 
 def save_interview_evaluation(candidate_id: str, evaluation: dict) -> RecruitmentWorkflowContext:
