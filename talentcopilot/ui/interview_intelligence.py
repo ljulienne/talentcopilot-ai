@@ -76,58 +76,160 @@ def _render_strategy(report, questions):
                 st.write(f"- {item}")
 
 
+def _resolve_candidate_competency_matrix(session, candidate_id: str):
+    from talentcopilot.services.candidate_workspace_service import CandidateWorkspaceService
+    from talentcopilot.services.competency_matrix_service import CompetencyMatrixService
+
+    candidate_reports = CandidateWorkspaceService().build_all(session)
+    candidate_report = next(
+        (
+            item
+            for item in candidate_reports
+            if str(getattr(item, "candidate_id", "") or item.candidate_name)
+            == str(candidate_id)
+        ),
+        None,
+    )
+    if candidate_report is None:
+        return None, CompetencyMatrixService()
+    service = CompetencyMatrixService()
+    return service.build(candidate_report, session), service
+
+
 def _render_live_evaluation(session, report, candidate_id: str):
     import streamlit as st
+
     from talentcopilot.ui.competency_star import render_competency_star
 
-    service = InterviewIntelligenceProService()
+    interview_service = InterviewIntelligenceProService()
+    matrix, matrix_service = _resolve_candidate_competency_matrix(session, candidate_id)
+    if matrix is None:
+        st.error("The role-aligned competency matrix could not be built for this candidate.")
+        return
+
     candidate_key = f"{getattr(session, 'session_id', 'session')}:{candidate_id or report.candidate_name}"
     outcome_key = f"{OUTCOME_PREFIX}{candidate_key}"
+    evaluator = st.text_input(
+        "Evaluator",
+        value=matrix.finalized_by or "Recruiter",
+        key=f"competency-evaluator:{candidate_key}",
+    )
 
-    section_title("Live interview evidence")
+    section_title("Role-aligned competency evaluation")
     st.caption(
-        "Capture recruiter observations and candidate evidence. This evaluation does not alter "
-        "the official matching score, official rank, or AI confidence."
+        "The role expectations come from the job description and remain fixed. "
+        "Adjust only the candidate assessment, capture supporting evidence, and save "
+        "a versioned post-interview radar. Official fit and rank are never recalculated."
     )
 
     competency_star_slot = st.empty()
     live_assessments = []
-
     ratings = []
-    for index, competency in enumerate(report.competencies[:7]):
-        safe_key = f"{candidate_key}:{index}"
-        with st.expander(competency.name, expanded=index == 0):
+    updates = {}
+
+    active_competencies = matrix.active_competencies()
+    if not active_competencies:
+        st.warning("No active role competency is available for this interview.")
+        return
+
+    for index, competency in enumerate(active_competencies):
+        safe_key = f"{candidate_key}:{competency.competency_id}:{index}"
+        origin_label = "Job requirement" if competency.is_job_requirement else "Interview-added"
+        with st.expander(
+            f"{competency.competency_name} · {origin_label}",
+            expanded=index == 0,
+        ):
+            if competency.is_job_requirement:
+                st.caption(
+                    f"Required {competency.required_level:.1f}/5 · "
+                    f"Pre-interview estimate {competency.ai_estimated_level:.1f}/5 · "
+                    f"Confidence {competency.confidence}"
+                )
+                st.caption(competency.evidence)
+            else:
+                renamed = st.text_input(
+                    "Competency name",
+                    value=competency.competency_name,
+                    key=f"rename:{safe_key}",
+                )
+                rename_col, archive_col = st.columns(2)
+                with rename_col:
+                    if st.button("Rename competency", key=f"rename-button:{safe_key}"):
+                        try:
+                            if matrix_service.rename_competency(
+                                matrix,
+                                competency.competency_id,
+                                renamed,
+                                evaluator=evaluator,
+                            ):
+                                st.success("Competency renamed.")
+                                st.rerun()
+                        except ValueError as exc:
+                            st.error(str(exc))
+                with archive_col:
+                    if st.button("Remove competency", key=f"archive-button:{safe_key}"):
+                        matrix_service.remove_competency(
+                            matrix,
+                            competency.competency_id,
+                            evaluator=evaluator,
+                            reason="Removed by the evaluator during the interview.",
+                        )
+                        st.success("Interview-added competency removed from the active radar.")
+                        st.rerun()
+
             answer = st.text_area(
                 "Candidate answer / evidence",
+                value=competency.interview_evidence,
                 key=f"answer:{safe_key}",
-                height=130,
-                placeholder="Capture the context, personal responsibility, actions, results and measurable evidence…",
+                height=120,
+                placeholder="Capture context, personal responsibility, actions, results and measurable evidence…",
             )
             col1, col2 = st.columns(2)
             with col1:
+                default_level = (
+                    competency.interviewer_level
+                    if competency.interviewer_level is not None
+                    else competency.ai_estimated_level
+                )
                 recruiter_score = st.slider(
-                    "Recruiter rating",
-                    min_value=1,
-                    max_value=5,
-                    value=3,
+                    "Evaluator level",
+                    min_value=0.0,
+                    max_value=5.0,
+                    value=float(max(0.0, min(5.0, default_level))),
+                    step=0.1,
                     key=f"rating:{safe_key}",
                 )
             with col2:
-                confirmed = st.checkbox(
-                    "Evidence confirmed",
-                    key=f"confirmed:{safe_key}",
+                statuses = list(matrix_service.VALIDATION_STATUSES)
+                current_status = (
+                    competency.validation_status
+                    if competency.validation_status in statuses
+                    else "To validate"
                 )
-            notes = st.text_input(
-                "Recruiter notes",
-                key=f"notes:{safe_key}",
-                placeholder="Optional decision-relevant note",
-            )
+                validation_status = st.selectbox(
+                    "Validation status",
+                    statuses,
+                    index=statuses.index(current_status),
+                    key=f"status:{safe_key}",
+                )
 
-            star = service.assess_star(answer)
-            st.progress(star.completeness_score / 100, text=f"STAR evidence completeness: {star.completeness_score}%")
+            notes = st.text_area(
+                "Evaluator notes",
+                value=competency.comment,
+                key=f"notes:{safe_key}",
+                height=80,
+                placeholder="Decision-relevant evidence or remaining uncertainty",
+            )
+            confirmed = validation_status == "Confirmed"
+
+            star = interview_service.assess_star(answer)
+            st.progress(
+                star.completeness_score / 100,
+                text=f"STAR evidence completeness: {star.completeness_score}%",
+            )
             if answer:
                 st.caption(star.evidence_summary)
-                follow_ups = service.suggest_follow_ups(star, competency.name)
+                follow_ups = interview_service.suggest_follow_ups(star, competency.competency_name)
                 if follow_ups:
                     st.markdown("**Suggested follow-up questions**")
                     for prompt in follow_ups:
@@ -137,50 +239,152 @@ def _render_live_evaluation(session, report, candidate_id: str):
 
             live_assessments.append(
                 {
-                    "competency": competency.name,
+                    "competency": competency.competency_name,
                     "score": recruiter_score,
                     "evidence_confirmed": confirmed,
                     "answer": answer,
                     "notes": notes,
                 }
             )
-
             ratings.append(
-                service.build_rating(
-                    competency=competency.name,
+                interview_service.build_rating(
+                    competency=competency.competency_name,
                     answer=answer,
-                    recruiter_score=recruiter_score,
+                    recruiter_score=max(1, min(5, round(recruiter_score))),
                     evidence_confirmed=confirmed,
                     notes=notes or answer,
                 )
             )
+            updates[competency.competency_id] = {
+                "interviewer_level": recruiter_score,
+                "validation_status": validation_status,
+                "comment": notes,
+                "interview_evidence": answer,
+            }
 
     with competency_star_slot.container():
-        st.markdown("### Competency Star")
+        st.markdown("### Competency Star — role-aligned radar")
         render_competency_star(
-            report.competencies,
+            matrix.active_competencies(),
             live_assessments=live_assessments,
             key=f"competency-star:{candidate_key}",
         )
 
-    if st.button("Generate post-interview recommendation", type="primary", key=f"evaluate:{candidate_key}"):
-        outcome = service.evaluate(report.candidate_name, ratings)
-        st.session_state[outcome_key] = outcome
-        save_interview_evaluation(
-            candidate_id,
-            {
-                "candidate_id": candidate_id,
-                "candidate_name": report.candidate_name,
-                "recommendation": outcome.recommendation.label,
-                "overall_score": outcome.overall_score,
-                "evidence_coverage": outcome.evidence_coverage,
-                "confidence": outcome.recommendation.confidence,
-                "rationale": list(outcome.recommendation.rationale),
-                "remaining_risks": list(outcome.recommendation.remaining_risks),
-                "next_step": outcome.recommendation.next_step,
-            },
+    with st.expander("Add a competency discovered during the interview", expanded=False):
+        new_name = st.text_input(
+            "New competency",
+            key=f"new-competency:{candidate_key}",
+            placeholder="Example: Vendor Management",
         )
-        st.success("Interview assessment saved to the active recruitment workflow.")
+        new_level = st.slider(
+            "Initial evaluator level",
+            0.0,
+            5.0,
+            3.0,
+            0.1,
+            key=f"new-level:{candidate_key}",
+        )
+        new_comment = st.text_area(
+            "Why is it relevant?",
+            key=f"new-comment:{candidate_key}",
+            placeholder="Evidence observed during the interview",
+        )
+        if st.button("Add to competency radar", key=f"add-competency:{candidate_key}"):
+            try:
+                matrix_service.add_competency(
+                    matrix,
+                    new_name,
+                    evaluator=evaluator,
+                    interviewer_level=new_level,
+                    comment=new_comment,
+                )
+                st.success("Competency added to the interview radar.")
+                st.rerun()
+            except ValueError as exc:
+                st.error(str(exc))
+
+    save_col, final_col = st.columns(2)
+    with save_col:
+        if st.button(
+            "Save interview draft",
+            key=f"save-draft:{candidate_key}",
+            use_container_width=True,
+        ):
+            matrix_service.update(
+                matrix,
+                updates,
+                evaluator=evaluator,
+                rationale="Live interview competency assessment",
+                status="interview_in_progress",
+            )
+            st.success(f"Interview competency draft saved · version {matrix.matrix_version}.")
+
+    with final_col:
+        if st.button(
+            "Generate post-interview recommendation & save radar",
+            type="primary",
+            key=f"evaluate:{candidate_key}",
+            use_container_width=True,
+        ):
+            matrix_service.update(
+                matrix,
+                updates,
+                evaluator=evaluator,
+                rationale="Final interview competency assessment",
+                status="interview_in_progress",
+            )
+            matrix_service.finalize(matrix, evaluator=evaluator)
+            outcome = interview_service.evaluate(report.candidate_name, ratings)
+            st.session_state[outcome_key] = outcome
+            save_interview_evaluation(
+                candidate_id,
+                {
+                    "candidate_id": candidate_id,
+                    "candidate_name": report.candidate_name,
+                    "recommendation": outcome.recommendation.label,
+                    "overall_score": outcome.overall_score,
+                    "evidence_coverage": outcome.evidence_coverage,
+                    "confidence": outcome.recommendation.confidence,
+                    "rationale": list(outcome.recommendation.rationale),
+                    "remaining_risks": list(outcome.recommendation.remaining_risks),
+                    "next_step": outcome.recommendation.next_step,
+                    "competency_matrix_version": matrix.matrix_version,
+                    "competency_matrix_status": matrix.status,
+                    "post_interview_radar": [
+                        {
+                            "competency_id": item.competency_id,
+                            "competency": item.competency_name,
+                            "origin": item.origin,
+                            "required_level": item.required_level,
+                            "pre_interview_level": item.ai_estimated_level,
+                            "post_interview_level": item.interviewer_level,
+                            "validation_status": item.validation_status,
+                            "comment": item.comment,
+                            "interview_evidence": item.interview_evidence,
+                        }
+                        for item in matrix.active_competencies()
+                    ],
+                },
+            )
+            st.success(
+                f"Post-interview competency radar saved · version {matrix.matrix_version}."
+            )
+
+    archived = [item for item in matrix.competencies if not item.is_active]
+    if archived:
+        with st.expander(f"Removed interview-added competencies ({len(archived)})"):
+            for item in archived:
+                st.write(f"**{item.competency_name}** — {item.removed_reason or 'Archived'}")
+                if not item.is_job_requirement and st.button(
+                    f"Restore {item.competency_name}",
+                    key=f"restore:{candidate_key}:{item.competency_id}",
+                ):
+                    matrix_service.restore_competency(
+                        matrix,
+                        item.competency_id,
+                        evaluator=evaluator,
+                    )
+                    st.rerun()
 
     outcome = st.session_state.get(outcome_key)
     if outcome is None:
@@ -189,14 +393,14 @@ def _render_live_evaluation(session, report, candidate_id: str):
     section_title("Post-interview decision support")
     metric_grid([
         ("Recommendation", outcome.recommendation.label, "Based only on captured interview evidence"),
-        ("Interview score", f"{outcome.overall_score:.2f}/5", "Recruiter scorecard average"),
+        ("Interview score", f"{outcome.overall_score:.2f}/5", "Evaluator scorecard average"),
         ("Evidence coverage", f"{outcome.evidence_coverage}%", "Competencies explicitly confirmed"),
         ("Recommendation confidence", f"{outcome.recommendation.confidence}%", "Evidence and STAR completeness"),
     ])
 
     insight_card(
         "Executive interview summary",
-        service.build_executive_summary(outcome),
+        interview_service.build_executive_summary(outcome),
         "Explainable recommendation",
     )
 
@@ -235,7 +439,6 @@ def _render_live_evaluation(session, report, candidate_id: str):
         mime="application/pdf",
         key=f"download:{candidate_key}",
     )
-
 
 def render_interview_intelligence():
     import streamlit as st

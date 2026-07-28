@@ -46,63 +46,72 @@ def _render_skill_bars(report):
 
 
 def _render_competency_matrix(report, session):
-    import streamlit as st
     import pandas as pd
-    import plotly.graph_objects as go
+    import streamlit as st
+
+    from talentcopilot.ui.competency_star import render_competency_star
 
     service = CompetencyMatrixService()
     matrix = service.build(report, session)
+    competencies = matrix.active_competencies()
 
     st.caption(
-        "AI estimates are evidence-based starting points on a 0–5 scale. "
-        "Interview assessments are stored separately and never overwrite the initial estimate."
+        "The radar axes come only from the current job requirements. Role expectations "
+        "remain fixed; the pre-interview candidate profile is estimated from CV evidence."
     )
 
-    labels = [item.competency_name for item in matrix.competencies]
-    ai_values = [item.ai_estimated_level for item in matrix.competencies]
-    assessed_values = [item.effective_level() for item in matrix.competencies]
-    if labels:
-        figure = go.Figure()
-        figure.add_trace(go.Scatterpolar(r=ai_values + [ai_values[0]], theta=labels + [labels[0]], fill="toself", name="AI estimate"))
-        if any(item.interviewer_level is not None for item in matrix.competencies):
-            figure.add_trace(go.Scatterpolar(r=assessed_values + [assessed_values[0]], theta=labels + [labels[0]], fill="toself", name="Consolidated"))
-        figure.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 5])), showlegend=True, height=520, margin=dict(l=40, r=40, t=40, b=40))
-        st.plotly_chart(figure, use_container_width=True)
+    st.markdown("### Role-aligned Competency Radar")
+    render_competency_star(
+        competencies,
+        key=f"candidate-competency-radar:{matrix.job_id}:{matrix.candidate_id}",
+    )
 
     rows = []
-    for item in matrix.competencies:
+    for item in competencies:
+        post_level = item.interviewer_level
+        comparison_level = post_level if post_level is not None else item.ai_estimated_level
         rows.append({
             "Competency": item.competency_name,
+            "Origin": "Job requirement" if item.is_job_requirement else "Interview-added",
             "Importance": item.importance,
-            "Required": item.required_level,
-            "AI estimate": item.ai_estimated_level,
-            "Interview": item.interviewer_level,
-            "Consolidated": item.effective_level(),
+            "Required": item.required_level if item.is_job_requirement else None,
+            "Pre-interview": item.ai_estimated_level,
+            "Post-interview": post_level,
             "Confidence": item.confidence,
-            "Status": item.validation_status,
-            "Gap": round(item.effective_level() - item.required_level, 1),
+            "Validation": item.validation_status,
+            "Gap vs role": round(comparison_level - item.required_level, 1) if item.is_job_requirement else None,
         })
     st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
-    with st.expander("Update interview assessment", expanded=False):
-        evaluator = st.text_input("Evaluator", value="Recruiter", key=f"matrix_evaluator_{matrix.candidate_id}")
-        updates = {}
-        for item in matrix.competencies:
-            st.markdown(f"**{item.competency_name}** — AI {item.ai_estimated_level}/5 · Required {item.required_level}/5")
-            level = st.slider("Interview level", 0.0, 5.0, float(item.interviewer_level if item.interviewer_level is not None else item.ai_estimated_level), 0.1, key=f"matrix_level_{matrix.candidate_id}_{item.competency_id}")
-            status = st.selectbox("Validation status", ["To validate", "Partially confirmed", "Confirmed", "Not demonstrated"], index=["To validate", "Partially confirmed", "Confirmed", "Not demonstrated"].index(item.validation_status) if item.validation_status in ["To validate", "Partially confirmed", "Confirmed", "Not demonstrated"] else 0, key=f"matrix_status_{matrix.candidate_id}_{item.competency_id}")
-            comment = st.text_area("Comment", value=item.comment, key=f"matrix_comment_{matrix.candidate_id}_{item.competency_id}")
-            updates[item.competency_id] = {"interviewer_level": level, "validation_status": status, "comment": comment}
-            st.caption(item.evidence)
-            st.divider()
-        if st.button("Save competency assessment", type="primary", key=f"save_matrix_{matrix.candidate_id}"):
-            service.update(matrix, updates, evaluator=evaluator, rationale="Candidate interview assessment")
-            st.success(f"Competency matrix saved · version {matrix.matrix_version}")
+    if matrix.status == "post_interview":
+        st.success(
+            f"Post-interview radar saved · version {matrix.matrix_version} · "
+            f"evaluator {matrix.finalized_by or 'Human evaluator'}."
+        )
+    else:
+        st.info(
+            "This pre-interview radar is read-only here. Human adjustments are recorded "
+            "in Interview Intelligence so the original CV-based estimate remains traceable."
+        )
+        if st.button(
+            "Open Interview Intelligence to evaluate →",
+            key=f"open_interview_matrix_{matrix.candidate_id}",
+            use_container_width=True,
+        ):
+            request_page(
+                "Interview Intelligence",
+                reason="Open the role-aligned competency evaluation for this candidate.",
+            )
             st.rerun()
 
     if matrix.audit_history:
-        with st.expander(f"Audit history ({len(matrix.audit_history)})"):
-            st.dataframe([entry.__dict__ for entry in matrix.audit_history], use_container_width=True, hide_index=True)
+        with st.expander(f"Assessment audit history ({len(matrix.audit_history)})"):
+            st.dataframe(
+                [entry.__dict__ for entry in matrix.audit_history],
+                use_container_width=True,
+                hide_index=True,
+            )
+
 
 def _render_evidence(report):
     import streamlit as st
@@ -598,15 +607,16 @@ def _render_competency_overview(report, session) -> None:
     import streamlit as st
 
     matrix = CompetencyMatrixService().build(report, session)
+    competencies = matrix.active_competencies()
     demonstrated = sum(
-        1 for item in matrix.competencies
+        1 for item in competencies
         if item.effective_level() >= item.required_level
     )
     partial = sum(
-        1 for item in matrix.competencies
+        1 for item in competencies
         if 0 < item.required_level - item.effective_level() <= 1
     )
-    missing = max(0, len(matrix.competencies) - demonstrated - partial)
+    missing = max(0, len(competencies) - demonstrated - partial)
 
     metric_grid([
         ("Demonstrated", str(demonstrated), "At or above required level"),
@@ -614,7 +624,7 @@ def _render_competency_overview(report, session) -> None:
         ("To validate", str(missing), "Material gap or missing evidence"),
     ])
 
-    for item in matrix.competencies:
+    for item in competencies:
         gap = item.effective_level() - item.required_level
         if gap >= 0:
             status = "Demonstrated"
