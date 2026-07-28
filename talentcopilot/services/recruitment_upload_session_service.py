@@ -35,6 +35,7 @@ from talentcopilot.calibrated_scoring import CalibratedMissionScoringEngine
 from talentcopilot.comparative_ranking import ComparativeRankingEngine
 from talentcopilot.career_intelligence import CareerFitEngine
 from talentcopilot.decision_ranking import DecisionRankingPolicy
+from talentcopilot.technical_requirements import TechnicalRequirementService
 
 
 class RecruitmentUploadSessionService:
@@ -156,11 +157,20 @@ class RecruitmentUploadSessionService:
 
         role_title = str(getattr(output, "role_title", "Recruitment") or "Recruitment")
         job_document = report.job_document
+        job_text = str(getattr(job_document, "text", "") or "")
+        technical_catalog = TechnicalRequirementService().extract(
+            job_text,
+            fallback=self._extract_skills(job_text),
+        )
         job = {
             "title": role_title,
             "source": getattr(job_document, "filename", "uploaded-job"),
-            "raw_text": getattr(job_document, "text", ""),
-            "required_skills": self._extract_skills(getattr(job_document, "text", "")),
+            "raw_text": job_text,
+            "required_skills": self._extract_skills(job_text),
+            # Unified presentation/evaluation source of truth. These exact
+            # requirements do not alter the official score already computed.
+            "technical_requirements": [item.to_dict() for item in technical_catalog],
+            "technical_requirement_engine_version": TechnicalRequirementService.VERSION,
         }
 
         provenance = build_provenance(

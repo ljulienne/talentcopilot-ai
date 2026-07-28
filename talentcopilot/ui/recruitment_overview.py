@@ -208,12 +208,12 @@ def _competency_coverage_chart(view: RecruitmentOverview, mode: str):
             textposition="outside",
             cliponaxis=False,
             marker=dict(color="#0EA5E9"),
-            hovertemplate="%{y}: %{x}% of candidates meet the expected level<extra></extra>",
+            hovertemplate="%{y}: %{x}% average pool alignment<extra></extra>",
         )
     )
     fig.update_xaxes(range=[0, 108], ticksuffix="%", gridcolor="#E2E8F0", zeroline=False)
     fig.update_yaxes(automargin=True)
-    fig.update_layout(title=dict(text="Role requirements covered by the pool", x=0.0, font=dict(size=15)))
+    fig.update_layout(title=dict(text="Average role-requirement alignment across the pool", x=0.0, font=dict(size=15)))
     return _plotly_layout(fig, height=max(320, 48 * max(5, len(items))))
 
 
@@ -385,7 +385,7 @@ def render_recruitment_overview() -> None:
         st.markdown(
             "- **Official role fit** is the canonical score and ranking already stored in the recruitment session.\n"
             "- **Competency alignment** compares estimated or assessed levels with the levels expected in the job description.\n"
-            "- **Pool coverage** shows the share of candidates meeting each role requirement.\n"
+            "- **Pool alignment** is the average of the exact values displayed in the competency heatmap.\n"
             "- **Interview progress** shows how much of the role-aligned competency assessment has been completed."
         )
 

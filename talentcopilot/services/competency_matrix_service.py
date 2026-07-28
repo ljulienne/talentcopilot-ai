@@ -12,6 +12,7 @@ from talentcopilot.models.competency_matrix import (
     CompetencyAssessment,
     CompetencyAuditEntry,
 )
+from talentcopilot.technical_requirements import TechnicalRequirementService
 
 
 class CompetencyMatrixService:
@@ -40,6 +41,7 @@ class CompetencyMatrixService:
 
     def __init__(self, storage_dir: str | Path | None = None):
         self.storage_dir = Path(storage_dir or ".talentcopilot_data/competency_matrices")
+        self.technical_requirements = TechnicalRequirementService()
 
     def build(self, report, session=None) -> CandidateCompetencyMatrix:
         job = dict(getattr(session, "job", {}) or {}) if session is not None else {}
@@ -56,19 +58,30 @@ class CompetencyMatrixService:
             for skill in skills
             if str(getattr(skill, "name", "") or "").strip()
         }
+        candidate = self._candidate(session, report)
         requirements = self._role_requirements(job, skills)
+        evidence_lookup = {
+            self._slug(requirement["name"]): self.technical_requirements.evaluate_candidate(
+                requirement, candidate
+            )
+            for requirement in requirements
+            if str(requirement.get("requirement_kind") or "general_capability")
+            != "general_capability"
+        }
 
         existing = self.load(candidate_id, job_id)
         if existing is not None:
-            changed = self._synchronise_role_requirements(existing, requirements, skill_lookup)
-            self._merge_current_evidence(existing, skill_lookup)
+            changed = self._synchronise_role_requirements(
+                existing, requirements, skill_lookup, evidence_lookup
+            )
+            self._merge_current_evidence(existing, skill_lookup, evidence_lookup)
             if changed:
                 existing.updated_at = self._utc_now()
                 self.save(existing, snapshot=False)
             return existing
 
         competencies = [
-            self._assessment_from_requirement(requirement, skill_lookup)
+            self._assessment_from_requirement(requirement, skill_lookup, evidence_lookup)
             for requirement in requirements
         ]
 
@@ -371,6 +384,10 @@ class CompetencyMatrixService:
         return rows
 
     def _role_requirements(self, job: Mapping, skills: list) -> list[dict]:
+        catalog = self.technical_requirements.catalog(job)
+        if catalog.requirements:
+            return [item.to_dict() for item in catalog.requirements]
+
         raw = (
             job.get("required_skills")
             or job.get("competencies")
@@ -415,7 +432,7 @@ class CompetencyMatrixService:
                     }
                 )
 
-        return requirements[:10]
+        return requirements[: self.technical_requirements.MAX_RADAR_AXES]
 
     def _normalise_requirement(self, value) -> dict | None:
         if isinstance(value, Mapping):
@@ -445,6 +462,12 @@ class CompetencyMatrixService:
                 "required_level": required_level,
                 "importance": importance,
                 "category": category,
+                "family": str(value.get("family") or "Role requirement"),
+                "requirement_kind": str(value.get("requirement_kind") or "general_capability"),
+                "source_excerpt": str(value.get("source_excerpt") or ""),
+                "aliases": tuple(value.get("aliases") or (name,)),
+                "related_terms": tuple(value.get("related_terms") or ()),
+                "interview_priority": str(value.get("interview_priority") or "Validate"),
             }
 
         name = str(value or "").strip()
@@ -455,12 +478,40 @@ class CompetencyMatrixService:
             "required_level": self.DEFAULT_REQUIRED_LEVEL,
             "importance": "Critical",
             "category": self._category(name),
+            "family": "Role requirement",
+            "requirement_kind": "general_capability",
+            "source_excerpt": "",
+            "aliases": (name,),
+            "related_terms": (),
+            "interview_priority": "Validate",
         }
 
-    def _assessment_from_requirement(self, requirement: dict, skill_lookup: dict) -> CompetencyAssessment:
+    def _assessment_from_requirement(
+        self, requirement: dict, skill_lookup: dict, evidence_lookup: dict
+    ) -> CompetencyAssessment:
         name = requirement["name"]
         skill = skill_lookup.get(self._slug(name))
-        ai_level = self._ai_level(skill)
+        technical_evidence = evidence_lookup.get(self._slug(name))
+        ai_level = (
+            float(technical_evidence.estimated_level)
+            if technical_evidence is not None
+            else self._ai_level(skill)
+        )
+        confidence = (
+            technical_evidence.confidence
+            if technical_evidence is not None
+            else str(getattr(skill, "confidence", "Low") if skill is not None else "Low")
+        )
+        evidence_status = (
+            technical_evidence.evidence_status
+            if technical_evidence is not None
+            else str(getattr(skill, "status", "Not demonstrated") if skill is not None else "Not demonstrated")
+        )
+        evidence = (
+            technical_evidence.evidence
+            if technical_evidence is not None
+            else str(getattr(skill, "evidence", "") if skill is not None else f"No direct evidence of {name} was identified in the current CV data.")
+        )
         return CompetencyAssessment(
             competency_id=self._slug(name),
             competency_name=name,
@@ -468,22 +519,21 @@ class CompetencyMatrixService:
             importance=requirement["importance"],
             required_level=requirement["required_level"],
             ai_estimated_level=ai_level,
-            confidence=str(getattr(skill, "confidence", "Low") if skill is not None else "Low"),
-            evidence_status=str(
-                getattr(skill, "status", "Not demonstrated")
-                if skill is not None
-                else "Not demonstrated"
-            ),
-            evidence=str(
-                getattr(skill, "evidence", "")
-                if skill is not None
-                else f"No direct evidence of {name} was identified in the current CV data."
-            ),
+            confidence=confidence,
+            evidence_status=evidence_status,
+            evidence=evidence,
             consolidated_level=ai_level,
             origin="job_requirement",
+            requirement_family=str(requirement.get("family") or "Role requirement"),
+            requirement_kind=str(requirement.get("requirement_kind") or "general_capability"),
+            source_excerpt=str(requirement.get("source_excerpt") or ""),
+            related_evidence=list(technical_evidence.related_evidence if technical_evidence else ()),
+            interview_priority=(technical_evidence.interview_priority if technical_evidence else str(requirement.get("interview_priority") or "Validate")),
         )
 
-    def _synchronise_role_requirements(self, matrix, requirements, skill_lookup) -> bool:
+    def _synchronise_role_requirements(
+        self, matrix, requirements, skill_lookup, evidence_lookup
+    ) -> bool:
         changed = False
         by_id = {item.competency_id: item for item in matrix.competencies}
         required_ids: set[str] = set()
@@ -494,16 +544,21 @@ class CompetencyMatrixService:
             current = by_id.get(competency_id)
             if current is None:
                 matrix.competencies.append(
-                    self._assessment_from_requirement(requirement, skill_lookup)
+                    self._assessment_from_requirement(requirement, skill_lookup, evidence_lookup)
                 )
                 changed = True
                 continue
             if current.origin != "job_requirement":
                 continue
-            for field_name in ("competency_name", "required_level", "importance", "category"):
-                new_value = requirement[
-                    "name" if field_name == "competency_name" else field_name
-                ]
+            for field_name in (
+                "competency_name", "required_level", "importance", "category",
+                "requirement_family", "requirement_kind", "source_excerpt", "interview_priority",
+            ):
+                source_key = {
+                    "competency_name": "name",
+                    "requirement_family": "family",
+                }.get(field_name, field_name)
+                new_value = requirement.get(source_key, getattr(current, field_name))
                 if getattr(current, field_name) != new_value:
                     setattr(current, field_name, new_value)
                     changed = True
@@ -524,22 +579,43 @@ class CompetencyMatrixService:
                         changed = True
         return changed
 
-    def _merge_current_evidence(self, matrix, skill_lookup):
+    def _merge_current_evidence(self, matrix, skill_lookup, evidence_lookup):
         for item in matrix.competencies:
             if item.origin != "job_requirement":
                 continue
+            technical_evidence = evidence_lookup.get(item.competency_id)
             skill = skill_lookup.get(item.competency_id)
+            if technical_evidence is not None:
+                item.evidence = technical_evidence.evidence
+                item.confidence = technical_evidence.confidence
+                item.evidence_status = technical_evidence.evidence_status
+                item.related_evidence = list(technical_evidence.related_evidence)
+                item.interview_priority = technical_evidence.interview_priority
+                if item.interviewer_level is None and matrix.status == "pre_interview":
+                    item.ai_estimated_level = float(technical_evidence.estimated_level)
+                    item.consolidated_level = item.ai_estimated_level
+                continue
             if skill is None:
                 continue
             item.evidence = str(getattr(skill, "evidence", item.evidence) or item.evidence)
             item.confidence = str(getattr(skill, "confidence", item.confidence) or item.confidence)
             item.evidence_status = str(getattr(skill, "status", item.evidence_status) or item.evidence_status)
-            # The immutable pre-interview estimate is refreshed only while the
-            # matrix has not yet been assessed by a human.
             if item.interviewer_level is None and matrix.status == "pre_interview":
                 item.ai_estimated_level = self._ai_level(skill)
                 item.consolidated_level = item.ai_estimated_level
         return matrix
+
+    def _candidate(self, session, report) -> dict:
+        if session is None:
+            return {}
+        candidate_id = str(getattr(report, "candidate_id", "") or "")
+        candidate_name = str(getattr(report, "candidate_name", "") or "")
+        for candidate in getattr(session, "candidates", []) or []:
+            if candidate_id and str(candidate.get("candidate_id") or "") == candidate_id:
+                return dict(candidate)
+            if candidate_name and str(candidate.get("name") or "") == candidate_name:
+                return dict(candidate)
+        return {}
 
     def _ai_level(self, skill) -> float:
         if skill is None:

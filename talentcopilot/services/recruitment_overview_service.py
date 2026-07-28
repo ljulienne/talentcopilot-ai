@@ -273,9 +273,12 @@ class RecruitmentOverviewService:
             rows.append(
                 CompetencyCoverage(
                     competency=name,
-                    pre_interview_coverage=int(round(sum(value >= 100 for value in pre_values) * 100 / max(1, len(pre_values)))),
+                    # Use the same normalized values as the heatmap. A score of
+                    # 92% therefore contributes 92%, instead of disappearing
+                    # behind a binary 100%-only threshold.
+                    pre_interview_coverage=int(round(sum(pre_values) / max(1, len(pre_values)))),
                     post_interview_coverage=(
-                        int(round(sum(value >= 100 for value in post_values) * 100 / max(1, len(post_values))))
+                        int(round(sum(post_values) / max(1, len(post_values))))
                         if post_values
                         else None
                     ),

@@ -145,7 +145,14 @@ def _render_live_evaluation(session, report, candidate_id: str):
                     f"Pre-interview estimate {competency.ai_estimated_level:.1f}/5 · "
                     f"Confidence {competency.confidence}"
                 )
+                st.caption(
+                    f"{competency.evidence_status} · Interview action: {competency.interview_priority}"
+                )
                 st.caption(competency.evidence)
+                if competency.related_evidence:
+                    st.caption("Related evidence: " + ", ".join(competency.related_evidence))
+                if competency.source_excerpt:
+                    st.caption("Role source: " + competency.source_excerpt)
             else:
                 renamed = st.text_input(
                     "Competency name",

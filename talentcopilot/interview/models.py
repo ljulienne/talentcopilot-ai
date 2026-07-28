@@ -9,6 +9,12 @@ class InterviewCompetency:
     confidence: int
     validate_in_interview: bool
     rationale: str = ""
+    evidence_status: str = ""
+    requirement_kind: str = ""
+    importance: str = ""
+    source_excerpt: str = ""
+    related_evidence: List[str] = field(default_factory=list)
+    interview_priority: str = "Validate"
 
 
 @dataclass

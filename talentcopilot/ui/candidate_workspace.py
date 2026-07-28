@@ -73,15 +73,29 @@ def _render_competency_matrix(report, session):
         rows.append({
             "Competency": item.competency_name,
             "Origin": "Job requirement" if item.is_job_requirement else "Interview-added",
+            "Family": item.requirement_family or item.category,
             "Importance": item.importance,
             "Required": item.required_level if item.is_job_requirement else None,
             "Pre-interview": item.ai_estimated_level,
             "Post-interview": post_level,
+            "Evidence status": item.evidence_status,
             "Confidence": item.confidence,
+            "Interview action": item.interview_priority,
             "Validation": item.validation_status,
             "Gap vs role": round(comparison_level - item.required_level, 1) if item.is_job_requirement else None,
         })
     st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+    with st.expander("Technical requirement evidence and interview probes", expanded=False):
+        for item in competencies:
+            if not item.is_job_requirement:
+                continue
+            st.markdown(f"**{item.competency_name}** · {item.evidence_status} · {item.interview_priority}")
+            st.caption(item.evidence)
+            if item.related_evidence:
+                st.caption("Related evidence: " + ", ".join(item.related_evidence))
+            if item.source_excerpt:
+                st.caption("Role source: " + item.source_excerpt)
 
     if matrix.status == "post_interview":
         st.success(

@@ -30,6 +30,11 @@ class CompetencyAssessment:
     removed_reason: str = ""
     added_by: str = ""
     added_at: str = ""
+    requirement_family: str = ""
+    requirement_kind: str = ""
+    source_excerpt: str = ""
+    related_evidence: list[str] = field(default_factory=list)
+    interview_priority: str = "Validate"
 
     def effective_level(self) -> float:
         if self.interviewer_level is not None:

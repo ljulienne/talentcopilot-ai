@@ -4,6 +4,7 @@ from talentcopilot.interview.models import InterviewCompetency, InterviewWorkspa
 from talentcopilot.interview.plan_service import InterviewPlanService
 from talentcopilot.interview.question_service import InterviewQuestionService
 from talentcopilot.interview.readiness_service import InterviewReadinessService
+from talentcopilot.technical_requirements import TechnicalRequirementService
 
 
 class InterviewWorkspaceService:
@@ -23,7 +24,10 @@ class InterviewWorkspaceService:
         }
         job = getattr(session, "job", {}) or {}
         role_title = job.get("title") or getattr(session, "role_title", "Recruitment")
-        required_skills = [str(item) for item in job.get("required_skills", []) if str(item).strip()]
+        technical_service = TechnicalRequirementService()
+        technical_catalog = technical_service.catalog(job)
+        role_requirements = list(technical_catalog.requirements)
+        required_skills = [item.name for item in role_requirements]
 
         source_of_truth = RecruitmentSourceOfTruthService()
         snapshot = source_of_truth.get(session)
@@ -55,6 +59,7 @@ class InterviewWorkspaceService:
                     candidate,
                     role_title,
                     required_skills=required_skills,
+                    role_requirements=role_requirements,
                     candidate_id=str(record.candidate_id),
                     canonical_name=str(record.candidate_name),
                     official_rank=int(record.mission_rank or len(reports) + 1),
@@ -68,6 +73,7 @@ class InterviewWorkspaceService:
         candidate: dict,
         role_title: str,
         required_skills: list[str] | None = None,
+        role_requirements: list | None = None,
         candidate_id: str = "",
         canonical_name: str = "",
         official_rank: int = 0,
@@ -77,44 +83,80 @@ class InterviewWorkspaceService:
         achievements = [str(item) for item in candidate.get("achievements", []) if str(item).strip()]
         match_score = float(getattr(analysis, "match_score", 0) or 0)
 
-        competency_names = []
-        for skill in required_skills + candidate_skills:
-            if skill not in competency_names:
-                competency_names.append(skill)
-        if not competency_names:
-            competency_names = ["Leadership", "Communication", "Stakeholder Management"]
-
         competencies = []
-        candidate_skill_tokens = {skill.lower() for skill in candidate_skills}
-        for index, skill in enumerate(competency_names[:7]):
-            explicitly_present = skill.lower() in candidate_skill_tokens
-            evidence_excerpt = self._matching_evidence(skill, achievements)
-
-            if explicitly_present and evidence_excerpt:
-                evidence = "High"
-                confidence = 88
-                validate = index >= 3
-                rationale = f"The profile names {skill} and includes supporting achievement evidence."
-            elif explicitly_present:
-                evidence = "Medium"
-                confidence = 68
-                validate = True
-                rationale = f"The profile names {skill}, but scope, ownership and outcome remain insufficiently evidenced."
-            else:
-                evidence = "Low"
-                confidence = 38
-                validate = True
-                rationale = f"{skill} is relevant to the mission but is not explicitly demonstrated in the available CV evidence."
-
-            competencies.append(
-                InterviewCompetency(
-                    name=skill,
-                    evidence_level=evidence,
-                    confidence=confidence,
-                    validate_in_interview=validate,
-                    rationale=rationale,
+        technical_service = TechnicalRequirementService()
+        if role_requirements:
+            for requirement in list(role_requirements)[: technical_service.MAX_RADAR_AXES]:
+                evidence = technical_service.evaluate_candidate(requirement, candidate)
+                if evidence.evidence_status == "Direct evidence":
+                    evidence_level = "High" if evidence.confidence == "High" else "Medium"
+                    confidence = 88 if evidence.confidence == "High" else 72
+                    validate = evidence.interview_priority != "Confirm"
+                elif evidence.evidence_status == "Related evidence":
+                    evidence_level = "Medium"
+                    confidence = 52
+                    validate = True
+                else:
+                    evidence_level = "Low"
+                    confidence = 28
+                    validate = True
+                rationale = (
+                    f"{evidence.evidence_status}. {evidence.evidence} "
+                    f"Interview action: {evidence.interview_priority}."
                 )
-            )
+                competencies.append(
+                    InterviewCompetency(
+                        name=requirement.name,
+                        evidence_level=evidence_level,
+                        confidence=confidence,
+                        validate_in_interview=validate,
+                        rationale=rationale,
+                        evidence_status=evidence.evidence_status,
+                        requirement_kind=requirement.requirement_kind,
+                        importance=requirement.importance,
+                        source_excerpt=requirement.source_excerpt,
+                        related_evidence=list(evidence.related_evidence),
+                        interview_priority=evidence.interview_priority,
+                    )
+                )
+        else:
+            competency_names = []
+            for skill in required_skills + candidate_skills:
+                if skill not in competency_names:
+                    competency_names.append(skill)
+            if not competency_names:
+                competency_names = ["Leadership", "Communication", "Stakeholder Management"]
+
+            candidate_skill_tokens = {skill.lower() for skill in candidate_skills}
+            for index, skill in enumerate(competency_names[:7]):
+                explicitly_present = skill.lower() in candidate_skill_tokens
+                evidence_excerpt = self._matching_evidence(skill, achievements)
+
+                if explicitly_present and evidence_excerpt:
+                    evidence = "High"
+                    confidence = 88
+                    validate = index >= 3
+                    rationale = f"The profile names {skill} and includes supporting achievement evidence."
+                elif explicitly_present:
+                    evidence = "Medium"
+                    confidence = 68
+                    validate = True
+                    rationale = f"The profile names {skill}, but scope, ownership and outcome remain insufficiently evidenced."
+                else:
+                    evidence = "Low"
+                    confidence = 38
+                    validate = True
+                    rationale = f"{skill} is relevant to the mission but is not explicitly demonstrated in the available CV evidence."
+
+                competencies.append(
+                    InterviewCompetency(
+                        name=skill,
+                        evidence_level=evidence,
+                        confidence=confidence,
+                        validate_in_interview=validate,
+                        rationale=rationale,
+                    )
+                )
 
         confidence_score = int(sum(c.confidence for c in competencies) / max(1, len(competencies)))
         low_evidence = sum(c.evidence_level == "Low" for c in competencies)

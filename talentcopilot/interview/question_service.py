@@ -9,7 +9,7 @@ from talentcopilot.interview.models import InterviewCompetency, InterviewQuestio
 class InterviewQuestionService:
     """Build varied evidence-grounded questions without an LLM call."""
 
-    ENGINE_VERSION = "7.2.1-evidence-grounding"
+    ENGINE_VERSION = "7.6.0-technical-requirement-intelligence"
 
     _INTERNAL_EVIDENCE_LABELS = {
         "management scope",
@@ -81,6 +81,14 @@ class InterviewQuestionService:
             achievements=achievements,
             candidate_skills=candidate_skills,
         )
+        declared_status = str(getattr(competency, "evidence_status", "") or "")
+        if declared_status == "No direct evidence":
+            evidence_type = "gap"
+        elif declared_status == "Related evidence":
+            evidence_type = "related"
+        elif declared_status == "Direct evidence" and evidence_type == "gap":
+            evidence_type = "inference"
+        related_evidence = list(getattr(competency, "related_evidence", []) or [])
         archetype = self._archetype(name, index)
 
         question, expected, positives, warnings, follow_ups = self._question_pack(
@@ -90,6 +98,7 @@ class InterviewQuestionService:
             evidence=evidence,
             evidence_type=evidence_type,
             role_title=role_title,
+            related_evidence=related_evidence,
         )
 
         experience_note = (
@@ -122,6 +131,7 @@ class InterviewQuestionService:
         evidence: str,
         evidence_type: str,
         role_title: str,
+        related_evidence: list[str] | None = None,
     ):
         prefix = self._evidence_prefix(
             competency=competency,
@@ -129,6 +139,102 @@ class InterviewQuestionService:
             evidence=evidence,
             evidence_type=evidence_type,
         )
+
+        normalized_competency = competency.casefold()
+        related_label = ", ".join((related_evidence or [])[:4])
+
+        if "successfactors" in normalized_competency:
+            if evidence_type in {"gap", "related"}:
+                transfer = (
+                    f" Related HRIS experience was identified ({related_label})."
+                    if related_label else ""
+                )
+                return (
+                    prefix + transfer + " " +
+                    "The role requires strong SAP SuccessFactors and Core HR expertise. "
+                    "Describe any direct SuccessFactors experience that may be absent from the CV, including the systems, modules, interfaces and data flows involved. "
+                    "If you have none, explain which HRIS platform experience is genuinely transferable, "
+                    "which SuccessFactors modules you would need to master, and how you would de-risk a Core HR deployment.",
+                    [
+                        "Exact SuccessFactors modules and release scope, if any",
+                        "Personal configuration, migration or deployment responsibility",
+                        "Concrete comparison with another HRIS platform",
+                        "A credible learning and delivery risk-mitigation plan",
+                    ],
+                    [
+                        "Distinguishes direct product expertise from transferable HRIS experience",
+                        "Names Employee Central or other relevant modules precisely",
+                        "Explains data, integration and testing implications",
+                    ],
+                    [
+                        "Claims generic HRIS experience as equivalent product mastery",
+                        "Cannot name modules or platform-specific delivery risks",
+                        "Provides no credible transfer or upskilling plan",
+                    ],
+                    [
+                        "Which SuccessFactors module would create the steepest learning curve for you?",
+                        "How would you validate a Core HR data model before migration?",
+                        "Which prior platform decisions would not transfer to SuccessFactors?",
+                    ],
+                )
+
+        if "power bi" in normalized_competency:
+            return (
+                prefix +
+                "The role requires dynamic Power BI reporting from Core HR data. "
+                "Describe the most advanced Power BI solution you personally delivered: which source data and source systems, "
+                "data model, Power Query or DAX logic, security controls and HR KPIs did you own, and what decision changed because of the dashboard?",
+                [
+                    "Source systems and refresh architecture",
+                    "Personal ownership of Power Query, modelling or DAX",
+                    "Data-quality and access-control checks",
+                    "Decision impact and adoption metrics",
+                ],
+                [
+                    "Explains hands-on technical contribution rather than only sponsorship",
+                    "Connects Core HR data lineage to KPI definitions",
+                    "Describes validation, security and user adoption",
+                ],
+                [
+                    "Mentions Power BI only as a viewer or project label",
+                    "Cannot explain the data model or KPI calculation",
+                    "No evidence of data-quality validation",
+                ],
+                [
+                    "Which DAX measure or transformation was the most complex?",
+                    "How did you reconcile dashboard results with the source HRIS?",
+                    "What measurable decision or process improvement followed?",
+                ],
+            )
+
+        if "ai solutions" in normalized_competency or "artificial intelligence" in normalized_competency:
+            return (
+                prefix +
+                "The role includes developing AI solutions for HR processes. "
+                "Describe any AI, machine-learning or generative-AI use case you have personally helped design or deploy. "
+                "If you have not deployed one, propose a realistic HR use case and explain the data, privacy, bias, explainability, human-oversight and success-measure requirements.",
+                [
+                    "Specific HR problem and users",
+                    "Data inputs, model or solution approach",
+                    "Privacy, bias and human-oversight controls",
+                    "Pilot success metrics and deployment decision",
+                ],
+                [
+                    "Separates analytics, automation and genuine AI",
+                    "Defines a bounded use case with measurable value",
+                    "Addresses governance and human accountability",
+                ],
+                [
+                    "Uses AI as a vague label with no operating model",
+                    "Ignores sensitive HR data and bias risks",
+                    "Cannot define validation or success metrics",
+                ],
+                [
+                    "Which HR decision should never be fully automated?",
+                    "How would you test bias before a pilot goes live?",
+                    "Which metric would justify scaling the solution?",
+                ],
+            )
 
         if archetype == "technical":
             return (
@@ -366,6 +472,13 @@ class InterviewQuestionService:
 
     def _candidate_evidence_lines(self, candidate: dict) -> list[str]:
         lines: list[str] = []
+        raw_text = str(candidate.get("raw_text") or "").strip()
+        if raw_text:
+            lines.extend(
+                " ".join(line.split())
+                for line in raw_text.splitlines()
+                if len(" ".join(line.split())) >= 12
+            )
         for key in ("achievements", "responsibilities", "experience", "experiences"):
             value = candidate.get(key, [])
             if isinstance(value, str):
@@ -391,6 +504,19 @@ class InterviewQuestionService:
         achievements: list[str],
         candidate_skills: list[str],
     ) -> tuple[str, str]:
+        exact_phrases = self._evidence_phrases(competency)
+        exact_matching = [
+            item for item in achievements
+            if any(phrase in item.casefold() for phrase in exact_phrases)
+        ]
+        for item in exact_matching:
+            if self._is_verbatim_evidence(item):
+                phrase = next(
+                    (value for value in exact_phrases if value in item.casefold()),
+                    exact_phrases[0] if exact_phrases else "",
+                )
+                return self._excerpt_around(item, phrase), "verbatim"
+
         tokens = self._tokens(competency)
         matching = [
             item for item in achievements
@@ -408,6 +534,20 @@ class InterviewQuestionService:
             return competency, "inference"
         return "", "gap"
 
+    def _evidence_phrases(self, competency: str) -> tuple[str, ...]:
+        value = competency.casefold()
+        if "power bi" in value:
+            return ("power bi", "powerbi")
+        if "successfactors" in value:
+            return ("successfactors", "success factors")
+        if "ai solutions" in value or "artificial intelligence" in value:
+            return ("artificial intelligence", "generative ai", "machine learning", " ai ")
+        if "interfaces" in value or "technical delivery" in value:
+            return ("interface", "integration", "sit", "uat", "acceptance testing")
+        if "data quality" in value:
+            return ("data quality", "data accuracy", "data integrity", "data reliability")
+        return ()
+
     def _evidence_prefix(
         self,
         *,
@@ -422,6 +562,10 @@ class InterviewQuestionService:
             return (
                 f"Your experience suggests exposure to {competency}, but the available "
                 "evidence does not yet establish the exact scope or personal ownership. "
+            )
+        if evidence_type == "related":
+            return (
+                f"The CV contains related experience, but no direct evidence of {requirement or competency}. "
             )
         return (
             f"The CV provides limited detail about {requirement or competency}. "
@@ -454,6 +598,22 @@ class InterviewQuestionService:
         if left.casefold() == right.casefold():
             return True
         return bool(left_tokens and right_tokens and left_tokens.intersection(right_tokens))
+
+    def _excerpt_around(self, value: str, phrase: str, limit: int = 220) -> str:
+        clean = " ".join(str(value or "").split())
+        if not phrase:
+            return self._shorten(clean, limit)
+        index = clean.casefold().find(phrase.casefold())
+        if index < 0:
+            return self._shorten(clean, limit)
+        start = max(0, index - 70)
+        end = min(len(clean), index + len(phrase) + 130)
+        excerpt = clean[start:end].strip(" ,.;:-")
+        if start > 0:
+            excerpt = "…" + excerpt
+        if end < len(clean):
+            excerpt += "…"
+        return excerpt
 
     def _shorten(self, value: str, limit: int) -> str:
         clean = " ".join(str(value).split())
