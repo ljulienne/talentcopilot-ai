@@ -4,7 +4,7 @@ from collections.abc import Iterable, Mapping
 from typing import Any
 
 
-MAX_COMPETENCIES = 7
+DENSE_RADAR_THRESHOLD = 10
 
 
 def _read_value(item: Any, attribute: str, default: Any = None) -> Any:
@@ -49,7 +49,7 @@ def build_competency_star_data(
         item
         for item in list(competencies or [])
         if bool(_read_value(item, "is_active", True))
-    ][:MAX_COMPETENCIES]
+    ]
 
     live_lookup: dict[str, Mapping[str, Any]] = {}
     for assessment in live_assessments or []:
@@ -131,6 +131,13 @@ def build_competency_star_data(
         "has_required_profile": has_required_profile,
         "has_live_evidence": has_live_evidence,
         "has_post_interview": has_live_evidence,
+        "displayed_count": len(labels),
+        "is_dense": len(labels) > DENSE_RADAR_THRESHOLD,
+        "interview_added_count": sum(
+            1
+            for item in selected
+            if str(_read_value(item, "origin", "job_requirement")) == "interview_added"
+        ),
     }
 
 
@@ -269,6 +276,13 @@ def render_competency_star(
         st.caption(
             "The initial profile represents pre-interview evidence confidence. A human "
             "assessment appears after interview evidence is captured."
+        )
+
+    if data.get("is_dense"):
+        st.caption(
+            f"This radar displays all {data['displayed_count']} active competencies, including "
+            f"{data['interview_added_count']} added during the interview. Labels may be denser "
+            "when the assessment contains more than ten axes."
         )
 
     st.caption(

@@ -223,19 +223,26 @@ def _render_live_evaluation(session, report, candidate_id: str):
             confirmed = validation_status == "Confirmed"
 
             star = interview_service.assess_star(answer)
-            st.progress(
-                star.completeness_score / 100,
-                text=f"STAR evidence completeness: {star.completeness_score}%",
-            )
-            if answer:
+            if answer.strip():
+                st.progress(
+                    star.completeness_score / 100,
+                    text=f"STAR evidence completeness: {star.completeness_score}%",
+                )
                 st.caption(star.evidence_summary)
-                follow_ups = interview_service.suggest_follow_ups(star, competency.competency_name)
+                follow_ups = interview_service.suggest_follow_ups(
+                    star, competency.competency_name
+                )
                 if follow_ups:
                     st.markdown("**Suggested follow-up questions**")
                     for prompt in follow_ups:
                         st.write(f"- {prompt}")
                 else:
                     st.success("The answer covers the expected STAR and evidence dimensions.")
+            else:
+                st.caption(
+                    "STAR evidence completeness: not assessed — capture the candidate's "
+                    "answer or interview evidence to calculate it."
+                )
 
             live_assessments.append(
                 {

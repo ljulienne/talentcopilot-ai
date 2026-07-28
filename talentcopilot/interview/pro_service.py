@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from typing import Iterable, Mapping
 
 from talentcopilot.interview.pro_models import (
@@ -20,39 +21,73 @@ class InterviewIntelligenceProService:
     - recommendations remain explainable and reversible.
     """
 
-    ENGINE_VERSION = "4.7"
+    ENGINE_VERSION = "4.7.1"
 
     _SITUATION_MARKERS = (
+        # English
         "when ", "during ", "in my previous", "at ", "the context", "the situation",
         "we faced", "the project", "the programme", "the program",
+        # French (text is accent-normalised before matching)
+        "lorsque ", "quand ", "pendant ", "durant ", "lors d'", "dans le cadre", "dans mon precedent",
+        "dans mon ancienne", "au sein de", "chez ", "le contexte", "la situation",
+        "nous avons rencontre", "nous faisions face", "le projet", "le programme",
     )
     _TASK_MARKERS = (
+        # English
         "my responsibility", "i was responsible", "my objective", "my task",
         "i needed to", "i had to", "the goal", "i owned",
+        # French
+        "ma responsabilite", "j'etais responsable", "mon objectif", "ma mission",
+        "ma tache", "je devais", "j'ai du", "il fallait que je", "j'avais pour objectif",
+        "j'avais la responsabilite", "j'etais charge", "le but",
     )
     _ACTION_MARKERS = (
+        # English
         "i implemented", "i designed", "i led", "i created", "i analysed",
         "i analyzed", "i configured", "i decided", "i changed", "i built",
         "i negotiated", "i facilitated", "i resolved", "i introduced",
+        # French
+        "j'ai mis en place", "j'ai implemente", "j'ai concu", "j'ai pilote",
+        "j'ai dirige", "j'ai mene", "j'ai cree", "j'ai analyse", "j'ai configure",
+        "j'ai decide", "j'ai modifie", "j'ai construit", "j'ai negocie",
+        "j'ai anime", "j'ai facilite", "j'ai resolu", "j'ai introduit",
+        "j'ai deploye", "j'ai coordonne", "j'ai accompagne", "j'ai organise",
     )
     _RESULT_MARKERS = (
+        # English
         "result", "outcome", "improved", "reduced", "increased", "delivered",
         "achieved", "saved", "adoption", "completed", "launched", "went live",
+        # French
+        "resultat", "impact", "ameliore", "reduit", "augmente", "livre",
+        "atteint", "economise", "adoption", "termine", "lance", "mis en production",
+        "mise en production", "gain", "baisse", "hausse", "a permis", "nous avons obtenu",
     )
     _OWNERSHIP_MARKERS = (
-        "i ", "my ", "personally", "i owned", "i decided", "i led",
+        # English
+        " i ", " my ", "personally", "i owned", "i decided", "i led",
+        # French
+        " je ", " j'", " mon ", " ma ", " mes ", "personnellement",
+        "j'ai", "j'etais", "j'avais", "j'ai decide", "j'ai pilote",
     )
+
 
     def assess_star(self, answer: str) -> StarAssessment:
         text = " ".join(str(answer or "").strip().split())
-        lower = f" {text.lower()} "
+        lower = f" {self._normalise(text)} "
 
         situation = self._contains(lower, self._SITUATION_MARKERS)
         task = self._contains(lower, self._TASK_MARKERS)
         action = self._contains(lower, self._ACTION_MARKERS)
         result = self._contains(lower, self._RESULT_MARKERS)
         ownership = self._contains(lower, self._OWNERSHIP_MARKERS)
-        metrics = bool(re.search(r"\b\d+(?:[.,]\d+)?\s*(?:%|percent|days?|weeks?|months?|years?|k|m|million|hours?)?\b", lower))
+        metrics = bool(
+            re.search(
+                r"\b\d+(?:[.,]\d+)?\s*(?:%|percent|pour\s*cent|jours?|semaines?|"
+                r"mois|ans?|annees?|days?|weeks?|months?|years?|heures?|hours?|k|m|"
+                r"millions?|euros?|€)?\b",
+                lower,
+            )
+        )
 
         checks = {
             "Situation / context": situation,
@@ -200,6 +235,15 @@ class InterviewIntelligenceProService:
             f"{outcome.overall_score:.2f}/5 with {outcome.evidence_coverage}% evidence coverage. "
             f"Recommendation: {recommendation.label} ({recommendation.confidence}% confidence). "
             f"Remaining validation: {risks}"
+        )
+
+    @staticmethod
+    def _normalise(text: str) -> str:
+        value = str(text or "").replace("’", "'").replace("`", "'").casefold()
+        return "".join(
+            character
+            for character in unicodedata.normalize("NFKD", value)
+            if not unicodedata.combining(character)
         )
 
     @staticmethod
