@@ -4,6 +4,34 @@ All notable changes to TalentCopilot are documented here.
 
 ---
 
+## 7.7.1 — Evidence Grounding & False-Positive Guardrails
+
+### Fixed
+
+- Rejected names, email addresses, URLs, locations, employers and isolated job titles as transferable evidence.
+- Replaced detached entity labels with complete, source-grounded CV statements.
+- Added action/object/credential validation before assigning `Related evidence`.
+- Added honest fallback wording when no sufficiently grounded related evidence exists.
+- Regenerated embedded 7.7.0 requirement catalogues with the corrected 7.7.1 engine.
+- Removed job-advert marketing text, degree conditions and section headings from competency axes.
+- Merged acronym and long-form duplicates such as ICR / Individual Compensation Review.
+
+### Improved
+
+- SuccessFactors transferability now cites comparable HRIS implementation statements.
+- ICR transferability now cites Salary Review evidence when present.
+- Power BI direct evidence now prefers the strongest action statement over a tools list.
+- AI transferability prioritises Data Science or ML credentials over generic dashboard evidence.
+- Interview questions quote the grounded adjacent source rather than detached keywords.
+
+### Preserved
+
+- Domain-agnostic extraction and the multi-domain benchmark remain active.
+- Official role-fit scores and ranks remain immutable.
+- Saved post-interview ratings remain separate from the AI pre-interview estimate.
+
+---
+
 ## 7.7.0 — Domain-Agnostic Requirement Intelligence
 
 ### Added

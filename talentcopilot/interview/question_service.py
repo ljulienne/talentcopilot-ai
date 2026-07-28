@@ -10,7 +10,7 @@ class InterviewQuestionService:
     """Build varied evidence-grounded questions without an LLM call."""
 
     ENGINE_VERSION = "7.2.1-evidence-grounding"
-    REQUIREMENT_ENGINE_VERSION = "7.7.0-domain-agnostic-requirement-intelligence"
+    REQUIREMENT_ENGINE_VERSION = "7.7.1-grounded-evidence-guardrails"
 
     _INTERNAL_EVIDENCE_LABELS = {
         "management scope",
@@ -156,7 +156,8 @@ class InterviewQuestionService:
             evidence=evidence,
             evidence_type=evidence_type,
         )
-        related = ", ".join((related_evidence or [])[:4])
+        related_items = [str(item).strip() for item in (related_evidence or []) if str(item).strip()]
+        related = " | ".join(f'“{item[:180]}”' for item in related_items[:2])
         family = (requirement_family or "").casefold()
         kind = (requirement_kind or "").casefold()
         component_label = ", ".join((components or [])[:4]) or competency
@@ -193,7 +194,7 @@ class InterviewQuestionService:
             )
 
         if kind in {"technical_platform", "technical_tool"} and evidence_type in {"gap", "related"}:
-            transfer = f" The CV shows related experience with {related}." if related else ""
+            transfer = f" The CV contains grounded adjacent evidence: {related}." if related else ""
             return (
                 prefix + transfer + critical_note +
                 f" The role requires {component_label}. Describe any direct experience that may be absent from the CV. "

@@ -70,7 +70,9 @@ class DomainAgnosticRequirementExtractor:
         (
             "Project Leadership & Delivery", "Leadership & Delivery", "Programme Delivery",
             "delivery_capability", ("project management", "program management", "programme management",
-            "lead complex projects", "project leadership", "project planning", "project delivery",
+            "lead complex projects", "lead and coordinate complex projects", "complex hris projects",
+            "hris projects", "managing hris projects", "led hris projects",
+            "project leadership", "project planning", "project delivery",
             "manage projects", "coordinate projects"),
         ),
         (
@@ -93,13 +95,15 @@ class DomainAgnosticRequirementExtractor:
         (
             "Vendor & Stakeholder Management", "Leadership & Delivery", "Stakeholder Governance",
             "delivery_capability", ("vendor management", "supplier management", "solution providers",
-            "external providers", "integrators", "stakeholder management", "steering committee",
-            "project committee", "client management"),
+            "external providers", "integrators", "vendors", "suppliers",
+            "stakeholder management", "steering committee",
+            "project committee", "client management", "liaising with vendors"),
         ),
         (
             "Team Leadership & International Delivery", "Leadership & Delivery", "People Leadership",
             "leadership_capability", ("team leadership", "team management", "people management",
-            "manage a team", "managing a team", "supporting collaborators", "international environment",
+            "manage a team", "managing a team", "supporting collaborators", "team member",
+            "led and developed", "hired and led", "international environment",
             "international projects", "multi country", "multi-country", "global environment"),
         ),
         (
@@ -199,6 +203,7 @@ class DomainAgnosticRequirementExtractor:
         "configure", "configured", "deploy", "deployed", "lead", "led", "manage", "managed",
         "deliver", "delivered", "create", "created", "launch", "launched", "own", "owned",
         "test", "tested", "validate", "validated", "audit", "audited", "apply", "applied", "optimise", "optimize",
+        "liaise", "liaised", "liaising",
         "mis en place", "déploy", "conçu", "pilot", "lancé", "géré", "dirigé",
     )
 
@@ -210,6 +215,7 @@ class DomainAgnosticRequirementExtractor:
 
     _FAMILY_RULES = (
         ("HRIS Platforms", "Technology & HRIS", ("hris", "human resources", "core hr", "payroll", "talent management", "people system")),
+        ("Compensation & Rewards", "Human Resources", ("compensation", "salary review", "merit review", "reward", "pay review", "individual compensation")),
         ("Business Intelligence", "Data & Analytics", ("report", "dashboard", "business intelligence", "analytics", "kpi", "visualization", "visualisation")),
         ("Data & Databases", "Data & Analytics", ("database", "sql", "data warehouse", "data lake", "etl", "data model")),
         ("Applied Artificial Intelligence", "Innovation & Data", ("artificial intelligence", "machine learning", "generative ai", "data science", "predictive", "nlp", "intelligence artificielle")),
@@ -233,6 +239,14 @@ class DomainAgnosticRequirementExtractor:
         "CRM & Sales Platforms": ("Business Intelligence",),
         "Supply Chain Systems": ("Business Intelligence", "Data & Databases"),
         "Marketing Technology": ("Business Intelligence", "Data & Databases"),
+        "Programme Delivery": ("Project & Delivery Methods", "HRIS Platforms", "Software Engineering"),
+        "Integration & Testing": ("Software Engineering", "HRIS Platforms", "Cloud & DevOps"),
+        "Data Governance": ("Data & Databases", "Business Intelligence", "HRIS Platforms"),
+        "Change & Adoption": ("Project & Delivery Methods", "HRIS Platforms"),
+        "Stakeholder Governance": ("Project & Delivery Methods", "HRIS Platforms", "CRM & Sales Platforms"),
+        "People Leadership": ("Project & Delivery Methods",),
+        "Planning & Forecasting": ("Finance Systems", "Business Intelligence"),
+        "Operational Excellence": ("Quality & Operations", "Project & Delivery Methods"),
     }
 
     def extract(
@@ -323,7 +337,7 @@ class DomainAgnosticRequirementExtractor:
         return self._ADJACENT_FAMILIES.get(str(family or ""), ())
 
     def _deterministic(self, text: str, *, role_title: str, fallback: Iterable[object]) -> list[_RequirementDraft]:
-        lines = self._lines(text)
+        lines = self._role_content_lines(self._lines(text))
         domain = self._domain_label(role_title, text)
         drafts: list[_RequirementDraft] = []
 
@@ -338,6 +352,32 @@ class DomainAgnosticRequirementExtractor:
 
             importance, level = self._importance(line)
             context_terms = self._context_terms(line)
+
+            # Preserve acronym/full-name pairs as one grounded requirement
+            # (for example Individual Compensation Review (ICR)). This generic
+            # rule also prevents duplicate axes for the acronym and long form.
+            for acronym, phrase in self._parenthetical_terms(line):
+                family, category = self._family(line, phrase)
+                kind = self._kind(phrase, line, family)
+                display_name = f"{self._title_phrase(phrase)} ({acronym.upper()})"
+                drafts.append(
+                    _RequirementDraft(
+                        name=display_name,
+                        category=category,
+                        family=family,
+                        kind=kind,
+                        importance=importance,
+                        level=level,
+                        source=line,
+                        aliases=self._unique([acronym, phrase, display_name]),
+                        related=self._related_terms(line, phrase, family),
+                        components=self._unique([acronym, phrase]),
+                        context=context_terms,
+                        priority="Mandatory probe" if importance == "Critical" else "Validate",
+                        order=index,
+                        specificity=11,
+                    )
+                )
 
             # Explicit AI phrasing is a generic technology class rather than a
             # product-specific definition.
@@ -411,13 +451,18 @@ class DomainAgnosticRequirementExtractor:
                     continue
                 capability_matched = True
                 capability_name = self._domain_capability_name(name, domain, plain)
+                capability_importance = importance
+                capability_specificity = 5
+                if name == "Operational Excellence & Continuous Improvement" and set(matched).issubset({"process optimization", "process optimisation"}):
+                    capability_importance = "Supporting"
+                    capability_specificity = 3
                 drafts.append(
                     _RequirementDraft(
                         name=capability_name,
                         category=category,
                         family=family,
                         kind=kind,
-                        importance=importance,
+                        importance=capability_importance,
                         level=level,
                         source=line,
                         aliases=self._unique(list(patterns) + [capability_name]),
@@ -426,7 +471,7 @@ class DomainAgnosticRequirementExtractor:
                         context=context_terms,
                         priority="Mandatory probe" if importance == "Critical" else "Validate",
                         order=index,
-                        specificity=5,
+                        specificity=capability_specificity,
                     )
                 )
 
@@ -590,7 +635,10 @@ Return JSON only with this structure:
 
         selected: list[_RequirementDraft] = []
         family_counts: dict[str, int] = {}
+        precise_families = {item.family for item in ranked if item.specificity >= 8}
         for item in ranked:
+            if item.specificity <= 5 and item.family in precise_families:
+                continue
             if len(selected) >= limit:
                 break
             # Keep precise requirements; limit generic repetition within one family.
@@ -603,6 +651,8 @@ Return JSON only with this structure:
         if len(selected) < min(limit, 5):
             for item in ranked:
                 if item in selected:
+                    continue
+                if item.specificity <= 5 and item.family in precise_families:
                     continue
                 selected.append(item)
                 if len(selected) >= limit:
@@ -652,9 +702,16 @@ Return JSON only with this structure:
         # Containment is only used for precise product/method names in the
         # same family; broad token overlap would incorrectly merge distinct
         # dashboard axes such as data quality and reporting.
-        if left.family == right.family and left.specificity >= 8 and right.specificity >= 8:
-            if left_name in right_name or right_name in left_name:
+        if left.family == right.family:
+            if left.specificity >= 8 and right.specificity >= 8 and (left_name in right_name or right_name in left_name):
                 return True
+            # Merge acronym/full-name and nested functional phrases such as
+            # ICR / Individual Compensation / Individual Compensation Review.
+            for left_component in left_components or {left_name}:
+                for right_component in right_components or {right_name}:
+                    if min(len(left_component.split()), len(right_component.split())) >= 2:
+                        if left_component in right_component or right_component in left_component:
+                            return True
         return False
 
     def _to_requirement(self, item: _RequirementDraft) -> TechnicalRequirement:
@@ -774,6 +831,8 @@ Return JSON only with this structure:
         plain = self._plain(line)
         if any(self._plain(marker) in plain for marker in self._IMPORTANCE_PREFERRED):
             return "Supporting", 3.0
+        if plain.startswith(("contribute ", "participate ", "actively participate ", "support ")):
+            return "Supporting", 3.0
         if any(self._plain(marker) in plain for marker in self._IMPORTANCE_CRITICAL):
             return "Critical", 4.5
         if any(marker in plain for marker in ("lead", "design", "implement", "own", "ensure", "manage", "responsible")):
@@ -844,7 +903,7 @@ Return JSON only with this structure:
             return "functional_capability"
         if family == "Applied Artificial Intelligence":
             return "technical_innovation"
-        if family == "Market Experience":
+        if family in {"Market Experience", "Compensation & Rewards"}:
             return "functional_capability"
         if family in {"HRIS Platforms", "Finance Systems", "CRM & Sales Platforms", "Supply Chain Systems"}:
             return "technical_platform"
@@ -935,25 +994,87 @@ Return JSON only with this structure:
     def _looks_like_named_requirement(self, term: str, context: str) -> bool:
         clean = self._clean_phrase(term)
         plain = self._plain(clean)
+        context_plain = self._plain(context)
         if not clean:
+            return False
+        if clean[:1].islower():
             return False
         if any(language in plain.split() for language in ("english", "french", "german", "spanish", "mandarin", "chinese", "arabic", "italian")):
             return False
         if plain in {"roi", "kpi", "hr", "bi", "ai"}:
             return False
-        if re.match(r"^(?:lead|manage|design|ensure|support|provide|participate|carry|apply|own|build|create|launch)\b", clean, flags=re.I):
+        if re.fullmatch(r"(?:bac\s*\+?\s*\d|bachelor|master|mba|msc|phd|doctorate)", plain):
             return False
+        if re.search(r"\b(?:years?|ans?)\b", plain):
+            return False
+        if re.match(r"^(?:about|market|especially|best practices?|position|description|lead|manage|design|ensure|support|provide|participate|carry|apply|own|build|create|launch)\b", clean, flags=re.I):
+            return False
+        if re.fullmatch(r"(?:hris|crm|erp|hr|it|data)\s+(?:tools?|solutions?|process(?:es)?|systems?|platforms?|functional)", plain):
+            return False
+        if re.search(r"\b(?:management|reporting|analysis|analytics|testing|leadership|governance|compliance)$", plain) and not (
+            any(char in clean for char in "/+#.") or any(char.isdigit() for char in clean)
+        ):
+            return False
+        if self._looks_like_methodology(clean, context) or self._looks_like_certification(clean, context):
+            return True
         if any(char in clean for char in "/+#.") or any(char.isdigit() for char in clean):
             return True
         if plain.endswith((" system", " systems", " platform", " platforms", " tool", " tools")):
             return True
+        if plain in {"it", "hr", "human resources"}:
+            return False
+        if re.search(r"\b(?:managers?|directors?|consultants?|specialists?|officers?|collaborators?)$", plain):
+            return False
+        if plain.endswith(" group") and not any(marker in context_plain for marker in (
+            "experience with", "knowledge of", "proficiency in", "expertise in", "required",
+        )):
+            return False
         if clean.isupper() and 2 <= len(clean) <= 20:
             return True
-        if any(char.isupper() for char in clean[1:]) and any(char.islower() for char in clean):
+        words = clean.split()
+        if len(words) == 1 and any(char.isupper() for char in clean[1:]) and any(char.islower() for char in clean):
             return True
+        if len(words) >= 2 and any(word.isupper() and len(word) >= 2 for word in words):
+            return True
+        # Unknown Title Case products are accepted only in an explicit
+        # requirement context. This avoids turning headings, company names and
+        # ordinary noun phrases into competency axes.
         if all(word[:1].isupper() for word in clean.split() if word):
-            return True
+            return any(marker in context_plain for marker in (
+                "experience with", "experience in", "knowledge of", "proficiency in",
+                "expertise on", "expertise in", "certified", "required", "mandatory",
+                "platform", "software", "system", "tool", "standard", "framework",
+            ))
         return False
+
+    def _parenthetical_terms(self, line: str) -> list[tuple[str, str]]:
+        pairs: list[tuple[str, str]] = []
+        clean = " ".join(str(line or "").split())
+        patterns = (
+            r"\b([A-Z][A-Z0-9&/+.-]{1,9})\s*\(([^()]{3,90})\)",
+            r"\b([^()]{3,90}?)\s*\(([A-Z][A-Z0-9&/+.-]{1,9})\)",
+        )
+        for pattern_index, pattern in enumerate(patterns):
+            for match in re.finditer(pattern, clean):
+                if pattern_index == 0:
+                    acronym, phrase = match.group(1), match.group(2)
+                else:
+                    phrase, acronym = match.group(1), match.group(2)
+                acronym = self._clean_phrase(acronym).upper()
+                phrase = self._clean_phrase(phrase)
+                phrase = re.sub(r"^.*?(?:the|an|a)\s+", "", phrase, flags=re.I) if len(phrase.split()) > 8 else phrase
+                if acronym in {"AI", "BI", "HR", "IT", "API"}:
+                    continue
+                if 2 <= len(acronym) <= 10 and 2 <= len(phrase.split()) <= 8 and self._valid_requirement_term(phrase):
+                    pairs.append((acronym, phrase))
+        unique: list[tuple[str, str]] = []
+        seen: set[tuple[str, str]] = set()
+        for acronym, phrase in pairs:
+            key = (self._plain(acronym), self._plain(phrase))
+            if key not in seen:
+                seen.add(key)
+                unique.append((acronym, phrase))
+        return unique
 
     def _valid_requirement_term(self, value: object) -> bool:
         clean = self._clean_phrase(value)
@@ -971,6 +1092,10 @@ Return JSON only with this structure:
     def _is_noise_line(self, line: str) -> bool:
         plain = self._plain(line)
         if plain in self._SECTION_HEADINGS:
+            return True
+        if plain.startswith(("about ", "why join ", "additional information ")):
+            return True
+        if self._looks_like_heading(line):
             return True
         if line.strip().isupper() and len(line.strip()) <= 65:
             return True
@@ -993,6 +1118,34 @@ Return JSON only with this structure:
     def _looks_like_methodology(self, term: str, context: str) -> bool:
         plain = self._plain(f"{term} {context}")
         return any(marker in plain for marker in ("methodology", "framework", "method", "agile", "scrum", "lean", "six sigma"))
+
+    def _role_content_lines(self, lines: list[str]) -> list[str]:
+        if not lines:
+            return []
+        start_markers = {
+            "requirements", "required skills", "qualifications", "profile",
+            "responsibilities", "main responsibilities", "job responsibilities",
+            "missions", "mission", "what you will do", "what you bring",
+        }
+        end_prefixes = (
+            "additional information", "why join", "about the company",
+            "company overview", "benefits", "what we offer", "join us",
+        )
+        start = None
+        for index, line in enumerate(lines):
+            plain = self._plain(line.rstrip(":"))
+            if plain in start_markers:
+                start = index + 1
+                break
+        if start is None:
+            return lines
+        end = len(lines)
+        for index in range(start, len(lines)):
+            plain = self._plain(lines[index])
+            if any(plain.startswith(prefix) for prefix in end_prefixes):
+                end = index
+                break
+        return lines[start:end]
 
     def _lines(self, text: str) -> list[str]:
         raw_lines = [
