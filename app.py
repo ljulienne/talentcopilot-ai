@@ -204,6 +204,7 @@ def main():
 
     render_current_recruitment(session)
     workflow_pages = {
+        "Recruitment Overview",
         "Recruitment Workspace",
         "Candidate Intelligence",
         "Interview Intelligence",

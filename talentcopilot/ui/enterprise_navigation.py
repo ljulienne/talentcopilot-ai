@@ -36,6 +36,7 @@ COMMAND_PAGES = [
 ]
 
 ANALYSIS_PAGES = [
+    _page("Recruitment Overview", "talentcopilot.ui.recruitment_overview", "render_recruitment_overview", "Visual summary of candidate fit, competency coverage and interview progress.", "▤"),
     _page("Organization Intelligence", "talentcopilot.ui.organization_intelligence_preview", "render_organization_intelligence_preview", "Diagnose collaboration patterns from uploaded data.", "◉"),
     _page("Recruitment Workspace", "talentcopilot.ui.recruitment_decision_workspace", "render_recruitment_decision_workspace", "Pilot the active recruitment and move the workflow forward.", "▣"),
     _page("Candidate Intelligence", "talentcopilot.ui.candidate_workspace", "render_candidate_workspace", "Review one candidate's recommendation, competencies, evidence and risks.", "◆"),
