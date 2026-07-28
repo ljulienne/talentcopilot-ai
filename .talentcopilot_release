@@ -1,3 +1,3 @@
-7.6.0-technical-requirement-intelligence
-base_release=7.5.0-visual-recruitment-command-center
-base_commit=7176e239960da6f397283729077fc4d6e3520967
+7.7.0-domain-agnostic-requirement-intelligence
+base_release=7.6.0-technical-requirement-intelligence
+base_commit=3b63a3314700b5d4ccece7d8a415bcbbd64ef4f5

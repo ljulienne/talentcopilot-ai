@@ -4,6 +4,7 @@ import re
 import unicodedata
 from collections.abc import Mapping
 
+from talentcopilot.technical_requirements.extractor import DomainAgnosticRequirementExtractor
 from talentcopilot.technical_requirements.models import (
     CandidateRequirementEvidence,
     TechnicalRequirement,
@@ -12,157 +13,20 @@ from talentcopilot.technical_requirements.models import (
 
 
 class TechnicalRequirementService:
-    """One deterministic source of truth for role-specific requirements.
+    """Unified, domain-agnostic role requirement intelligence.
 
-    The service preserves exact technologies and delivery expectations instead
-    of collapsing them into generic labels. It is presentation/evaluation
-    intelligence only and never changes the canonical fit score or rank.
+    Exact technologies and role capabilities are extracted from the offer at
+    runtime. An optional grounded LLM pass can enrich the deterministic output,
+    while the deterministic engine remains the safe offline fallback. This
+    service is evaluation/presentation intelligence only and never changes the
+    canonical fit score or rank.
     """
 
-    VERSION = "7.6.0"
+    VERSION = "7.7.0"
     MAX_RADAR_AXES = 9
 
-    # Ordered by decision value for the role-aligned radar.
-    _DEFINITIONS = (
-        {
-            "name": "SAP SuccessFactors & Core HR",
-            "category": "Technology & HRIS",
-            "family": "HRIS Platforms",
-            "kind": "technical_platform",
-            "importance": "Critical",
-            "level": 5.0,
-            "aliases": ("sap successfactors", "successfactors", "success factors"),
-            "related": (
-                "core hr", "hris", "sirh", "workday", "peoplesoft", "oracle hcm",
-                "oracle hr", "sap hr", "talentsoft", "saba", "cornerstone", "tapplent",
-                "premium rh", "seditweb", "sedit web", "employee central",
-            ),
-            "triggers": ("successfactors", "core hr"),
-        },
-        {
-            "name": "Power BI & HR Reporting",
-            "category": "Data & Analytics",
-            "family": "Business Intelligence",
-            "kind": "technical_tool",
-            "importance": "Critical",
-            "level": 4.0,
-            "aliases": ("power bi", "powerbi", "microsoft power bi"),
-            "related": (
-                "tableau", "qlik", "qliksense", "business objects", "reporting",
-                "dashboard", "dashboards", "people analytics", "hr analytics", "dax",
-                "power query",
-            ),
-            "triggers": ("power bi",),
-        },
-        {
-            "name": "AI Solutions for HR",
-            "category": "Innovation & Data",
-            "family": "Applied Artificial Intelligence",
-            "kind": "technical_innovation",
-            "importance": "High",
-            "level": 3.0,
-            "aliases": (
-                "artificial intelligence", "ai solution", "ai solutions", "generative ai",
-                "machine learning", "intelligence artificielle", "solution ia", "solutions ia",
-            ),
-            "related": (
-                "data science", "python", "analytics", "automation", "predictive",
-                "ibm data science", "natural language processing", "nlp",
-            ),
-            "triggers": ("artificial intelligence", " ai ", "intelligence artificielle", "solution ia"),
-        },
-        {
-            "name": "HRIS Project Leadership",
-            "category": "Leadership & Delivery",
-            "family": "Programme Delivery",
-            "kind": "delivery_capability",
-            "importance": "Critical",
-            "level": 5.0,
-            "aliases": (
-                "hris project management", "hris project manager", "project management",
-                "program management", "programme management", "project leadership",
-            ),
-            "related": ("implementation", "deployment", "migration", "project manager", "programme"),
-            "triggers": ("hris project", "complex hris projects", "project management"),
-        },
-        {
-            "name": "Interfaces & Technical Delivery",
-            "category": "Technology & HRIS",
-            "family": "Integration & Testing",
-            "kind": "technical_delivery",
-            "importance": "High",
-            "level": 4.0,
-            "aliases": (
-                "interfaces with third-party systems", "third party interfaces", "system interfaces",
-                "api integration", "interfaces", "integration", "acceptance testing", "uat", "sit",
-                "functional testing", "technical testing",
-            ),
-            "related": ("api", "web service", "data flow", "integration", "testing", "migration"),
-            "triggers": ("interface", "acceptance testing", "technical acceptance", "third-party systems"),
-        },
-        {
-            "name": "Data Quality & Core HR Reliability",
-            "category": "Data & Analytics",
-            "family": "Data Governance",
-            "kind": "data_governance",
-            "importance": "High",
-            "level": 4.0,
-            "aliases": (
-                "data cleaning", "data reliability", "data quality", "data accuracy",
-                "data integrity", "core hr data", "data governance",
-            ),
-            "related": ("rgpd", "gdpr", "sql", "reporting", "validation", "payroll data"),
-            "triggers": ("data cleaning", "data reliability", "data quality", "core hr data"),
-        },
-        {
-            "name": "Change Management & Adoption",
-            "category": "Transformation",
-            "family": "Change & Adoption",
-            "kind": "functional_capability",
-            "importance": "High",
-            "level": 4.0,
-            "aliases": (
-                "change management", "user adoption", "communication and training plans",
-                "training plans", "post-deployment support", "upskilling", "conduite du changement",
-            ),
-            "related": ("training", "communication", "support", "transformation", "adoption"),
-            "triggers": ("change management", "adopting new tools", "communication and training"),
-        },
-        {
-            "name": "Vendor & Stakeholder Management",
-            "category": "Leadership & Delivery",
-            "family": "Stakeholder Governance",
-            "kind": "delivery_capability",
-            "importance": "High",
-            "level": 4.0,
-            "aliases": (
-                "solution providers", "external providers management", "vendor management",
-                "integrators", "steering committees", "project committees", "stakeholder management",
-            ),
-            "related": ("vendor", "provider", "supplier", "integrator", "stakeholder", "committee", "liaising"),
-            "triggers": ("solution providers", "providers management", "integrators", "steering committees"),
-        },
-        {
-            "name": "Team Leadership & International Delivery",
-            "category": "Leadership & Delivery",
-            "family": "People & International Leadership",
-            "kind": "leadership_capability",
-            "importance": "High",
-            "level": 4.0,
-            "aliases": (
-                "management experience", "supporting collaborators", "team leadership", "team management",
-                "international environment", "international projects", "large group", "multi-country",
-            ),
-            "related": ("managed", "led a team", "team member", "global", "international", "countries", "regions"),
-            "triggers": ("internal collaborator", "management", "international environment", "large group"),
-        },
-    )
-
-    _ELIGIBILITY_PATTERNS = (
-        ("Minimum experience", ("minimum of 10 years", "10 years of", "minimum 10 years")),
-        ("Higher education", ("higher education degree", "bac+5", "master")),
-        ("French and English", ("fluent french and english", "french and english", "français et anglais")),
-    )
+    def __init__(self, extractor: DomainAgnosticRequirementExtractor | None = None):
+        self.extractor = extractor or DomainAgnosticRequirementExtractor()
 
     def catalog(self, job: Mapping | None) -> TechnicalRequirementCatalog:
         job = dict(job or {})
@@ -170,62 +34,50 @@ class TechnicalRequirementService:
         role_title = str(job.get("title") or "Recruitment")
 
         embedded = job.get("technical_requirements") or []
+        embedded_version = str(job.get("technical_requirement_engine_version") or "")
         if embedded:
             parsed = tuple(self._from_mapping(item) for item in embedded if isinstance(item, Mapping))
             parsed = tuple(item for item in parsed if item is not None)
-            if parsed:
+            # A 7.7+ embedded catalogue is authoritative. Older specialised
+            # catalogues are regenerated from raw text to avoid carrying their
+            # domain assumptions into a new session.
+            if parsed and embedded_version.startswith("7.7"):
                 return TechnicalRequirementCatalog(
                     role_title=role_title,
                     requirements=parsed[: self.MAX_RADAR_AXES],
-                    eligibility_checks=self._eligibility(text),
+                    eligibility_checks=self.extractor.eligibility(text),
+                    extraction_method=str(job.get("technical_requirement_extraction_method") or "embedded"),
                 )
 
-        requirements = self.extract(text, fallback=job.get("required_skills") or [])
+        requirements, method = self.extract_with_method(
+            text,
+            role_title=role_title,
+            fallback=job.get("required_skills") or [],
+        )
         return TechnicalRequirementCatalog(
             role_title=role_title,
             requirements=tuple(requirements[: self.MAX_RADAR_AXES]),
-            eligibility_checks=self._eligibility(text),
+            eligibility_checks=self.extractor.eligibility(text),
+            extraction_method=method,
         )
 
-    def extract(self, text: str, *, fallback=()) -> list[TechnicalRequirement]:
-        plain = self._plain(text)
-        padded = f" {plain} "
-        found: list[TechnicalRequirement] = []
-        for definition in self._DEFINITIONS:
-            matched = next(
-                (
-                    trigger
-                    for trigger in definition["triggers"]
-                    if self._plain(trigger).strip() and self._plain(trigger) in padded
-                ),
-                None,
-            )
-            if matched is None:
-                continue
-            source = self._source_excerpt(text, matched)
-            found.append(self._build(definition, source))
+    def extract(self, text: str, *, fallback=(), role_title: str = "Recruitment") -> list[TechnicalRequirement]:
+        requirements, _ = self.extract_with_method(text, fallback=fallback, role_title=role_title)
+        return requirements
 
-        if not found:
-            for raw in fallback or ():
-                name = str(raw.get("name") if isinstance(raw, Mapping) else raw or "").strip()
-                if not name:
-                    continue
-                found.append(
-                    TechnicalRequirement(
-                        requirement_id=self._slug(name),
-                        name=name,
-                        category=self._fallback_category(name),
-                        family="Role requirement",
-                        requirement_kind="general_capability",
-                        importance="Critical",
-                        required_level=4.0,
-                        source_excerpt="Extracted from the role requirements.",
-                        aliases=(name,),
-                        related_terms=(),
-                        interview_priority="Validate",
-                    )
-                )
-        return found[: self.MAX_RADAR_AXES]
+    def extract_with_method(
+        self,
+        text: str,
+        *,
+        fallback=(),
+        role_title: str = "Recruitment",
+    ) -> tuple[list[TechnicalRequirement], str]:
+        return self.extractor.extract(
+            text,
+            role_title=role_title,
+            fallback=fallback,
+            limit=self.MAX_RADAR_AXES,
+        )
 
     def evaluate_candidate(
         self,
@@ -235,37 +87,57 @@ class TechnicalRequirementService:
         req = requirement if isinstance(requirement, TechnicalRequirement) else self._from_mapping(requirement)
         if req is None:
             raise ValueError("A valid technical requirement is required.")
+
         candidate = dict(candidate or {})
         text_parts = [
             str(candidate.get("raw_text") or ""),
-            " ".join(str(item) for item in candidate.get("skills", []) or []),
-            " ".join(str(item) for item in candidate.get("achievements", []) or []),
+            "\n".join(str(item) for item in candidate.get("skills", []) or []),
+            "\n".join(str(item) for item in candidate.get("achievements", []) or []),
         ]
         raw = "\n".join(text_parts)
         plain = f" {self._plain(raw)} "
 
-        direct_hits = self._hits(plain, req.aliases)
-        related_hits = self._hits(plain, req.related_terms)
+        aliases = tuple(dict.fromkeys(tuple(req.aliases) + tuple(req.components) + (req.name,)))
+        direct_hits = self._hits(plain, aliases)
+        matched_components = tuple(
+            component for component in (req.components or aliases)
+            if self._hits(plain, (component,))
+        )
+        missing_components = tuple(
+            component for component in (req.components or ())
+            if component not in matched_components
+        )
+
+        candidate_entities = self.extractor.extract_candidate_entities(raw)
+        related_entities = self._related_entities(req, candidate_entities)
+        related_term_hits = self._hits(plain, req.related_terms)
+        related_hits = list(dict.fromkeys(related_entities + related_term_hits))
         action_depth = self._action_depth(raw, direct_hits)
 
         if direct_hits:
-            status = "Direct evidence"
-            level = self._direct_level(req, raw, direct_hits, action_depth)
-            confidence = "High" if action_depth >= 2 or len(direct_hits) >= 2 else "Moderate"
-            priority = "Confirm depth" if level >= req.required_level * 0.7 else "Validate depth"
             evidence = self._candidate_excerpt(raw, direct_hits[0]) or f"Direct mention identified: {direct_hits[0]}."
-            related = tuple(dict.fromkeys(related_hits))
+            if action_depth == 0 and not self._has_metric(evidence):
+                status = "Ambiguous evidence"
+                level = min(3.0, max(1.8, req.required_level * 0.55))
+                confidence = "Limited"
+                priority = "Validate depth"
+            else:
+                status = "Direct evidence"
+                level = self._direct_level(req, raw, direct_hits, action_depth)
+                confidence = "High" if action_depth >= 2 or self._has_metric(evidence) else "Moderate"
+                priority = "Confirm depth" if level >= req.required_level * 0.7 else "Validate depth"
+            related = tuple(related_hits)
         elif related_hits:
             status = "Related evidence"
             level = min(max(1.0, req.required_level * 0.45), 2.5)
             confidence = "Limited"
             priority = "Mandatory probe" if req.importance == "Critical" else "Validate transferability"
             evidence = (
-                f"No direct evidence of {req.name} was identified. Related experience was found: "
-                + ", ".join(list(dict.fromkeys(related_hits))[:4])
+                f"No direct evidence of {req.name} was identified. Related or transferable experience was found: "
+                + ", ".join(related_hits[:5])
                 + "."
             )
-            related = tuple(dict.fromkeys(related_hits))
+            related = tuple(related_hits)
         else:
             status = "No direct evidence"
             level = 0.5 if req.importance != "Critical" else 0.0
@@ -282,45 +154,66 @@ class TechnicalRequirementService:
             confidence=confidence,
             evidence=evidence,
             related_evidence=related,
+            matched_components=matched_components,
+            missing_components=missing_components,
             interview_priority=priority,
         )
 
+    def _related_entities(
+        self,
+        requirement: TechnicalRequirement,
+        candidate_entities: list[tuple[str, str, str]],
+    ) -> list[str]:
+        related: list[str] = []
+        adjacent = set(self.extractor.adjacent_families(requirement.family))
+        for entity, family, _excerpt in candidate_entities:
+            if self._plain(entity) in {self._plain(value) for value in requirement.aliases + requirement.components}:
+                continue
+            if family == requirement.family or family in adjacent:
+                related.append(entity)
+        return list(dict.fromkeys(related))[:8]
+
     def _direct_level(self, req, raw: str, hits: list[str], action_depth: int) -> float:
-        level = 2.6
+        level = 2.5
         level += min(0.8, 0.25 * len(hits))
-        level += min(1.1, 0.35 * action_depth)
-        if re.search(r"\b\d+(?:[.,]\d+)?\s*(?:%|users?|countries?|sites?|projects?|teams?)\b", raw, re.I):
+        level += min(1.2, 0.35 * action_depth)
+        if self._has_metric(raw):
             level += 0.3
-        if req.requirement_kind == "technical_tool" and action_depth == 0:
+        if req.requirement_kind in {"technical_tool", "technical_platform"} and action_depth == 0:
             level = min(level, 3.0)
         return min(5.0, level)
 
     def _action_depth(self, raw: str, hits: list[str]) -> int:
         if not hits:
             return 0
+        lines = [" ".join(line.split()) for line in str(raw or "").splitlines() if line.strip()]
+        relevant = [
+            line.casefold() for line in lines
+            if any(self._plain(hit) in self._plain(line) for hit in hits)
+        ]
+        if not relevant:
+            relevant = [str(raw or "").casefold()]
         count = 0
-        lower = raw.casefold()
-        for marker in (
-            "implemented", "launched", "designed", "built", "configured", "developed",
-            "led", "managed", "created", "deployed", "validated", "tested", "piloted",
-            "mis en place", "déployé", "conçu", "piloté", "lancé",
-        ):
-            if marker in lower:
+        for marker in self.extractor._ACTION_MARKERS:
+            if any(marker in line for line in relevant):
                 count += 1
         return min(4, count)
 
+    @staticmethod
+    def _has_metric(value: str) -> bool:
+        return bool(re.search(r"\b\d+(?:[.,]\d+)?\s*(?:%|users?|countries?|sites?|projects?|teams?|m|k|million|hours?|days?)\b", value, re.I))
+
     def _hits(self, plain_text: str, terms) -> list[str]:
-        hits = []
+        hits: list[str] = []
         for term in terms or ():
             normalized = self._plain(term)
-            if normalized and f" {normalized} " in plain_text:
+            if not normalized:
+                continue
+            if f" {normalized} " in plain_text:
                 hits.append(str(term))
-            elif normalized and len(normalized) > 4 and normalized in plain_text:
+            elif len(normalized) > 4 and re.search(rf"(?<![a-z0-9]){re.escape(normalized)}(?![a-z0-9])", plain_text):
                 hits.append(str(term))
-        return hits
-
-    def _source_excerpt(self, text: str, trigger: str) -> str:
-        return self._candidate_excerpt(text, trigger) or f"Requirement detected from: {trigger}."
+        return list(dict.fromkeys(hits))
 
     def _candidate_excerpt(self, text: str, term: str) -> str:
         lines = [" ".join(line.split()) for line in str(text or "").splitlines() if line.strip()]
@@ -333,23 +226,7 @@ class TechnicalRequirementService:
         index = normalized.find(needle)
         if index < 0:
             return ""
-        # Normalized indices are approximate; return a compact readable segment.
         return clean[max(0, index - 80): index + len(term) + 180].strip()[:300]
-
-    def _build(self, definition: Mapping, source: str) -> TechnicalRequirement:
-        return TechnicalRequirement(
-            requirement_id=self._slug(definition["name"]),
-            name=definition["name"],
-            category=definition["category"],
-            family=definition["family"],
-            requirement_kind=definition["kind"],
-            importance=definition["importance"],
-            required_level=float(definition["level"]),
-            source_excerpt=source,
-            aliases=tuple(definition["aliases"]),
-            related_terms=tuple(definition["related"]),
-            interview_priority="Mandatory probe" if definition["importance"] == "Critical" else "Validate",
-        )
 
     def _from_mapping(self, item: Mapping) -> TechnicalRequirement | None:
         name = str(item.get("name") or item.get("competency") or "").strip()
@@ -366,15 +243,10 @@ class TechnicalRequirementService:
             source_excerpt=str(item.get("source_excerpt") or ""),
             aliases=tuple(item.get("aliases") or (name,)),
             related_terms=tuple(item.get("related_terms") or ()),
+            components=tuple(item.get("components") or (name,)),
+            context_terms=tuple(item.get("context_terms") or ()),
             interview_priority=str(item.get("interview_priority") or "Validate"),
-        )
-
-    def _eligibility(self, text: str) -> tuple[str, ...]:
-        plain = self._plain(text)
-        return tuple(
-            label
-            for label, patterns in self._ELIGIBILITY_PATTERNS
-            if any(self._plain(pattern) in plain for pattern in patterns)
+            extraction_method=str(item.get("extraction_method") or "embedded"),
         )
 
     @staticmethod
@@ -392,10 +264,10 @@ class TechnicalRequirementService:
     @staticmethod
     def _fallback_category(name: str) -> str:
         value = name.casefold()
-        if any(token in value for token in ("data", "report", "power bi", "analytics")):
+        if any(token in value for token in ("data", "report", "analytics", "database")):
             return "Data & Analytics"
-        if any(token in value for token in ("hris", "sap", "system", "interface", "technical")):
-            return "Technology & HRIS"
+        if any(token in value for token in ("system", "software", "platform", "technical", "cloud", "api")):
+            return "Technology & Tools"
         if any(token in value for token in ("lead", "manage", "stakeholder", "project")):
             return "Leadership & Delivery"
-        return "Role capability"
+        return "Role Capability"

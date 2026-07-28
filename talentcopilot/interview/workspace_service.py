@@ -92,9 +92,9 @@ class InterviewWorkspaceService:
                     evidence_level = "High" if evidence.confidence == "High" else "Medium"
                     confidence = 88 if evidence.confidence == "High" else 72
                     validate = evidence.interview_priority != "Confirm"
-                elif evidence.evidence_status == "Related evidence":
+                elif evidence.evidence_status in {"Related evidence", "Ambiguous evidence"}:
                     evidence_level = "Medium"
-                    confidence = 52
+                    confidence = 52 if evidence.evidence_status == "Related evidence" else 44
                     validate = True
                 else:
                     evidence_level = "Low"
@@ -113,8 +113,10 @@ class InterviewWorkspaceService:
                         rationale=rationale,
                         evidence_status=evidence.evidence_status,
                         requirement_kind=requirement.requirement_kind,
+                        requirement_family=requirement.family,
                         importance=requirement.importance,
                         source_excerpt=requirement.source_excerpt,
+                        components=list(requirement.components),
                         related_evidence=list(evidence.related_evidence),
                         interview_priority=evidence.interview_priority,
                     )

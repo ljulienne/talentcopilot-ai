@@ -11,8 +11,10 @@ class InterviewCompetency:
     rationale: str = ""
     evidence_status: str = ""
     requirement_kind: str = ""
+    requirement_family: str = ""
     importance: str = ""
     source_excerpt: str = ""
+    components: List[str] = field(default_factory=list)
     related_evidence: List[str] = field(default_factory=list)
     interview_priority: str = "Validate"
 

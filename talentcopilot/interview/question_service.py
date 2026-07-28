@@ -9,7 +9,8 @@ from talentcopilot.interview.models import InterviewCompetency, InterviewQuestio
 class InterviewQuestionService:
     """Build varied evidence-grounded questions without an LLM call."""
 
-    ENGINE_VERSION = "7.6.0-technical-requirement-intelligence"
+    ENGINE_VERSION = "7.2.1-evidence-grounding"
+    REQUIREMENT_ENGINE_VERSION = "7.7.0-domain-agnostic-requirement-intelligence"
 
     _INTERNAL_EVIDENCE_LABELS = {
         "management scope",
@@ -86,6 +87,8 @@ class InterviewQuestionService:
             evidence_type = "gap"
         elif declared_status == "Related evidence":
             evidence_type = "related"
+        elif declared_status == "Ambiguous evidence":
+            evidence_type = "inference"
         elif declared_status == "Direct evidence" and evidence_type == "gap":
             evidence_type = "inference"
         related_evidence = list(getattr(competency, "related_evidence", []) or [])
@@ -99,6 +102,10 @@ class InterviewQuestionService:
             evidence_type=evidence_type,
             role_title=role_title,
             related_evidence=related_evidence,
+            requirement_kind=str(getattr(competency, "requirement_kind", "") or ""),
+            requirement_family=str(getattr(competency, "requirement_family", "") or ""),
+            components=list(getattr(competency, "components", []) or []),
+            importance=str(getattr(competency, "importance", "") or ""),
         )
 
         experience_note = (
@@ -132,333 +139,219 @@ class InterviewQuestionService:
         evidence_type: str,
         role_title: str,
         related_evidence: list[str] | None = None,
+        requirement_kind: str = "",
+        requirement_family: str = "",
+        components: list[str] | None = None,
+        importance: str = "",
     ):
+        """Build a question from evidence status and requirement type.
+
+        The templates are domain-agnostic. Product-specific depth is supplied
+        by the extracted family/context rather than by a role-specific question
+        catalogue.
+        """
         prefix = self._evidence_prefix(
             competency=competency,
             requirement=requirement,
             evidence=evidence,
             evidence_type=evidence_type,
         )
+        related = ", ".join((related_evidence or [])[:4])
+        family = (requirement_family or "").casefold()
+        kind = (requirement_kind or "").casefold()
+        component_label = ", ".join((components or [])[:4]) or competency
+        critical_note = " This is a critical role requirement." if importance == "Critical" else ""
 
-        normalized_competency = competency.casefold()
-        related_label = ", ".join((related_evidence or [])[:4])
-
-        if "successfactors" in normalized_competency:
-            if evidence_type in {"gap", "related"}:
-                transfer = (
-                    f" Related HRIS experience was identified ({related_label})."
-                    if related_label else ""
-                )
-                return (
-                    prefix + transfer + " " +
-                    "The role requires strong SAP SuccessFactors and Core HR expertise. "
-                    "Describe any direct SuccessFactors experience that may be absent from the CV, including the systems, modules, interfaces and data flows involved. "
-                    "If you have none, explain which HRIS platform experience is genuinely transferable, "
-                    "which SuccessFactors modules you would need to master, and how you would de-risk a Core HR deployment.",
-                    [
-                        "Exact SuccessFactors modules and release scope, if any",
-                        "Personal configuration, migration or deployment responsibility",
-                        "Concrete comparison with another HRIS platform",
-                        "A credible learning and delivery risk-mitigation plan",
-                    ],
-                    [
-                        "Distinguishes direct product expertise from transferable HRIS experience",
-                        "Names Employee Central or other relevant modules precisely",
-                        "Explains data, integration and testing implications",
-                    ],
-                    [
-                        "Claims generic HRIS experience as equivalent product mastery",
-                        "Cannot name modules or platform-specific delivery risks",
-                        "Provides no credible transfer or upskilling plan",
-                    ],
-                    [
-                        "Which SuccessFactors module would create the steepest learning curve for you?",
-                        "How would you validate a Core HR data model before migration?",
-                        "Which prior platform decisions would not transfer to SuccessFactors?",
-                    ],
-                )
-
-        if "power bi" in normalized_competency:
+        if "artificial intelligence" in family or kind == "technical_innovation":
             return (
-                prefix +
-                "The role requires dynamic Power BI reporting from Core HR data. "
-                "Describe the most advanced Power BI solution you personally delivered: which source data and source systems, "
-                "data model, Power Query or DAX logic, security controls and HR KPIs did you own, and what decision changed because of the dashboard?",
+                prefix + critical_note +
+                f" Describe the most relevant applied AI or automation initiative you personally delivered for {role_title}. "
+                "Clarify the use case, data, model or service used, your own contribution, validation method, measurable outcome, "
+                "privacy controls, bias and explainability risks, and where human oversight remained necessary. "
+                "If you have not deployed such a solution, propose a realistic first use case and explain how you would govern it.",
                 [
-                    "Source systems and refresh architecture",
-                    "Personal ownership of Power Query, modelling or DAX",
-                    "Data-quality and access-control checks",
-                    "Decision impact and adoption metrics",
+                    "A real use case or a credible implementation approach",
+                    "Personal technical or functional ownership",
+                    "Data quality, privacy, bias and explainability controls",
+                    "Measurable business outcome and human oversight",
                 ],
                 [
-                    "Explains hands-on technical contribution rather than only sponsorship",
-                    "Connects Core HR data lineage to KPI definitions",
-                    "Describes validation, security and user adoption",
+                    "Separates experimentation from production deployment",
+                    "Explains model or service selection and validation",
+                    "Recognises bias, privacy and human-decision risks",
                 ],
                 [
-                    "Mentions Power BI only as a viewer or project label",
-                    "Cannot explain the data model or KPI calculation",
-                    "No evidence of data-quality validation",
+                    "Uses AI terminology without a concrete use case",
+                    "Cannot explain data, validation or governance",
+                    "Treats automated output as a decision without human control",
                 ],
                 [
-                    "Which DAX measure or transformation was the most complex?",
-                    "How did you reconcile dashboard results with the source HRIS?",
-                    "What measurable decision or process improvement followed?",
+                    "Which failure mode or bias would you test first?",
+                    "How would you measure value without overstating causality?",
+                    "Which decisions must remain under human oversight?",
                 ],
             )
 
-        if "ai solutions" in normalized_competency or "artificial intelligence" in normalized_competency:
+        if kind in {"technical_platform", "technical_tool"} and evidence_type in {"gap", "related"}:
+            transfer = f" The CV shows related experience with {related}." if related else ""
             return (
-                prefix +
-                "The role includes developing AI solutions for HR processes. "
-                "Describe any AI, machine-learning or generative-AI use case you have personally helped design or deploy. "
-                "If you have not deployed one, propose a realistic HR use case and explain the data, privacy, bias, explainability, human-oversight and success-measure requirements.",
+                prefix + transfer + critical_note +
+                f" The role requires {component_label}. Describe any direct experience that may be absent from the CV. "
+                "If your experience is with adjacent products or technologies, explain what is genuinely transferable, "
+                "the important product-specific differences, the learning curve, and how you would de-risk delivery in the first 90 days.",
                 [
-                    "Specific HR problem and users",
-                    "Data inputs, model or solution approach",
-                    "Privacy, bias and human-oversight controls",
-                    "Pilot success metrics and deployment decision",
+                    "Exact products, versions, modules or components used",
+                    "Personal configuration, design or delivery responsibility",
+                    "A precise comparison with the related technology",
+                    "A credible learning and risk-mitigation plan",
                 ],
                 [
-                    "Separates analytics, automation and genuine AI",
-                    "Defines a bounded use case with measurable value",
-                    "Addresses governance and human accountability",
+                    "Distinguishes direct expertise from transferable experience",
+                    "Names concrete product-specific differences",
+                    "Connects prior evidence to the target delivery context",
                 ],
                 [
-                    "Uses AI as a vague label with no operating model",
-                    "Ignores sensitive HR data and bias risks",
-                    "Cannot define validation or success metrics",
+                    "Treats all tools in the family as interchangeable",
+                    "Cannot describe hands-on ownership",
+                    "Offers no credible transfer or upskilling plan",
                 ],
                 [
-                    "Which HR decision should never be fully automated?",
-                    "How would you test bias before a pilot goes live?",
-                    "Which metric would justify scaling the solution?",
+                    "Which feature or component would create the steepest learning curve?",
+                    "Which prior design decision would not transfer safely?",
+                    "What proof would demonstrate readiness before production delivery?",
                 ],
             )
 
-        if archetype == "technical":
+        if kind in {"technical_platform", "technical_tool"}:
+            bi_depth = (
+                " Include the semantic model, transformations, calculation logic or formulas (such as DAX when applicable), refresh, security and reconciliation controls."
+                if "business intelligence" in family else ""
+            )
+            database_depth = (
+                " Include schema design, query or performance decisions, availability, security and migration considerations."
+                if "database" in family else ""
+            )
+            engineering_depth = (
+                " Include architecture, interfaces, testing, deployment, observability and non-functional trade-offs."
+                if any(value in family for value in ("software", "cloud", "devops", "cyber")) else ""
+            )
             return (
-                prefix
-                + f"Describe the most technically demanding {competency} situation you handled. "
-                  "Which systems, modules, interfaces or data flows were involved, "
-                  "which technical decisions did you personally make, how did you validate the solution, "
-                  "what defect or limitation was hardest to resolve, and which measurable reliability, quality, or delivery result improved?",
+                prefix + critical_note +
+                f" Describe the most advanced solution you personally delivered using {component_label}. "
+                "What did you configure, design, build or operate, at what scale, with which dependencies and controls, and what measurable decision or outcome changed?"
+                + bi_depth + database_depth + engineering_depth,
                 [
-                    "Specific systems, modules and configuration scope",
-                    "Testing or validation approach",
-                    "Concrete technical constraint and resolution",
-                    "Evidence of production quality or stability",
+                    "Exact scope, version, modules or technical components",
+                    "Personal hands-on ownership",
+                    "Architecture, data, integration, security or testing decisions",
+                    "Scale, adoption and measurable outcome",
                 ],
                 [
-                    "Shows clear technical ownership of design and configuration decisions",
-                    "Explains architecture, configuration and validation precisely",
-                    "Distinguishes design choices from vendor defaults",
-                    "Shows diagnostic depth and technical accountability",
+                    "Explains concrete technical or functional decisions",
+                    "Separates personal contribution from team activity",
+                    "Connects implementation choices to an outcome",
                 ],
                 [
-                    "Cannot name the systems or modules involved",
-                    "Describes only coordination with no technical understanding",
-                    "No evidence of testing or quality controls",
+                    "Mentions the tool only as a user or project label",
+                    "Cannot explain design, configuration or validation",
+                    "No objective measure of success",
                 ],
                 [
-                    "Which interface or data dependency created the highest risk?",
-                    "What did you reject or redesign, and why?",
-                    "Which test result or production metric confirmed that your solution worked?",
+                    "Which product-specific feature was most difficult?",
+                    "How did you validate the result against the source or expected behaviour?",
+                    "What would you redesign today and why?",
                 ],
+            )
+
+        if kind == "certification":
+            return (
+                prefix + critical_note +
+                f" The role references {component_label}. Confirm the certification, its current validity and level, "
+                "then describe a work situation where you applied the underlying standard or body of knowledge to make a decision or improve an outcome.",
+                ["Certification issuer and validity", "Applied knowledge", "Personal decision or deliverable", "Outcome"],
+                ["Provides verifiable credential detail", "Connects certification knowledge to practice"],
+                ["Credential cannot be verified", "No evidence of practical application"],
+                ["Which part of the standard do you use most often?", "How do you keep the knowledge current?", "What result improved because of it?"],
+            )
+
+        if kind == "methodology":
+            return (
+                prefix + critical_note +
+                f" Describe a situation where you applied {component_label} rather than merely naming the method. "
+                "Why was it appropriate, what practices did you personally use, what trade-offs did you make, and what measurable result followed?",
+                ["Context and method selection", "Practices personally applied", "Trade-offs", "Measured result"],
+                ["Adapts the method to context", "Names concrete practices and artefacts"],
+                ["Uses methodology vocabulary without applied evidence", "Cannot explain trade-offs"],
+                ["Which practice had the greatest impact?", "What did you deliberately not apply?", "How did you measure effectiveness?"],
             )
 
         if archetype == "data":
             return (
-                prefix
-                + f"Describe a {competency} deliverable that influenced an HR or business decision. "
-                  "What source data did you personally validate, how did you ensure reliability, "
-                  "which KPI mattered most, what measurable change did the analysis reveal, and what decision changed because of it?",
-                [
-                    "Source systems and data model",
-                    "Data-quality controls",
-                    "Relevant KPI definition",
-                    "Decision or action enabled",
-                ],
-                [
-                    "Shows clear ownership of data validation and KPI definitions",
-                    "Explains lineage and validation checks",
-                    "Chooses KPIs tied to a business decision",
-                    "Shows how stakeholders used the output",
-                ],
-                [
-                    "Focuses only on dashboard appearance",
-                    "Cannot explain data quality or KPI definitions",
-                    "No evidence that the analysis changed a decision",
-                ],
-                [
-                    "Which data-quality issue could have changed the conclusion?",
-                    "How did you prevent users from misinterpreting the KPI?",
-                    "Which stakeholder decision was directly influenced by the result?",
-                ],
+                prefix + critical_note +
+                f" Describe a {competency} deliverable that influenced a business decision. "
+                "Which sources, definitions, controls and analytical choices did you personally own, and what measurable action or outcome followed?",
+                ["Data sources", "Definitions and validation", "Personal analytical ownership", "Decision impact"],
+                ["Explains lineage and validation", "Connects analysis to a decision"],
+                ["Cannot explain source quality", "No decision or outcome"],
+                ["Which assumption was most sensitive?", "How did you reconcile conflicting sources?", "Who acted on the result?"],
             )
 
         if archetype == "change":
             return (
-                prefix
-                + f"Choose one transformation where adoption of {competency} was uncertain. "
-                  "Which user groups resisted, what did you personally change in the communication or training approach, "
-                  "and which measurable adoption or behavioural indicator proved that the change worked?",
-                [
-                    "Stakeholder segmentation",
-                    "Resistance diagnosis",
-                    "Targeted change actions",
-                    "Adoption metrics or behavioural evidence",
-                ],
-                [
-                    "Shows clear ownership of the change strategy and adoption actions",
-                    "Names distinct populations and resistance patterns",
-                    "Links interventions to measured adoption",
-                    "Shows adaptation rather than generic communication",
-                ],
-                [
-                    "Relies only on training attendance",
-                    "Cannot explain resistance or stakeholder differences",
-                    "No measurable adoption outcome",
-                ],
-                [
-                    "Which population required a different approach?",
-                    "What early signal showed the change plan was not working?",
-                    "Which adoption metric improved after you changed the approach?",
-                ],
+                prefix + critical_note +
+                f" Choose one transformation where adoption of {competency} was uncertain. "
+                "What resistance did you diagnose, which communication, training or process interventions did you personally lead, and how was adoption measured?",
+                ["Stakeholder resistance", "Personal intervention", "Adoption measure", "Sustained outcome"],
+                ["Uses evidence to adapt the change plan", "Measures adoption beyond attendance"],
+                ["Describes communication only", "No adoption evidence"],
+                ["Which group resisted most?", "What did you change after feedback?", "How did you know adoption was sustained?"],
             )
 
-        if archetype == "stakeholder":
+        if archetype in {"leadership", "stakeholder"}:
             return (
-                prefix
-                + f"For the {role_title} context, describe a situation where stakeholders had "
-                  f"conflicting priorities around {competency}. Who disagreed, "
-                  "how did you personally influence the decision, what framework did you use, "
-                  "how did you secure commitment, and what measurable delivery or business outcome followed?",
-                [
-                    "Stakeholder map and competing interests",
-                    "Decision criteria",
-                    "Influencing approach",
-                    "Documented agreement or governance outcome",
-                ],
-                [
-                    "Shows clear ownership of stakeholder alignment and final decision-making",
-                    "Explains power dynamics and competing incentives",
-                    "Uses explicit criteria to arbitrate",
-                    "Secures a concrete commitment or governance decision",
-                ],
-                [
-                    "Avoids conflict rather than resolving it",
-                    "Escalates without attempting influence",
-                    "Cannot explain the final decision rationale",
-                ],
-                [
-                    "Which stakeholder had the strongest veto power?",
-                    "What concession did you make, and what did you protect?",
-                    "How did you verify that the final commitment was translated into action?",
-                ],
-            )
-
-        if archetype == "leadership":
-            return (
-                prefix
-                + f"Give an example where you had to develop or redirect another person while "
-                  f"delivering {competency}. What capability gap did you personally identify, "
-                  "what did you delegate, and which measurable performance or autonomy indicator improved?",
-                [
-                    "Initial capability or performance gap",
-                    "Delegation and coaching approach",
-                    "Feedback cadence",
-                    "Observable performance improvement",
-                ],
-                [
-                    "Shows clear ownership of team development and performance improvement",
-                    "Adapts coaching to the individual",
-                    "Delegates meaningful responsibility with controls",
-                    "Shows measurable improvement or independence",
-                ],
-                [
-                    "Equates management with task assignment",
-                    "No feedback or development approach",
-                    "Cannot describe the person's progress",
-                ],
-                [
-                    "What did you stop doing personally once the person improved?",
-                    "How did you handle underperformance?",
-                    "Which measurable behaviour showed that the person had become more autonomous?",
-                ],
+                prefix + critical_note +
+                f" Describe the most complex situation in which you personally led {competency}. "
+                "Who had conflicting objectives, what decision or governance mechanism did you own, and what measurable outcome followed?",
+                ["Stakeholder map", "Personal decision authority", "Conflict or trade-off", "Outcome"],
+                ["Shows clear ownership and influence", "Explains governance and trade-offs"],
+                ["Relies only on collective language", "Cannot identify a decision personally owned"],
+                ["Who disagreed and why?", "What did you decide personally?", "Which metric proves the outcome?"],
             )
 
         if archetype == "risk":
             return (
-                prefix
-                + f"Describe the highest-risk situation you encountered in {competency}. "
-                  "Which early warning indicators did you personally monitor, what mitigation options "
-                  "did you compare, what residual risk did you accept, and what measurable impact did the mitigation prevent or reduce?",
-                [
-                    "Risk statement and impact",
-                    "Early warning indicators",
-                    "Alternative mitigations",
-                    "Residual-risk decision",
-                ],
-                [
-                    "Shows clear ownership of risk identification, mitigation and escalation",
-                    "Quantifies probability and impact",
-                    "Compares options and trade-offs",
-                    "Escalates with a recommendation, not just a problem",
-                ],
-                [
-                    "Identifies the risk only after it materialised",
-                    "No alternative options considered",
-                    "Cannot explain residual risk acceptance",
-                ],
-                [
-                    "Which mitigation did you reject and why?",
-                    "At what threshold would you have escalated differently?",
-                    "Which indicator confirmed that the residual risk remained acceptable?",
-                ],
+                prefix + critical_note +
+                f" Describe the highest-risk situation you encountered in {competency}. "
+                "How did you identify and quantify the risk, which control or corrective action did you personally implement, and what residual risk remained?",
+                ["Risk identification", "Control ownership", "Evidence of effectiveness", "Residual risk"],
+                ["Quantifies risk and control effectiveness", "Acknowledges residual risk"],
+                ["Offers generic assurance", "No evidence that controls worked"],
+                ["What was the earliest warning signal?", "Which control failed first?", "Who accepted the residual risk?"],
             )
 
         return (
-            prefix
-            + f"Describe one example that best proves your personal contribution to {competency}. "
-              "What responsibility did you personally own, what did you deliver, "
-              "and which measurable result was used to assess success?",
-            [
-                "Personal accountability",
-                "Concrete deliverable",
-                "Decision or action taken",
-                "Outcome assessment",
-            ],
-            [
-                "Shows clear ownership of the deliverable and its outcome",
-                "Separates personal contribution from team activity",
-                "Uses evidence to demonstrate impact",
-            ],
-            [
-                "Uses only collective language",
-                "Cannot identify a personal deliverable",
-                "No objective success measure",
-            ],
-            [
-                "What would not have happened without your contribution?",
-                "Who can verify the result?",
-                "Which measurable outcome is most directly attributable to your work?",
-            ],
+            prefix + critical_note +
+            f" Describe one example that best proves your personal contribution to {competency}. "
+            "What responsibility did you personally own, what did you deliver, which constraints or trade-offs did you manage, and which measurable result assessed success?",
+            ["Personal accountability", "Concrete deliverable", "Trade-offs", "Measured result"],
+            ["Shows clear ownership", "Separates personal contribution from team activity", "Uses evidence to demonstrate impact"],
+            ["Uses only collective language", "Cannot identify a personal deliverable", "No objective success measure"],
+            ["What would not have happened without your contribution?", "Who can verify the result?", "Which outcome is most directly attributable to your work?"],
         )
 
     def _archetype(self, competency: str, index: int) -> str:
         value = competency.lower()
-        if any(token in value for token in ("power bi", "analytics", "report", "data", "dashboard")):
+        if any(token in value for token in ("analytics", "report", "data", "dashboard", "forecast", "consolidation")):
             return "data"
         if any(token in value for token in ("change", "adoption", "training", "transformation")):
             return "change"
-        if any(token in value for token in ("stakeholder", "vendor", "committee", "communication")):
+        if any(token in value for token in ("stakeholder", "vendor", "supplier", "committee", "communication", "account")):
             return "stakeholder"
-        if any(token in value for token in ("management", "leadership", "coaching", "team")):
+        if any(token in value for token in ("management", "leadership", "coaching", "team", "sales")):
             return "leadership"
-        if any(token in value for token in ("risk", "quality", "compliance", "governance")):
+        if any(token in value for token in ("risk", "quality", "compliance", "governance", "safety", "control")):
             return "risk"
-        if any(token in value for token in ("hris", "core hr", "successfactors", "interface", "integration", "testing")):
+        if any(token in value for token in ("system", "platform", "software", "database", "cloud", "interface", "integration", "testing", "engineering", "architecture")):
             return "technical"
         return ("ownership", "risk", "stakeholder")[index % 3]
 
@@ -535,18 +428,16 @@ class InterviewQuestionService:
         return "", "gap"
 
     def _evidence_phrases(self, competency: str) -> tuple[str, ...]:
-        value = competency.casefold()
-        if "power bi" in value:
-            return ("power bi", "powerbi")
-        if "successfactors" in value:
-            return ("successfactors", "success factors")
-        if "ai solutions" in value or "artificial intelligence" in value:
-            return ("artificial intelligence", "generative ai", "machine learning", " ai ")
-        if "interfaces" in value or "technical delivery" in value:
-            return ("interface", "integration", "sit", "uat", "acceptance testing")
-        if "data quality" in value:
-            return ("data quality", "data accuracy", "data integrity", "data reliability")
-        return ()
+        clean = competency.casefold()
+        phrases = [clean]
+        for part in re.split(r"\s+(?:&|and|for)\s+|/", clean):
+            part = part.strip()
+            if len(part) >= 3:
+                phrases.append(part)
+        compact = re.sub(r"[^a-z0-9+#]", "", clean)
+        if compact:
+            phrases.append(compact)
+        return tuple(dict.fromkeys(phrases))
 
     def _evidence_prefix(
         self,

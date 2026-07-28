@@ -158,8 +158,10 @@ class RecruitmentUploadSessionService:
         role_title = str(getattr(output, "role_title", "Recruitment") or "Recruitment")
         job_document = report.job_document
         job_text = str(getattr(job_document, "text", "") or "")
-        technical_catalog = TechnicalRequirementService().extract(
+        technical_service = TechnicalRequirementService()
+        technical_catalog, technical_method = technical_service.extract_with_method(
             job_text,
+            role_title=role_title,
             fallback=self._extract_skills(job_text),
         )
         job = {
@@ -171,6 +173,7 @@ class RecruitmentUploadSessionService:
             # requirements do not alter the official score already computed.
             "technical_requirements": [item.to_dict() for item in technical_catalog],
             "technical_requirement_engine_version": TechnicalRequirementService.VERSION,
+            "technical_requirement_extraction_method": technical_method,
         }
 
         provenance = build_provenance(
