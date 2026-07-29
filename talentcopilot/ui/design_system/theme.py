@@ -232,10 +232,204 @@ def apply_enterprise_theme():
         [data-testid="stSidebar"] .stButton > button:focus-visible {{outline:2px solid #67E8F9;outline-offset:2px}}
         .tc-page-export-row {{display:flex;justify-content:flex-end;gap:.5rem;margin:-.35rem 0 .8rem}}
 
+
+        /* Release 7.9.0 — Premium UX consolidation */
+        .block-container {{
+            max-width: 1380px;
+            padding-top: .45rem;
+        }}
+        .tc-page-header {{
+            position: relative;
+            overflow: hidden;
+            margin: .15rem 0 .85rem;
+            padding: 1rem 1.15rem 1rem 1.35rem;
+            border: 1px solid #DCE6F3;
+            border-radius: 16px;
+            background: rgba(255,255,255,.94);
+            box-shadow: 0 8px 24px rgba(15,23,42,.055);
+        }}
+        .tc-page-header-accent {{
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 5px;
+            background: linear-gradient(180deg,#1D4ED8 0%,#06B6D4 100%);
+        }}
+        .tc-page-header-main {{
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+        }}
+        .tc-page-eyebrow {{
+            color: #2563EB;
+            font-size: .65rem;
+            font-weight: 850;
+            letter-spacing: .105em;
+            text-transform: uppercase;
+        }}
+        .tc-page-header h1 {{
+            margin: .18rem 0 .2rem;
+            color: #0F172A;
+            font-size: clamp(1.45rem,2.2vw,2rem);
+            line-height: 1.08;
+            letter-spacing: -.038em;
+        }}
+        .tc-page-header p {{
+            max-width: 860px;
+            margin: 0;
+            color: #52647D;
+            font-size: .87rem;
+            line-height: 1.45;
+        }}
+        .tc-page-meta {{
+            display: flex;
+            flex-wrap: wrap;
+            gap: .42rem;
+            margin-top: .58rem;
+        }}
+        .tc-page-meta span,.tc-page-status {{
+            display: inline-flex;
+            align-items: center;
+            min-height: 1.65rem;
+            padding: .18rem .56rem;
+            border: 1px solid #D8E4F2;
+            border-radius: 999px;
+            background: #F8FAFC;
+            color: #475569;
+            font-size: .68rem;
+            font-weight: 760;
+        }}
+        .tc-page-status {{
+            color: #075985;
+            background: #ECFEFF;
+            border-color: #A5F3FC;
+            white-space: nowrap;
+        }}
+        .tc-recommended-action {{
+            position: relative;
+            margin: .7rem 0 .85rem;
+            padding: .88rem 1rem .88rem 1.15rem;
+            border: 1px solid #C7D2FE;
+            border-radius: 14px;
+            background: linear-gradient(135deg,#F8FAFF 0%,#EEF2FF 100%);
+            box-shadow: 0 6px 18px rgba(49,46,129,.055);
+        }}
+        .tc-recommended-action:before {{
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 12px;
+            bottom: 12px;
+            width: 4px;
+            border-radius: 0 999px 999px 0;
+            background: linear-gradient(180deg,#1D4ED8,#06B6D4);
+        }}
+        .tc-recommended-kicker {{
+            color: #4338CA;
+            font-size: .62rem;
+            font-weight: 850;
+            letter-spacing: .095em;
+            text-transform: uppercase;
+        }}
+        .tc-recommended-title {{
+            margin-top: .2rem;
+            color: #0F172A;
+            font-size: .98rem;
+            font-weight: 840;
+        }}
+        .tc-recommended-body {{
+            margin-top: .16rem;
+            color: #52647D;
+            font-size: .8rem;
+            line-height: 1.42;
+        }}
+        .tc-empty-state {{
+            display: flex;
+            align-items: center;
+            gap: .9rem;
+            padding: 1rem;
+            margin: .65rem 0;
+            border: 1px dashed #C7D2E2;
+            border-radius: 14px;
+            background: #F8FAFC;
+        }}
+        .tc-empty-icon {{
+            display: grid;
+            place-items: center;
+            width: 2.3rem;
+            height: 2.3rem;
+            flex: 0 0 2.3rem;
+            border-radius: 12px;
+            color: #1D4ED8;
+            background: #E0EAFF;
+            font-weight: 900;
+        }}
+        .tc-empty-title {{color:#0F172A;font-weight:820;font-size:.92rem}}
+        .tc-empty-body {{color:#64748B;font-size:.78rem;line-height:1.4;margin-top:.12rem}}
+        .tc-skeleton {{padding:1rem;border:1px solid #E2E8F0;border-radius:14px;background:#FFFFFF}}
+        .tc-skeleton-line {{display:block;height:.72rem;margin:.55rem 0;border-radius:999px;background:linear-gradient(90deg,#E8EEF6 20%,#F8FAFC 50%,#E8EEF6 80%);background-size:220% 100%;animation:tcShimmer 1.45s infinite}}
+        .tc-skeleton-line:nth-child(2) {{width:78%}}
+        .tc-skeleton-line:nth-child(3) {{width:58%}}
+        @keyframes tcShimmer {{0%{{background-position:100% 0}}100%{{background-position:-100% 0}}}}
+        .tc-candidate-row {{
+            display: grid;
+            grid-template-columns: minmax(190px,1.6fr) repeat(4,minmax(90px,.65fr)) minmax(240px,1.7fr);
+            gap: .7rem;
+            align-items: center;
+            min-height: 70px;
+            padding: .72rem .86rem;
+            margin: .38rem 0;
+            border: 1px solid #E1E8F2;
+            border-radius: 13px;
+            background: rgba(255,255,255,.96);
+            box-shadow: 0 2px 8px rgba(15,23,42,.035);
+        }}
+        .tc-candidate-row:hover {{border-color:#B9CBE4;box-shadow:0 7px 18px rgba(15,23,42,.065)}}
+        .tc-candidate-name {{color:#0F172A;font-size:.9rem;font-weight:840}}
+        .tc-candidate-rank {{color:#64748B;font-size:.65rem;font-weight:820;text-transform:uppercase;letter-spacing:.07em}}
+        .tc-candidate-value {{color:#0F172A;font-size:.82rem;font-weight:820}}
+        .tc-candidate-label {{color:#7A8AA1;font-size:.59rem;font-weight:820;text-transform:uppercase;letter-spacing:.065em}}
+        .tc-candidate-insight {{color:#475569;font-size:.69rem;line-height:1.38}}
+        .tc-candidate-insight strong {{color:#25364D}}
+        .tc-toolbar {{
+            padding: .68rem .78rem;
+            margin: .45rem 0 .75rem;
+            border: 1px solid #E2E8F0;
+            border-radius: 14px;
+            background: rgba(248,250,252,.86);
+        }}
+        div[data-testid="stMetric"] {{padding:.7rem .82rem}}
+        div[data-testid="stMetricValue"] {{font-size:1.55rem}}
+        .stDownloadButton > button,.stButton > button {{min-height:2.35rem;border-radius:10px;font-size:.82rem}}
+        .stDownloadButton > button {{font-weight:720;border-color:#CBD5E1;color:#334155;background:#FFFFFF}}
+        [data-testid="stSidebar"] {{width:286px !important}}
+        [data-testid="stSidebar"] .stButton > button {{
+            min-height:2.48rem;
+            padding:.48rem .7rem;
+            color:#F4F8FF;
+            font-size:.86rem;
+            font-weight:780;
+        }}
+        [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+        [data-testid="stSidebar"] label {{color:#D6E3F4}}
+        .tc-mission-card {{padding:.72rem .78rem;margin:.45rem 0 .62rem}}
+        .tc-sidebar-section {{margin:.82rem .3rem .3rem;color:#C5D4E8}}
+        .tc-brand-lockup {{padding:.28rem .1rem .8rem}}
+        .tc-brand-mark {{width:42px;height:42px;flex-basis:42px}}
+        .tc-brand-name {{font-size:.94rem}}
+        .tc-brand-slogan {{font-size:.64rem}}
+        .stTabs [data-baseweb="tab-list"] {{position:sticky;top:6.15rem;z-index:30;background:rgba(238,242,247,.96);backdrop-filter:blur(10px)}}
+
         @media (max-width: 760px) {{
             .block-container {{ padding-left: 1rem; padding-right: 1rem; }}
             .tc-hero {{ padding: 1.3rem 1.2rem; border-radius: 19px; }}
             .tc-card {{ padding: 1rem; }}
+            .tc-page-header {{padding:.9rem 1rem .9rem 1.15rem}}
+            .tc-page-header-main {{display:block}}
+            .tc-page-status {{margin-top:.6rem}}
+            .tc-candidate-row {{grid-template-columns:1fr 1fr;gap:.55rem}}
+            .tc-candidate-row .tc-candidate-insight {{grid-column:1 / -1}}
+            .stTabs [data-baseweb="tab-list"] {{position:relative;top:auto;overflow-x:auto}}
         }}
         </style>
         ''',

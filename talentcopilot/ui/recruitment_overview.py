@@ -16,7 +16,14 @@ from talentcopilot.services.recruitment_workflow_state import (
     select_workflow_candidate,
 )
 from talentcopilot.services.streamlit_session_bridge import get_streamlit_session
-from talentcopilot.ui.design_system.components import enterprise_hero, metric_grid, section_title
+from talentcopilot.ui.design_system.components import (
+    compact_empty_state,
+    loading_skeleton,
+    metric_grid,
+    page_header,
+    recommended_action,
+    section_title,
+)
 from talentcopilot.ui.design_system.theme import apply_enterprise_theme
 from talentcopilot.ui.navigation_actions import request_page
 
@@ -251,25 +258,21 @@ def _interview_progress_chart(view: RecruitmentOverview):
 def _next_action(view: RecruitmentOverview) -> None:
     import streamlit as st
 
-    st.markdown(
-        f"""
-        <div style="border:1px solid #C7D2FE;background:#EEF2FF;border-radius:18px;padding:1rem 1.1rem;margin:.75rem 0 1rem">
-          <div style="font-size:.72rem;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:#4338CA">Recommended next action</div>
-          <div style="font-size:1.05rem;font-weight:820;color:#0F172A;margin:.24rem 0">{escape(view.next_action_title)}</div>
-          <div style="font-size:.86rem;color:#475569;line-height:1.45">{escape(view.next_action_detail)}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    recommended_action(
+        view.next_action_title,
+        view.next_action_detail,
     )
-    if st.button(
-        view.next_action_button + " →",
-        type="primary",
-        key="recruitment_overview_next_action",
-        use_container_width=True,
-        help="TalentCopilot recommends this action from the current workflow state.",
-    ):
-        request_page(view.next_action_page, reason=view.next_action_title)
-        st.rerun()
+    action_col, spacer = st.columns([1.05, 2.4])
+    with action_col:
+        if st.button(
+            view.next_action_button + " →",
+            type="primary",
+            key="recruitment_overview_next_action",
+            use_container_width=True,
+            help="TalentCopilot recommends this action from the current workflow state.",
+        ):
+            request_page(view.next_action_page, reason=view.next_action_title)
+            st.rerun()
 
 
 def _candidate_shortcut(view: RecruitmentOverview) -> None:
@@ -321,19 +324,28 @@ def _candidate_cards(view: RecruitmentOverview, compensation_report) -> None:
         "Interview progress",
         "Compensation alignment",
     ]
-    filter_col, sort_col = st.columns([1.25, 1])
-    with filter_col:
-        selected_filter = st.selectbox(
-            "Candidate filter",
-            filter_options,
-            key="dashboard_perspective_filter",
-        )
-    with sort_col:
-        selected_sort = st.selectbox(
-            "Sort by",
-            sort_options,
-            key="dashboard_perspective_sort",
-        )
+
+    with st.container(border=True):
+        filter_col, sort_col, view_col = st.columns([1.25, 1, .8])
+        with filter_col:
+            selected_filter = st.selectbox(
+                "Candidate filter",
+                filter_options,
+                key="dashboard_perspective_filter",
+            )
+        with sort_col:
+            selected_sort = st.selectbox(
+                "Sort by",
+                sort_options,
+                key="dashboard_perspective_sort",
+            )
+        with view_col:
+            display_mode = st.segmented_control(
+                "Display",
+                ["List", "Cards"],
+                default="List",
+                key="dashboard_perspective_display_mode",
+            ) or "List"
 
     candidates = list(view.candidates)
     if selected_filter == "Strong prospects":
@@ -369,43 +381,79 @@ def _candidate_cards(view: RecruitmentOverview, compensation_report) -> None:
         candidates.sort(key=lambda item: item.official_rank)
 
     if not candidates:
-        st.info("No candidate matches the selected dashboard filter.")
+        compact_empty_state(
+            "No candidate matches this view",
+            "Change the filter or return to All candidates to review the complete portfolio.",
+            icon="◇",
+        )
+        return
+
+    def compensation_label(candidate) -> str:
+        budget = budget_by_name.get(candidate.candidate_name)
+        if budget is None or budget.budget_fit is None:
+            return "Not documented"
+        return "Within range" if budget.budget_fit >= 70 else "Negotiation required"
+
+    if display_mode == "List":
+        st.caption("Compact decision view · open a candidate only when deeper evidence is needed.")
+        for candidate in candidates:
+            confidence = f"{candidate.confidence_score:.0f}%" if candidate.confidence_score is not None else "—"
+            compensation = compensation_label(candidate)
+            st.markdown(
+                f'''<div class="tc-candidate-row">
+                <div><div class="tc-candidate-rank">Rank #{candidate.official_rank}</div>
+                <div class="tc-candidate-name">{escape(candidate.candidate_name)}</div></div>
+                <div><div class="tc-candidate-label">Talent fit</div><div class="tc-candidate-value">{candidate.official_match_score:.0f}%</div></div>
+                <div><div class="tc-candidate-label">Evidence</div><div class="tc-candidate-value">{confidence}</div></div>
+                <div><div class="tc-candidate-label">Interview</div><div class="tc-candidate-value">{escape(candidate.interview_status)}</div></div>
+                <div><div class="tc-candidate-label">Compensation</div><div class="tc-candidate-value">{escape(compensation)}</div></div>
+                <div class="tc-candidate-insight"><strong>Strength:</strong> {escape(candidate.strongest_area)}<br>
+                <strong>Risk:</strong> {escape(candidate.primary_risk)}</div>
+                </div>''',
+                unsafe_allow_html=True,
+            )
+            action_col, spacer = st.columns([.8, 3.2])
+            with action_col:
+                if st.button(
+                    f"View {candidate.candidate_name}",
+                    key=f"dashboard_open_candidate_list_{candidate.candidate_id}",
+                    use_container_width=True,
+                ):
+                    select_workflow_candidate(candidate.candidate_id, candidate.candidate_name)
+                    request_page(
+                        "Candidate Intelligence",
+                        reason=f"Reviewing {candidate.candidate_name} from Dashboard Perspective.",
+                    )
+                    st.rerun()
         return
 
     for start in range(0, len(candidates), 2):
         columns = st.columns(2)
         for column, candidate in zip(columns, candidates[start:start + 2]):
-            budget = budget_by_name.get(candidate.candidate_name)
-            compensation_label = (
-                "Not documented"
-                if budget is None or budget.budget_fit is None
-                else "Within range"
-                if budget.budget_fit >= 70
-                else "Negotiation required"
-            )
+            compensation = compensation_label(candidate)
             strongest = candidate.strongest_area
             risk = candidate.primary_risk
             with column:
                 st.markdown(
-                    f"""
-                    <div class="tc-card" style="min-height:235px">
+                    f'''
+                    <div class="tc-card" style="min-height:198px">
                       <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start">
                         <div>
-                          <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#64748B;font-weight:800">Rank #{candidate.official_rank}</div>
-                          <div style="font-size:1.08rem;font-weight:850;color:#0F172A;margin-top:.15rem">{escape(candidate.candidate_name)}</div>
+                          <div style="font-size:.67rem;text-transform:uppercase;letter-spacing:.08em;color:#64748B;font-weight:800">Rank #{candidate.official_rank}</div>
+                          <div style="font-size:1rem;font-weight:850;color:#0F172A;margin-top:.12rem">{escape(candidate.candidate_name)}</div>
                         </div>
-                        <div style="font-size:1.4rem;font-weight:900;color:#1D4ED8">{candidate.official_match_score:.0f}%</div>
+                        <div style="font-size:1.25rem;font-weight:900;color:#1D4ED8">{candidate.official_match_score:.0f}%</div>
                       </div>
-                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.55rem;margin-top:.9rem;font-size:.78rem;color:#475569">
+                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.42rem;margin-top:.7rem;font-size:.72rem;color:#475569">
                         <div><strong>Evidence</strong><br>{candidate.confidence_score if candidate.confidence_score is not None else '—'}%</div>
                         <div><strong>Interview</strong><br>{escape(candidate.interview_status)}</div>
-                        <div><strong>Compensation</strong><br>{escape(compensation_label)}</div>
+                        <div><strong>Compensation</strong><br>{escape(compensation)}</div>
                         <div><strong>Progress</strong><br>{candidate.interview_progress}%</div>
                       </div>
-                      <div style="margin-top:.8rem;font-size:.77rem;color:#334155"><strong>Strongest area:</strong> {escape(strongest)}</div>
-                      <div style="margin-top:.3rem;font-size:.77rem;color:#334155"><strong>Primary risk:</strong> {escape(risk)}</div>
+                      <div style="margin-top:.65rem;font-size:.72rem;color:#334155"><strong>Strongest area:</strong> {escape(strongest)}</div>
+                      <div style="margin-top:.25rem;font-size:.72rem;color:#334155"><strong>Primary risk:</strong> {escape(risk)}</div>
                     </div>
-                    """,
+                    ''',
                     unsafe_allow_html=True,
                 )
                 if st.button(
@@ -427,24 +475,40 @@ def render_recruitment_overview() -> None:
     apply_enterprise_theme()
     session = get_streamlit_session()
 
-    enterprise_hero(
+    role_title = str(getattr(session, "role_title", "") or "Candidate portfolio") if session is not None else "Candidate portfolio"
+    candidate_total = int(getattr(session, "candidate_count", 0) or 0) if session is not None else 0
+    page_header(
         "Dashboard Perspective",
-        "Review the complete candidate pool, compare decision signals and open individual evidence only when needed.",
-        "Candidate Portfolio Intelligence",
+        "Review the whole candidate pool first, then open individual evidence only where deeper validation is needed.",
+        eyebrow="Recruitment · Candidate portfolio",
+        metadata=(role_title, f"{candidate_total} candidates" if candidate_total else "No active portfolio"),
+        status="Decision overview",
     )
 
     if session is None:
-        st.info("Create or reopen a recruitment mission before opening the visual overview.")
+        compact_empty_state(
+            "No active recruitment mission",
+            "Create or reopen a mission before opening the candidate portfolio.",
+            icon="▦",
+        )
         if st.button("Open Recruitment Workspace", type="primary", key="overview_empty_open_workspace"):
             request_page("Recruitment Overview", reason="Create or reopen a recruitment mission.")
             st.rerun()
         return
 
     workflow_context = get_workflow_context(session, current_page="Dashboard Perspective")
+    loading_placeholder = st.empty()
+    with loading_placeholder.container():
+        loading_skeleton(2)
     view = RecruitmentOverviewService().build(session, workflow_context)
+    loading_placeholder.empty()
 
     if not view.has_analysis:
-        st.info("Dashboard Perspective becomes available after candidate analysis.")
+        compact_empty_state(
+            "Candidate analysis is not complete",
+            "Dashboard Perspective becomes available as soon as the candidate analysis has finished.",
+            icon="◇",
+        )
         if st.button("Continue candidate analysis", type="primary", key="overview_continue_analysis"):
             request_page("Recruitment Overview", reason="Complete the candidate analysis first.")
             st.rerun()
@@ -472,7 +536,7 @@ def render_recruitment_overview() -> None:
             use_container_width=True,
         )
     with compare_col:
-        if st.button("Compare finalists", type="primary", key="dashboard_compare_finalists", use_container_width=True):
+        if st.button("Compare finalists", key="dashboard_compare_finalists", use_container_width=True):
             request_page("Comparison", reason="Opened finalist comparison from Dashboard Perspective.")
             st.rerun()
 
@@ -483,6 +547,8 @@ def render_recruitment_overview() -> None:
         ("Compensation documented", f"{documented_compensation}/{view.candidate_count}", f"{compensation_aligned} aligned"),
     ])
 
+    _next_action(view)
+
     section_title(
         "Candidate portfolio",
         "Start with the whole pool. Filters and sorting are preserved when you open a candidate and return.",
@@ -492,16 +558,16 @@ def render_recruitment_overview() -> None:
     available_modes = [MODE_OFFICIAL, MODE_PRE]
     if view.has_post_interview_data:
         available_modes.append(MODE_POST)
-    mode = st.radio(
+    mode = st.segmented_control(
         "Dashboard perspective",
         available_modes,
-        horizontal=True,
+        default=MODE_OFFICIAL,
         key="recruitment_overview_mode",
         help=(
             "Official role fit is the immutable CV-to-role score. Competency alignment is a separate "
             "visual indicator based on role-required levels and does not replace the official ranking."
         ),
-    )
+    ) or MODE_OFFICIAL
 
     if mode != MODE_OFFICIAL:
         st.caption(
@@ -519,23 +585,20 @@ def render_recruitment_overview() -> None:
         st.plotly_chart(_fit_distribution_chart(view), use_container_width=True, config={"displayModeBar": False})
 
     competency_mode = MODE_POST if mode == MODE_POST else MODE_PRE
-    st.plotly_chart(_heatmap(view, competency_mode), use_container_width=True, config={"displayModeBar": False})
+    with st.expander("Advanced portfolio analytics", expanded=False):
+        st.caption("Competency and interview diagnostics are available on demand to keep the decision view concise.")
+        st.plotly_chart(_heatmap(view, competency_mode), use_container_width=True, config={"displayModeBar": False})
+        coverage_col, interview_col = st.columns(2)
+        with coverage_col:
+            st.plotly_chart(
+                _competency_coverage_chart(view, competency_mode),
+                use_container_width=True,
+                config={"displayModeBar": False},
+            )
+        with interview_col:
+            st.plotly_chart(_interview_progress_chart(view), use_container_width=True, config={"displayModeBar": False})
 
-    coverage_col, interview_col = st.columns(2)
-    with coverage_col:
-        st.plotly_chart(
-            _competency_coverage_chart(view, competency_mode),
-            use_container_width=True,
-            config={"displayModeBar": False},
-        )
-    with interview_col:
-        st.plotly_chart(_interview_progress_chart(view), use_container_width=True, config={"displayModeBar": False})
-
-    guidance_col, shortcut_col = st.columns([1.25, 0.75])
-    with guidance_col:
-        _next_action(view)
-    with shortcut_col:
-        section_title("Open the detail", "Keep the dashboard compact and drill down only when needed.")
+    with st.expander("Quick candidate access", expanded=False):
         _candidate_shortcut(view)
 
     with st.expander("How to read these indicators", expanded=False):

@@ -155,22 +155,24 @@ def render_recruitment_workflow_shell(session, *, current_page: str) -> None:
     st.markdown(
         """
         <style>
-        .tc-workflow-anchor{position:sticky;top:.2rem;z-index:980;margin:-.45rem 0 1rem;padding-top:.15rem}
-        .tc-workflow-shell{border:1px solid #D9E5F5;border-radius:16px;padding:12px 15px 11px;background:rgba(255,255,255,.985);box-shadow:0 12px 30px rgba(15,23,42,.08);backdrop-filter:blur(16px)}
-        .tc-workflow-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:7px}
-        .tc-workflow-role{font-size:.93rem;font-weight:840;color:#0F172A;letter-spacing:-.015em}
-        .tc-workflow-meta{font-size:.72rem;color:#52647D;line-height:1.35}
-        .tc-workflow-kicker{display:inline-flex;align-items:center;border-radius:999px;padding:.24rem .58rem;font-size:.68rem;font-weight:820;color:#1E3A8A;background:#EFF6FF;border:1px solid #BFDBFE}
-        .tc-workflow-bar{height:6px;background:#E7EEF8;border-radius:999px;overflow:hidden;margin:8px 0 10px}
-        .tc-workflow-bar>span{display:block;height:100%;background:linear-gradient(90deg,#1D4ED8 0%,#0EA5E9 58%,#06B6D4 100%);border-radius:999px;box-shadow:0 0 14px rgba(14,165,233,.35)}
-        .tc-workflow-steps{display:grid;grid-template-columns:repeat(5,minmax(105px,1fr));gap:6px}
-        .tc-workflow-step{position:relative;padding:8px 9px;border-radius:10px;text-align:left;font-size:.68rem;line-height:1.22;border:1px solid #E2E8F0;color:#53657D;background:#F8FAFC;min-height:50px}
-        .tc-workflow-step strong{display:block;font-size:.76rem;color:inherit}
-        .tc-workflow-state{display:block;font-size:.55rem;text-transform:uppercase;letter-spacing:.08em;font-weight:850;margin-bottom:3px;color:#71839B}
-        .tc-workflow-step.current{color:#1E3A8A;background:#EFF6FF;border-color:#93C5FD;font-weight:800;box-shadow:inset 3px 0 0 #0EA5E9}
+        .tc-workflow-anchor{position:sticky;top:.15rem;z-index:980;margin:-.25rem 0 .65rem;padding-top:.1rem}
+        .tc-workflow-shell{border:1px solid #D9E5F5;border-radius:14px;padding:9px 12px 8px;background:rgba(255,255,255,.975);box-shadow:0 8px 24px rgba(15,23,42,.07);backdrop-filter:blur(16px)}
+        .tc-workflow-top{display:grid;grid-template-columns:minmax(210px,1.25fr) minmax(420px,3fr) auto;gap:12px;align-items:center}
+        .tc-workflow-context{min-width:0}
+        .tc-workflow-role{font-size:.82rem;font-weight:850;color:#0F172A;letter-spacing:-.012em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .tc-workflow-meta{font-size:.64rem;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+        .tc-workflow-track{display:flex;align-items:center;gap:4px;min-width:0}
+        .tc-workflow-step{position:relative;display:flex;align-items:center;justify-content:center;flex:1;min-width:0;height:31px;padding:0 7px;border-radius:9px;border:1px solid #E2E8F0;color:#64748B;background:#F8FAFC;font-size:.66rem;font-weight:780;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .tc-workflow-step.current{color:#1E3A8A;background:#EFF6FF;border-color:#93C5FD;box-shadow:inset 3px 0 0 #0EA5E9}
         .tc-workflow-step.done{color:#166534;background:#F0FDF4;border-color:#BBF7D0}
-        .tc-workflow-step.locked{color:#8292A8;background:#F8FAFC;border-style:dashed}
-        @media(max-width:900px){.tc-workflow-steps{grid-template-columns:repeat(2,minmax(120px,1fr))}.tc-workflow-anchor{position:relative;top:auto}.tc-workflow-head{display:block}.tc-workflow-kicker{margin-top:7px}}
+        .tc-workflow-step.locked{color:#8A99AD;background:#F8FAFC;border-style:dashed}
+        .tc-workflow-state{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+        .tc-workflow-kicker{display:inline-flex;align-items:center;justify-content:center;min-height:1.65rem;border-radius:999px;padding:.16rem .55rem;font-size:.63rem;font-weight:850;color:#1E3A8A;background:#EFF6FF;border:1px solid #BFDBFE;white-space:nowrap}
+        .tc-workflow-bar{height:3px;background:#E7EEF8;border-radius:999px;overflow:hidden;margin-top:7px}
+        .tc-workflow-bar>span{display:block;height:100%;background:linear-gradient(90deg,#1D4ED8 0%,#0EA5E9 58%,#06B6D4 100%);border-radius:999px;box-shadow:0 0 14px rgba(14,165,233,.35)}
+        .tc-workflow-action-note{display:flex;align-items:center;min-height:2.35rem;padding:.35rem .55rem;color:#52647D;font-size:.72rem}
+        @media(max-width:1000px){.tc-workflow-top{grid-template-columns:1fr auto}.tc-workflow-track{grid-column:1 / -1;order:3}.tc-workflow-context{order:1}.tc-workflow-kicker{order:2}}
+        @media(max-width:760px){.tc-workflow-anchor{position:relative;top:auto}.tc-workflow-track{display:grid;grid-template-columns:repeat(2,minmax(120px,1fr))}.tc-workflow-step{justify-content:flex-start}.tc-workflow-meta{white-space:normal}.tc-workflow-top{grid-template-columns:1fr}}
         </style>
         """,
         unsafe_allow_html=True,
@@ -183,20 +185,22 @@ def render_recruitment_workflow_shell(session, *, current_page: str) -> None:
         steps_html.append(
             f'<div class="tc-workflow-step {css}" title="{escape(item.reason or accessible_state)}">'
             f'<span class="tc-workflow-state">{accessible_state}</span>'
-            f'<strong>{escape(item.label)}</strong></div>'
+            f'{escape(item.label)}</div>'
         )
 
     st.markdown(
-        f'<div class="tc-workflow-anchor"><div class="tc-workflow-shell"><div class="tc-workflow-head">'
-        f'<div><div class="tc-workflow-role">{escape(context.role_title)}</div>'
-        f'<div class="tc-workflow-meta">{escape(selected)} · Current stage: {escape(current.label)}</div></div>'
+        f'<div class="tc-workflow-anchor"><div class="tc-workflow-shell">'
+        f'<div class="tc-workflow-top">'
+        f'<div class="tc-workflow-context"><div class="tc-workflow-role">{escape(context.role_title)}</div>'
+        f'<div class="tc-workflow-meta">{escape(selected)} · {escape(current.label)}</div></div>'
+        f'<div class="tc-workflow-track">{"".join(steps_html)}</div>'
         f'<div class="tc-workflow-kicker">{int(progress * 100)}% complete</div></div>'
         f'<div class="tc-workflow-bar" aria-label="Workflow progress"><span style="width:{int(progress * 100)}%"></span></div>'
-        f'<div class="tc-workflow-steps">{"".join(steps_html)}</div></div></div>',
+        f'</div></div>',
         unsafe_allow_html=True,
     )
 
-    left, middle, right = st.columns([1.05, 2.65, 1.55])
+    left, middle, right = st.columns([.9, 2.8, 1.35])
     with left:
         if previous_page and st.button(
             "← Previous",
@@ -207,10 +211,11 @@ def render_recruitment_workflow_shell(session, *, current_page: str) -> None:
             request_page(previous_page, reason=f"Returned to {previous_page}.")
             st.rerun()
     with middle:
-        if not current.available and current.reason:
-            st.info(current.reason)
-        else:
-            st.caption(f"Next recommended action: **{action_label}**")
+        note = current.reason if not current.available and current.reason else f"Next recommended action: {action_label}"
+        st.markdown(
+            f'<div class="tc-workflow-action-note">{escape(note)}</div>',
+            unsafe_allow_html=True,
+        )
     with right:
         if st.button(
             action_label + " →",

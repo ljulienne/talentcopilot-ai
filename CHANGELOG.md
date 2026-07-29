@@ -1,5 +1,16 @@
 # Changelog
 
+## 7.9.0 — Premium UX Consolidation
+
+- Introduced a compact, consistent page header across the Recruitment journey.
+- Reduced the sticky workflow shell to a concise stage rail with one recommended continuation action.
+- Added compact List and Cards modes to Dashboard Perspective, defaulting to the decision-efficient List view.
+- Moved advanced competency and interview charts behind progressive disclosure.
+- Strengthened sidebar contrast, density and mobile responsiveness.
+- Standardized button, metric, empty-state and loading-state presentation.
+- Reduced duplicate primary calls to action and preserved all PDF exports.
+- Preserved official scores, ranks, evidence, recommendations and compensation separation.
+
 ## 7.8.2 — Candidate Insight Grounding
 
 - Corrected Dashboard Perspective candidate insight grounding.

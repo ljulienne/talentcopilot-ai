@@ -89,20 +89,20 @@ def _tone(value: str) -> str:
 def _styles() -> str:
     return """
     <style>
-    .tc-ew-hero{padding:1.45rem 1.55rem;border:1px solid #dbe4f0;border-radius:24px;background:linear-gradient(135deg,#fff 0%,#f7f8ff 100%);box-shadow:0 16px 44px rgba(15,23,42,.07)}
+    .tc-ew-hero{position:relative;padding:.95rem 1.1rem 1rem 1.3rem;border:1px solid #dbe4f0;border-radius:16px;background:linear-gradient(135deg,#fff 0%,#f8fbff 100%);box-shadow:0 8px 24px rgba(15,23,42,.055);overflow:hidden}.tc-ew-hero:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(180deg,#1d4ed8,#06b6d4)}
     .tc-ew-kicker{font-size:.72rem;font-weight:850;letter-spacing:.12em;text-transform:uppercase;color:#4f46e5}
-    .tc-ew-title{font-size:1.75rem;font-weight:850;color:#0f172a;margin:.28rem 0}
-    .tc-ew-subtitle{font-size:.92rem;color:#64748b;line-height:1.5}
-    .tc-ew-meta{display:flex;gap:.55rem;flex-wrap:wrap;margin-top:.8rem}
-    .tc-ew-pill{border-radius:999px;padding:.34rem .68rem;font-size:.76rem;font-weight:800;background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe}
-    .tc-ew-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;margin:1rem 0}
-    .tc-ew-metric,.tc-ew-card{padding:1rem 1.05rem;border:1px solid #e2e8f0;border-radius:18px;background:#fff}
+    .tc-ew-title{font-size:1.55rem;font-weight:850;color:#0f172a;margin:.2rem 0}
+    .tc-ew-subtitle{font-size:.84rem;color:#64748b;line-height:1.42;max-width:860px}
+    .tc-ew-meta{display:flex;gap:.42rem;flex-wrap:wrap;margin-top:.55rem}
+    .tc-ew-pill{border-radius:999px;padding:.22rem .55rem;font-size:.67rem;font-weight:800;background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe}
+    .tc-ew-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.65rem;margin:.75rem 0}
+    .tc-ew-metric,.tc-ew-card{padding:.82rem .9rem;border:1px solid #e2e8f0;border-radius:14px;background:#fff}
     .tc-ew-label{font-size:.76rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.06em}
-    .tc-ew-value{font-size:1.38rem;font-weight:850;color:#0f172a;margin:.28rem 0}
+    .tc-ew-value{font-size:1.22rem;font-weight:850;color:#0f172a;margin:.2rem 0}
     .tc-ew-detail,.tc-ew-body,.tc-ew-footer{font-size:.82rem;color:#64748b;line-height:1.5}
-    .tc-ew-summary{padding:1rem 1.1rem;border-radius:18px;background:#eef2ff;border:1px solid #c7d2fe;color:#312e81;line-height:1.55;margin:1rem 0}
-    .tc-ew-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.55rem;margin:1rem 0}
-    .tc-ew-step{padding:.72rem .8rem;border:1px solid #e2e8f0;border-radius:14px;background:#fff;font-size:.8rem;color:#64748b}
+    .tc-ew-summary{padding:.82rem .95rem;border-radius:14px;background:#eef2ff;border:1px solid #c7d2fe;color:#312e81;line-height:1.48;margin:.75rem 0}
+    .tc-ew-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.42rem;margin:.65rem 0}
+    .tc-ew-step{padding:.5rem .62rem;border:1px solid #e2e8f0;border-radius:10px;background:#fff;font-size:.72rem;color:#64748b}
     .tc-ew-step.done{background:#ecfdf5;border-color:#a7f3d0;color:#065f46}
     .tc-ew-step.current{background:#eef2ff;border-color:#c7d2fe;color:#3730a3;font-weight:800}
     .tc-ew-card{margin:.65rem 0}

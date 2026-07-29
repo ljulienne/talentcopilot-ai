@@ -76,6 +76,92 @@ def activity_item(time: str, title: str, detail: str):
     )
 
 
+
+def page_header(
+    title: str,
+    subtitle: str,
+    *,
+    eyebrow: str = "TalentCopilot",
+    metadata: Iterable[str] = (),
+    status: str = "",
+):
+    # Compact, consistent page header for premium workspaces.
+    import streamlit as st
+
+    metadata_items = [str(item).strip() for item in metadata if str(item).strip()]
+    metadata_html = ""
+    if metadata_items:
+        metadata_html = '<div class="tc-page-meta">' + "".join(
+            f'<span>{escape(item)}</span>' for item in metadata_items
+        ) + "</div>"
+    status_html = (
+        f'<span class="tc-page-status">{escape(str(status))}</span>'
+        if status
+        else ""
+    )
+    st.markdown(
+        f'''<section class="tc-page-header">
+        <div class="tc-page-header-accent"></div>
+        <div class="tc-page-header-main">
+          <div>
+            <div class="tc-page-eyebrow">{escape(str(eyebrow))}</div>
+            <h1>{escape(str(title))}</h1>
+            <p>{escape(str(subtitle))}</p>
+            {metadata_html}
+          </div>
+          {status_html}
+        </div>
+        </section>''',
+        unsafe_allow_html=True,
+    )
+
+
+def recommended_action(
+    title: str,
+    body: str,
+    *,
+    label: str = "Recommended next action",
+    tone: str = "primary",
+):
+    # Decision-first recommendation without creating an extra CTA.
+    import streamlit as st
+
+    tone_class = tone if tone in {"primary", "success", "warning", "neutral"} else "primary"
+    st.markdown(
+        f'''<div class="tc-recommended-action {tone_class}">
+        <div class="tc-recommended-kicker">{escape(str(label))}</div>
+        <div class="tc-recommended-title">{escape(str(title))}</div>
+        <div class="tc-recommended-body">{escape(str(body))}</div>
+        </div>''',
+        unsafe_allow_html=True,
+    )
+
+
+def compact_empty_state(title: str, body: str, *, icon: str = "○"):
+    # Compact empty state that explains the next step.
+    import streamlit as st
+
+    st.markdown(
+        f'''<div class="tc-empty-state">
+        <div class="tc-empty-icon" aria-hidden="true">{escape(str(icon))}</div>
+        <div><div class="tc-empty-title">{escape(str(title))}</div>
+        <div class="tc-empty-body">{escape(str(body))}</div></div>
+        </div>''',
+        unsafe_allow_html=True,
+    )
+
+
+def loading_skeleton(lines: int = 3):
+    # Lightweight visual loading placeholder.
+    import streamlit as st
+
+    safe_lines = max(1, min(int(lines), 6))
+    rows = "".join('<span class="tc-skeleton-line"></span>' for _ in range(safe_lines))
+    st.markdown(
+        f'<div class="tc-skeleton" aria-label="Loading content">{rows}</div>',
+        unsafe_allow_html=True,
+    )
+
 def next_action_card(
     title: str,
     body: str,

@@ -20,7 +20,7 @@ from talentcopilot.services.streamlit_session_bridge import get_streamlit_sessio
 from talentcopilot.services.compensation_budget_service import CompensationBudgetService
 from talentcopilot.services.recruitment_pdf_service import RecruitmentPdfService
 from talentcopilot.services.recruitment_workflow_state import get_workflow_context, select_workflow_candidate
-from talentcopilot.ui.design_system.components import enterprise_hero, insight_card, metric_grid, section_title
+from talentcopilot.ui.design_system.components import loading_skeleton, page_header, insight_card, metric_grid, section_title
 from talentcopilot.ui.design_system.theme import apply_enterprise_theme
 from talentcopilot.ui.navigation_actions import request_page
 def _render_skill_bars(report):
@@ -525,11 +525,11 @@ def _render_candidate_header(report, decision_brief) -> None:
     st.markdown(
         """
         <style>
-        .tc-candidate-header {border:1px solid rgba(128,128,128,.18);border-radius:20px;padding:20px 22px;margin:4px 0 16px;background:rgba(255,255,255,.025)}
+        .tc-candidate-header {border:1px solid #E1E8F2;border-radius:14px;padding:14px 16px;margin:2px 0 10px;background:#FFFFFF;box-shadow:0 5px 16px rgba(15,23,42,.04)}
         .tc-candidate-kicker {font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;opacity:.62;font-weight:700}
-        .tc-candidate-name {font-size:1.75rem;line-height:1.15;font-weight:800;margin:.25rem 0 .35rem}
-        .tc-candidate-meta {font-size:.9rem;opacity:.74}
-        .tc-candidate-status {display:inline-block;margin-top:.7rem;padding:.35rem .7rem;border-radius:999px;border:1px solid rgba(72,120,255,.3);background:rgba(72,120,255,.09);font-weight:700;font-size:.82rem}
+        .tc-candidate-name {font-size:1.35rem;line-height:1.15;font-weight:850;margin:.18rem 0 .25rem}
+        .tc-candidate-meta {font-size:.78rem;color:#64748B}
+        .tc-candidate-status {display:inline-block;margin-top:.52rem;padding:.25rem .58rem;border-radius:999px;border:1px solid #BFDBFE;background:#EFF6FF;color:#1E3A8A;font-weight:780;font-size:.7rem}
         </style>
         """,
         unsafe_allow_html=True,
@@ -548,17 +548,7 @@ def _render_candidate_header(report, decision_brief) -> None:
         )
     with right:
         st.metric("Official Match", f"{report.match_score:.0f}%", "Canonical score")
-        if st.button(
-            "Prepare interview →",
-            type="primary",
-            use_container_width=True,
-            key=f"candidate_prepare_interview_{getattr(report, 'candidate_id', report.candidate_name)}",
-        ):
-            request_page(
-                "Interview Intelligence",
-                reason=f"Preparing the interview for {report.candidate_name}.",
-            )
-            st.rerun()
+        st.caption("Use the action bar below to continue the recruitment journey.")
 
     metric_grid([
         ("Official Rank", f"#{report.rank}", "Canonical ranking"),
@@ -660,7 +650,19 @@ def render_candidate_workspace():
     apply_enterprise_theme()
 
     session = get_streamlit_session()
+
+    page_header(
+        "Candidate Intelligence",
+        "Review the decision first, then open only the evidence required to validate it.",
+        eyebrow="Recruitment · Candidate detail",
+        status="Evidence-led review",
+    )
+
+    loading_placeholder = st.empty()
+    with loading_placeholder.container():
+        loading_skeleton(2)
     reports = CandidateWorkspaceService().build_all(session)
+    loading_placeholder.empty()
 
     if st.button(
         "← Back to Dashboard Perspective",
@@ -670,11 +672,6 @@ def render_candidate_workspace():
         request_page("Dashboard Perspective", reason="Returned to Dashboard Perspective from Candidate Intelligence.")
         st.rerun()
 
-    enterprise_hero(
-        "Candidate Intelligence",
-        "Review the decision first, then open only the evidence needed to validate it.",
-        "Recruitment Decision Support",
-    )
 
     if not reports:
         st.info("No active candidate analysis. Load the Enterprise Demo to populate this workspace.")

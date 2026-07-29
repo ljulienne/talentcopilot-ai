@@ -16,7 +16,7 @@ from talentcopilot.services.streamlit_session_bridge import (
     set_streamlit_session,
 )
 from talentcopilot.ui.design_system.components import (
-    enterprise_hero,
+    page_header,
     insight_card,
     metric_grid,
     section_title,
@@ -313,10 +313,11 @@ def render_hiring_budget():
     budget_service = HiringBudgetService()
     session = get_streamlit_session()
 
-    enterprise_hero(
+    page_header(
         "Compensation & Budget",
-        "Define the approved position package, capture candidate expectations before or after interview, and model offer scenarios without changing Talent Fit.",
-        "Human + Financial Decision Support",
+        "Define the approved position package, record candidate expectations and model offer scenarios without changing Talent Fit.",
+        eyebrow="Recruitment · Financial alignment",
+        status="Independent signal",
     )
 
     if session is None:

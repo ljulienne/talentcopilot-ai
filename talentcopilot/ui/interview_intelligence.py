@@ -15,7 +15,7 @@ from talentcopilot.services.recruitment_workflow_state import (
     set_workflow_finalists,
 )
 from talentcopilot.ui.navigation_actions import request_page
-from talentcopilot.ui.design_system.components import enterprise_hero, insight_card, metric_grid, section_title
+from talentcopilot.ui.design_system.components import loading_skeleton, page_header, insight_card, metric_grid, section_title
 from talentcopilot.ui.design_system.theme import apply_enterprise_theme
 
 
@@ -461,6 +461,13 @@ def render_interview_intelligence():
     apply_enterprise_theme()
     session = get_streamlit_session()
 
+    page_header(
+        "Interview & Assessment",
+        "Prepare, conduct and evaluate a focused interview while keeping pre-interview Talent Fit unchanged.",
+        eyebrow="Recruitment · Structured interview",
+        status="Human assessment",
+    )
+
     if st.button(
         "← Back to Dashboard Perspective",
         key="interview_back_dashboard",
@@ -469,18 +476,17 @@ def render_interview_intelligence():
         request_page("Dashboard Perspective", reason="Returned to Dashboard Perspective from Interview & Assessment.")
         st.rerun()
 
-    enterprise_hero(
-        "Interview & Assessment",
-        "Prepare, conduct and evaluate a focused, evidence-based interview while keeping pre-interview Talent Fit unchanged.",
-        "Structured Human Assessment",
-    )
 
     if session is None or not getattr(session, "ranked_analyses", None):
         st.info("Create or load a recruitment session before preparing an interview strategy.")
         return
 
+    loading_placeholder = st.empty()
+    with loading_placeholder.container():
+        loading_skeleton(3)
     with st.spinner("Preparing the interview context…"):
         reports = InterviewWorkspaceService().build_all(session)
+    loading_placeholder.empty()
 
     if not reports:
         st.info("No candidate analysis is available for interview preparation.")
@@ -639,7 +645,6 @@ def render_interview_intelligence():
     with compare_col:
         if st.button(
             "Compare finalists →",
-            type="primary",
             key=f"interview_compare_top_{selected_id}",
             use_container_width=True,
         ):

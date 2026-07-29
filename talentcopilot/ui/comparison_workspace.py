@@ -11,7 +11,7 @@ from talentcopilot.services.recruitment_workflow_state import (
     mark_finalists_compared,
     set_workflow_finalists,
 )
-from talentcopilot.ui.design_system.components import enterprise_hero, insight_card, metric_grid, section_title
+from talentcopilot.ui.design_system.components import page_header, insight_card, metric_grid, section_title
 from talentcopilot.ui.design_system.theme import apply_enterprise_theme
 from talentcopilot.ui.navigation_actions import request_page
 
@@ -51,6 +51,13 @@ def render_comparison_workspace():
     session = get_streamlit_session()
     report = service.build(session)
 
+    page_header(
+        "Compare & Decide",
+        "Compare official evidence, interview findings and compensation context without altering the official ranking.",
+        eyebrow="Recruitment · Final comparison",
+        status="Human-owned decision",
+    )
+
     if st.button(
         "← Back to Dashboard Perspective",
         key="comparison_back_dashboard",
@@ -59,11 +66,6 @@ def render_comparison_workspace():
         request_page("Dashboard Perspective", reason="Returned to Dashboard Perspective from Compare & Decide.")
         st.rerun()
 
-    enterprise_hero(
-        "Compare & Decide",
-        "Compare canonical pre-interview evidence, interview findings and compensation context without altering official ranking.",
-        "Human-owned Final Decision",
-    )
 
     if session is None or not report.candidates:
         if st.button("Load Enterprise Demo", key="comparison_load_demo"):
