@@ -1,3 +1,12 @@
+# Release 7.8.0 — Premium Recruitment Experience
+
+- Replaced radio-based sidebar navigation with a modern SaaS navigation shell.
+- Added configurable Digital Synergy brand identity and English slogan.
+- Consolidated recruitment navigation and reduced repeated information.
+- Simplified Candidate and Interview workspaces to three sections each.
+- Standardized normal primary actions on blue/cyan styling.
+- Preserved official scores, ranks, evidence and assessment data.
+
 # Changelog
 
 All notable changes to TalentCopilot are documented here.

@@ -125,8 +125,9 @@ def render_recruitment_workflow_shell(session, *, current_page: str) -> None:
         .tc-workflow-bar{height:5px;background:#EEF2F7;border-radius:999px;overflow:hidden;margin:9px 0 11px}
         .tc-workflow-bar>span{display:block;height:100%;background:linear-gradient(90deg,#4F46E5,#0EA5E9);border-radius:999px}
         .tc-workflow-steps{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:7px}
-        .tc-workflow-step{position:relative;padding:9px 8px;border-radius:12px;text-align:center;font-size:.75rem;line-height:1.25;border:1px solid #E2E8F0;color:#64748B;background:#F8FAFC;min-height:54px}
-        .tc-workflow-step strong{display:block;font-size:.85rem;margin-bottom:3px}
+        .tc-workflow-step{position:relative;padding:10px 9px;border-radius:12px;text-align:left;font-size:.72rem;line-height:1.25;border:1px solid #E2E8F0;color:#64748B;background:#F8FAFC;min-height:58px}
+        .tc-workflow-step strong{display:block;font-size:.82rem;color:inherit}
+        .tc-workflow-state{display:block;font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;font-weight:800;margin-bottom:4px;color:#94A3B8}
         .tc-workflow-step.current{color:#3730A3;background:#EEF2FF;border-color:#A5B4FC;font-weight:780;box-shadow:0 0 0 1px rgba(79,70,229,.06) inset}
         .tc-workflow-step.done{color:#166534;background:#F0FDF4;border-color:#BBF7D0}
         .tc-workflow-step.locked{color:#94A3B8;background:#F8FAFC;border-style:dashed}
@@ -139,19 +140,18 @@ def render_recruitment_workflow_shell(session, *, current_page: str) -> None:
     steps_html = []
     for item in groups:
         css = "current" if item.current else "done" if item.completed else "locked" if not item.available else ""
-        symbol = _status_symbol(item.completed, item.current, item.available)
-        accessible_state = "Complete" if item.completed else "Current" if item.current else "Blocked" if not item.available else "Pending"
+        accessible_state = "Complete" if item.completed else "Current" if item.current else "Blocked" if not item.available else "Next"
         steps_html.append(
             f'<div class="tc-workflow-step {css}" title="{escape(item.reason or accessible_state)}">'
-            f'<strong aria-hidden="true">{symbol}</strong><span>{escape(item.label)}</span>'
-            f'<span style="position:absolute;left:-9999px">{accessible_state}</span></div>'
+            f'<span class="tc-workflow-state">{accessible_state}</span>'
+            f'<strong>{escape(item.label)}</strong></div>'
         )
 
     st.markdown(
         f'<div class="tc-workflow-shell"><div class="tc-workflow-head">'
         f'<div><div class="tc-workflow-role">{escape(context.role_title)}</div>'
         f'<div class="tc-workflow-meta">{escape(selected)} · Current stage: {escape(current.label)}</div></div>'
-        f'<div class="tc-workflow-kicker">● {int(progress * 100)}% complete</div></div>'
+        f'<div class="tc-workflow-kicker">{int(progress * 100)}% complete</div></div>'
         f'<div class="tc-workflow-bar" aria-label="Workflow progress"><span style="width:{int(progress * 100)}%"></span></div>'
         f'<div class="tc-workflow-steps">{"".join(steps_html)}</div></div>',
         unsafe_allow_html=True,

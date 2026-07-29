@@ -573,57 +573,68 @@ def render_interview_intelligence():
         source_widget_key=selection_key,
     )
 
-    metric_grid([
-        ("Candidate", report.candidate_name, f"Official rank #{report.official_rank} · {report.role_title}"),
-        ("Official Fit", f"{report.fit_score:.0f}%", "Same score as the recruitment session"),
-        ("Evidence Confidence", f"{report.confidence_score}%", "Interview preparation basis"),
-        ("Hiring Risk", report.risk_level, report.recommendation),
-    ])
-
     workflow_context = get_workflow_context(session, current_page="Interview Intelligence")
     saved_evaluation = workflow_context.interview_evaluations.get(selected_id)
+
+    st.markdown(
+        f'''<div class="tc-card" style="margin-top:.35rem">
+        <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:#64748B;font-weight:800">Candidate interview</div>
+        <div style="font-size:1.35rem;font-weight:850;margin:.2rem 0">{report.candidate_name}</div>
+        <div class="tc-muted">Official rank #{report.official_rank} · {report.role_title}</div>
+        </div>''',
+        unsafe_allow_html=True,
+    )
+
+    metric_grid([
+        ("Official Fit", f"{report.fit_score:.0f}%", "Canonical score"),
+        ("Evidence Confidence", f"{report.confidence_score}%", "Preparation basis"),
+        (
+            "Interview Status",
+            "Assessed" if saved_evaluation else "Prepared" if selected_id in workflow_context.interview_prepared_candidate_ids else "Not started",
+            report.risk_level,
+        ),
+    ])
+
     if saved_evaluation:
         st.success(
-            f"Saved interview assessment: {saved_evaluation.get('recommendation', 'Recorded')} · "
+            f"Assessment saved · {saved_evaluation.get('recommendation', 'Recorded')} · "
             f"evidence coverage {saved_evaluation.get('evidence_coverage', 0)}%."
         )
     elif selected_id in workflow_context.interview_prepared_candidate_ids:
-        st.info("Interview preparation is complete. Record evidence in Live Evaluation to continue.")
+        st.info("Preparation is complete. Continue with the structured evaluation.")
     else:
-        st.info("Generate the interview playbook, then record evidence before comparison.")
+        st.info("Prepare the interview playbook before recording evidence.")
 
-    insight_card(
-        "Interview focus",
-        f"Readiness is {report.readiness.status.lower()} ({report.readiness.score}%). "
-        f"Prioritise {len([c for c in report.competencies if c.validate_in_interview])} evidence gaps before the hiring decision.",
-        "Evidence-led strategy",
-    )
-
-    tab_overview, tab_strategy, tab_live, tab_scorecard = st.tabs([
-        "Overview",
-        "Interview Playbook",
-        "Live Evaluation",
-        "Preparation Scorecard",
+    # "Live Evaluation" remains the underlying evidence-capture capability.
+    tab_prepare, tab_conduct, tab_assessment = st.tabs([
+        "Prepare",
+        "Conduct",
+        "Assessment",
     ])
 
-    with tab_overview:
-        section_title("Recommended interview plan")
-        st.metric("Suggested duration", f"{report.plan.total_minutes} min")
-        for section in report.plan.sections:
-            st.write(f"**{section.duration_minutes} min · {section.title}** — {section.objective}")
+    with tab_prepare:
+        plan_col, gap_col = st.columns([1, 1.35])
+        with plan_col:
+            section_title("Interview plan")
+            st.metric("Suggested duration", f"{report.plan.total_minutes} min")
+            with st.expander("View agenda", expanded=False):
+                for section in report.plan.sections:
+                    st.write(f"**{section.duration_minutes} min · {section.title}** — {section.objective}")
+        with gap_col:
+            section_title("Priority validation")
+            priority = [c for c in report.competencies if c.validate_in_interview]
+            for competency in priority[:4]:
+                st.warning(f"{competency.name}: {competency.rationale}")
 
-        section_title("Priority evidence gaps")
-        priority = [c for c in report.competencies if c.validate_in_interview]
-        for competency in priority[:6]:
-            st.warning(f"{competency.name}: {competency.rationale}")
-
-    with tab_strategy:
         key = _cache_key(session, report)
         cached_questions = st.session_state.get(key)
-
         if cached_questions is None:
-            st.caption("Questions are generated only when requested and then reused for this candidate and mission.")
-            if st.button("Generate Interview Strategy", type="primary", key=f"generate_{key}"):
+            if st.button(
+                "Generate interview playbook",
+                type="primary",
+                key=f"generate_{key}",
+                use_container_width=True,
+            ):
                 st.session_state[key] = report.questions
                 cached_questions = report.questions
                 workflow_context = get_workflow_context(session, current_page="Interview Intelligence")
@@ -633,30 +644,41 @@ def render_interview_intelligence():
                 save_workflow_context(workflow_context)
                 st.success("Interview playbook generated and cached.")
         else:
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                st.caption("Using the cached playbook for this candidate and mission.")
-            with col2:
+            action_col, refresh_col = st.columns([3, 1])
+            with action_col:
+                st.caption("The playbook is ready for this candidate and mission.")
+            with refresh_col:
                 if st.button("Regenerate", key=f"regenerate_{key}"):
                     st.session_state[key] = report.questions
                     cached_questions = report.questions
-
         if cached_questions is not None:
             _render_strategy(report, cached_questions)
 
-    with tab_live:
+    with tab_conduct:
+        section_title("Live Evaluation", "Capture one grounded answer and assessment at a time.")
         _render_live_evaluation(session, report, selected_id)
 
-    with tab_scorecard:
-        section_title("Pre-interview scorecard")
-        rows = [
-            {
-                "Competency": item.competency,
-                "Suggested score": item.suggested_score,
-                "Evaluation guidance": item.evaluation_guidance,
-            }
-            for item in report.scorecard
-        ]
-        st.dataframe(rows, use_container_width=True, hide_index=True)
-        st.metric("Decision readiness", f"{report.decision_readiness}%")
-        st.caption("This preparation scorecard is not a post-interview hiring decision.")
+    with tab_assessment:
+        section_title("Assessment summary")
+        if saved_evaluation:
+            metric_grid([
+                ("Recommendation", saved_evaluation.get("recommendation", "Recorded"), "Human assessment"),
+                ("Evidence coverage", f"{saved_evaluation.get('evidence_coverage', 0)}%", "Captured evidence"),
+                ("Confidence", f"{saved_evaluation.get('confidence', 0)}%", "Assessment confidence"),
+            ])
+            st.write(saved_evaluation.get("next_step", "Review the finalist comparison."))
+        else:
+            st.info("Complete and save the evaluation to unlock the post-interview summary.")
+        with st.expander("Pre-interview preparation scorecard", expanded=False):
+            rows = [
+                {
+                    "Competency": item.competency,
+                    "Suggested score": item.suggested_score,
+                    "Evaluation guidance": item.evaluation_guidance,
+                }
+                for item in report.scorecard
+            ]
+            st.dataframe(rows, use_container_width=True, hide_index=True)
+            st.metric("Decision readiness", f"{report.decision_readiness}%")
+            st.caption("This preparation scorecard is not a post-interview hiring decision.")
+

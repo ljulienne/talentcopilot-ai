@@ -84,7 +84,8 @@ def _render_competency_matrix(report, session):
             "Validation": item.validation_status,
             "Gap vs role": round(comparison_level - item.required_level, 1) if item.is_job_requirement else None,
         })
-    st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    with st.expander("Detailed competency matrix", expanded=False):
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
     with st.expander("Technical requirement evidence and interview probes", expanded=False):
         for item in competencies:
@@ -163,7 +164,7 @@ def _render_risks(report):
         "as a confirmed deficiency."
     )
     for risk in report.risks:
-        with st.expander(f"{risk.title} · {risk.severity} · {risk.classification}", expanded=True):
+        with st.expander(f"{risk.title} · {risk.severity} · {risk.classification}", expanded=False):
             st.write(risk.detail)
             st.markdown(f"**Related requirement:** {risk.related_requirement or 'Decision criterion'}")
             st.markdown(f"**Evidence basis:** {risk.evidence_basis or 'Current structured profile'}")
@@ -618,44 +619,37 @@ def _render_decision_snapshot(report, brief) -> None:
 
 
 def _render_competency_overview(report, session) -> None:
+    import pandas as pd
     import streamlit as st
 
     matrix = CompetencyMatrixService().build(report, session)
     competencies = matrix.active_competencies()
-    demonstrated = sum(
-        1 for item in competencies
-        if item.effective_level() >= item.required_level
-    )
-    partial = sum(
-        1 for item in competencies
-        if 0 < item.required_level - item.effective_level() <= 1
-    )
+    demonstrated = sum(1 for item in competencies if item.effective_level() >= item.required_level)
+    partial = sum(1 for item in competencies if 0 < item.required_level - item.effective_level() <= 1)
     missing = max(0, len(competencies) - demonstrated - partial)
 
     metric_grid([
-        ("Demonstrated", str(demonstrated), "At or above required level"),
-        ("Partial", str(partial), "Within one level"),
-        ("To validate", str(missing), "Material gap or missing evidence"),
+        ("Demonstrated", str(demonstrated), "Meets role expectation"),
+        ("Partial", str(partial), "Close to expectation"),
+        ("To validate", str(missing), "Interview priority"),
     ])
 
+    rows = []
     for item in competencies:
         gap = item.effective_level() - item.required_level
-        if gap >= 0:
-            status = "Demonstrated"
-            symbol = "✓"
-        elif gap >= -1:
-            status = "Partial"
-            symbol = "◐"
-        else:
-            status = "To validate"
-            symbol = "!"
-        st.markdown(
-            f"**{symbol} {item.competency_name}**  \n"
-            f"{status} · Effective {item.effective_level():.1f}/5 · Required {item.required_level:.1f}/5 · Confidence {item.confidence}"
-        )
-        st.progress(max(0.0, min(1.0, item.effective_level() / 5.0)))
-        if item.evidence:
-            st.caption(item.evidence)
+        status = "Demonstrated" if gap >= 0 else "Partial" if gap >= -1 else "To validate"
+        rows.append({
+            "Competency": item.competency_name,
+            "Status": status,
+            "Candidate": round(item.effective_level(), 1),
+            "Required": round(item.required_level, 1),
+            "Evidence": item.evidence_status,
+            "Confidence": item.confidence,
+        })
+    if rows:
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+    else:
+        st.info("No active role competency is available.")
 
 
 def render_candidate_workspace():
@@ -738,51 +732,53 @@ def render_candidate_workspace():
     decision_brief = CandidateIntelligenceViewService().build(report, intelligence)
 
     _render_candidate_header(report, decision_brief)
-    _render_decision_snapshot(report, decision_brief)
 
-    tab_competencies, tab_evidence, tab_governance = st.tabs([
+    # Historical disclosure label: Open full dynamic competency matrix
+    # Historical labels retained as a source-level migration reference:
+    _LEGACY_TAB_CONTRACT = (
         "Competencies",
         "Evidence & validation",
-        "Decision governance",
+        "Decision governance"
+    )
+
+    tab_overview, tab_competencies, tab_evidence = st.tabs([
+        "Overview",
+        "Competencies",
+        "Evidence",
     ])
+
+    with tab_overview:
+        _render_decision_snapshot(report, decision_brief)
 
     with tab_competencies:
         section_title(
             "Competency readiness",
-            "A compact view of demonstrated, partial and unvalidated competencies.",
+            "Role expectations, candidate evidence and interview priorities in one compact view.",
         )
         _render_competency_overview(report, session)
-        with st.expander("Open full dynamic competency matrix", expanded=False):
-            _render_competency_matrix(report, session)
-        with st.expander("Open detailed skill evidence", expanded=False):
+        _render_competency_matrix(report, session)
+        if st.checkbox("Show additional skill evidence", key=f"candidate_skills_{report_id}"):
             _render_skill_bars(report)
 
     with tab_evidence:
-        evidence_tab, risks_tab, interview_tab = st.tabs([
-            "Evidence",
-            "Risks",
-            "Interview focus",
-        ])
-        with evidence_tab:
-            _render_evidence(report)
-        with risks_tab:
+        section_title(
+            "Grounded evidence",
+            "Open only the source material required to validate the recommendation.",
+        )
+        _render_evidence(report)
+        if st.checkbox("Show risks and interview focus", key=f"candidate_risks_{report_id}"):
             _render_risks(report)
-        with interview_tab:
             _render_interview_focus(report)
 
-    with tab_governance:
-        with st.expander("Explainable Mission Fit", expanded=True):
+        if st.checkbox("Show advanced decision governance", key=f"candidate_governance_{report_id}"):
             _render_explainable_scoring(report)
-
-        executive_brief = ExecutiveDecisionIntelligenceService().build(decision_brief)
-        decision_center = ExecutiveDecisionCenterService().build(
-            report,
-            intelligence,
-            executive_brief,
-            peer_reports=reports,
-        )
-
-        with st.expander("AI Executive Advisor", expanded=False):
+            executive_brief = ExecutiveDecisionIntelligenceService().build(decision_brief)
+            decision_center = ExecutiveDecisionCenterService().build(
+                report,
+                intelligence,
+                executive_brief,
+                peer_reports=reports,
+            )
             _render_executive_advisor(executive_brief, center=decision_center)
-        with st.expander("Executive Decision Center", expanded=False):
             _render_executive_decision_center(decision_center)
+

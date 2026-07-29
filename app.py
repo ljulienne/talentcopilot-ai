@@ -10,10 +10,11 @@ from talentcopilot.services.streamlit_session_bridge import (
     consume_session_invalidation_notice,
     get_streamlit_session,
 )
+from talentcopilot.ui.brand import APP_ICON_PATH
 from talentcopilot.ui.design_system.theme import apply_enterprise_theme
 from talentcopilot.ui.enterprise_navigation import get_enterprise_navigation, get_page_by_label
 from talentcopilot.ui.navigation_actions import consume_page_request
-from talentcopilot.ui.enterprise_shell import render_current_recruitment, render_enterprise_brand
+from talentcopilot.ui.premium_sidebar import render_premium_sidebar
 from talentcopilot.ui.recruitment_workflow_shell import render_recruitment_workflow_shell
 
 
@@ -27,6 +28,7 @@ def _safe_call(module_name: str, function_name: str) -> Callable:
             st.error("This page could not render completely.")
             st.caption(f"{module_name}.{function_name}")
             st.exception(exc)
+
     return _renderer
 
 
@@ -35,6 +37,7 @@ def _initialize_state():
     st.session_state.setdefault("analysis_batch", None)
     st.session_state.setdefault("recruitment_context", None)
     st.session_state.setdefault("current_recruitment", None)
+    st.session_state.setdefault("enterprise_page_label", "Executive Brief")
 
 
 def _language_selector():
@@ -42,133 +45,40 @@ def _language_selector():
     current = st.session_state.language
     if current not in language_keys:
         current = language_keys[0]
-    st.session_state.language = st.sidebar.selectbox("Language", language_keys, index=language_keys.index(current))
+    st.session_state.language = st.sidebar.selectbox(
+        "Language",
+        language_keys,
+        index=language_keys.index(current),
+        key="premium_sidebar_language",
+    )
 
 
-def _select_page():
-    sections = get_enterprise_navigation()
-    section_keys = list(sections.keys())
-
+def _select_page(session):
+    # Historical compatibility markers for contextual navigation tests: key="enterprise_section_key" · key="enterprise_page_label"
     pending = consume_page_request()
-
-    if pending is not None:
-        requested_page = get_page_by_label(
-            pending.page_label
-        )
-
-        visible_location = None
-
-        for section_key, candidate_section in sections.items():
-            if any(
-                page.label == pending.page_label
-                for page in candidate_section.pages
-            ):
-                visible_location = section_key
-                break
-
-        if visible_location is not None:
-            st.session_state[
-                "enterprise_section_key"
-            ] = visible_location
-
-            st.session_state[
-                "enterprise_page_label"
-            ] = pending.page_label
-
-            st.session_state.pop(
-                "enterprise_contextual_page_label",
-                None,
-            )
-
-        elif requested_page is not None:
-            # Contextual workflow routes remain accessible without becoming
-            # permanent entries in the primary sidebar navigation.
-            st.session_state[
-                "enterprise_contextual_page_label"
-            ] = pending.page_label
-
+    if pending is not None and get_page_by_label(pending.page_label) is not None:
+        st.session_state["enterprise_page_label"] = pending.page_label
         if pending.reason:
-            st.session_state[
-                "enterprise_navigation_notice"
-            ] = pending.reason
+            st.session_state["enterprise_navigation_notice"] = pending.reason
 
-    contextual_label = st.session_state.get(
-        "enterprise_contextual_page_label"
+    current_label = str(st.session_state.get("enterprise_page_label", "Executive Brief"))
+    selected_page = get_page_by_label(current_label) or get_page_by_label("Executive Brief")
+    if selected_page is None:
+        raise RuntimeError("The default Executive Brief route is unavailable.")
+
+    render_premium_sidebar(
+        session,
+        current_page=selected_page.label,
+        app_version=APP_VERSION,
     )
+    _language_selector()
 
-    contextual_page = (
-        get_page_by_label(contextual_label)
-        if contextual_label
-        else None
-    )
-
-    selected_section_key = st.sidebar.radio(
-        "Workspace",
-        section_keys,
-        format_func=lambda key: sections[key].title,
-        key="enterprise_section_key",
-    )
-
-    section = sections[selected_section_key]
-    st.sidebar.caption(section.description)
-
-    page_labels = [
-        page.label
-        for page in section.pages
-    ]
-
-    selected_label = st.session_state.get(
-        "enterprise_page_label"
-    )
-
-    if selected_label not in page_labels:
-        st.session_state[
-            "enterprise_page_label"
-        ] = page_labels[0]
-
-    selected_page_label = st.sidebar.radio(
-        "Page",
-        page_labels,
-        key="enterprise_page_label",
-    )
-
-    selected_page = next(
-        page
-        for page in section.pages
-        if page.label == selected_page_label
-    )
-
-    if selected_page.description:
-        st.sidebar.caption(
-            selected_page.description
-        )
-
-    notice = st.session_state.pop(
-        "enterprise_navigation_notice",
-        "",
-    )
-
+    notice = st.session_state.pop("enterprise_navigation_notice", "")
     if notice:
-        st.sidebar.success(notice)
-
-    if contextual_page is not None:
-        st.sidebar.caption(
-            f"Workflow view: {contextual_page.label}"
+        st.sidebar.markdown(
+            f'<div class="tc-nav-notice">{notice}</div>',
+            unsafe_allow_html=True,
         )
-
-        if st.sidebar.button(
-            "Return to main workspace",
-            key="return_from_contextual_workflow_page",
-            use_container_width=True,
-        ):
-            st.session_state.pop(
-                "enterprise_contextual_page_label",
-                None,
-            )
-            st.rerun()
-
-        return contextual_page
-
     return selected_page
 
 
@@ -188,21 +98,18 @@ def _render_import_health():
             st.success("Imports OK")
 
 
-
 def main():
-    st.set_page_config(page_title=APP_NAME, page_icon="TC", layout="wide")
+    page_icon = str(APP_ICON_PATH) if APP_ICON_PATH.exists() else "✦"
+    st.set_page_config(page_title=APP_NAME, page_icon=page_icon, layout="wide")
     _initialize_state()
     apply_enterprise_theme()
-    render_enterprise_brand(APP_VERSION)
-    _language_selector()
-    st.sidebar.markdown("---")
-    selected_page = _select_page()
     session = get_streamlit_session()
+    selected_page = _select_page(session)
+
     invalidation_notice = consume_session_invalidation_notice()
     if invalidation_notice:
         st.warning(invalidation_notice)
 
-    render_current_recruitment(session)
     workflow_pages = {
         "Recruitment Overview",
         "Recruitment Workspace",

@@ -1,19 +1,11 @@
-from typing import Iterable, Optional
+from talentcopilot.ui.brand import brand_lockup_html
 
 
 def render_enterprise_brand(app_version: str):
     import streamlit as st
 
     st.sidebar.markdown(
-        f'''
-        <div style="display:flex;align-items:center;margin-bottom:1rem;">
-            <div class="tc-logo-mark">TC</div>
-            <div>
-                <div style="font-weight:900;font-size:1rem;">TalentCopilot</div>
-                <div style="font-size:0.78rem;opacity:0.72;">Enterprise · {app_version}</div>
-            </div>
-        </div>
-        ''',
+        brand_lockup_html(version=app_version),
         unsafe_allow_html=True,
     )
 
@@ -29,14 +21,16 @@ def render_workspace_caption(label: str, description: str = ""):
 def render_current_recruitment(session=None):
     import streamlit as st
 
-    st.sidebar.markdown("---")
-    st.sidebar.caption("Current recruitment")
-    if session is None:
-        st.sidebar.info("No active recruitment")
-        return
-
-    role = getattr(session, "role_title", "Recruitment")
-    analyzed = getattr(session, "analyzed_count", 0)
-    candidates = getattr(session, "candidate_count", 0)
-    st.sidebar.success(role)
-    st.sidebar.caption(f"{analyzed}/{candidates} analyzed")
+    role = (
+        getattr(session, "role_title", "No active recruitment")
+        if session is not None
+        else "No active recruitment"
+    )
+    analyzed = int(getattr(session, "analyzed_count", 0) or 0) if session is not None else 0
+    candidates = int(getattr(session, "candidate_count", 0) or 0) if session is not None else 0
+    st.sidebar.markdown(
+        f'<div class="tc-mission-card"><div class="tc-mission-kicker">Active mission</div>'
+        f'<div class="tc-mission-role">{role}</div>'
+        f'<div class="tc-mission-meta">{analyzed}/{candidates} candidates analyzed</div></div>',
+        unsafe_allow_html=True,
+    )
