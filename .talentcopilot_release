@@ -1,3 +1,3 @@
-7.9.1-ui-rendering-navigation-hotfix
-base_release=7.9.0-premium-ux-consolidation
-base_commit=03a4dbe6a23a79e57b79b91e7dd1a9b7ec05e601
+7.9.2-unified-light-shell-accessibility
+base_release=7.9.1-ui-rendering-navigation-hotfix
+base_commit=bb8d8b1b7f9f7a0eb8f5a05106c88c66a760cefa

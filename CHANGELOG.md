@@ -130,3 +130,13 @@ All notable changes to TalentCopilot are documented here.
 - Various import issues
 - UI consistency improvements
 - Refactoring for future scalability
+
+## 7.9.2 — Unified Light Shell & Accessibility
+
+- Replaced the dark sidebar surface with a light blue-gray application shell.
+- Increased navigation text contrast and font clarity.
+- Converted floating white sidebar buttons into integrated navigation rows.
+- Added accessible active, hover, focus, and disabled navigation states.
+- Harmonized brand, mission, notice, select, expander, and recommended-next-step styling.
+- Lightened shared enterprise hero surfaces.
+- Preserved all business engines, scores, ranks, evidence, interviews, compensation, and PDF exports.

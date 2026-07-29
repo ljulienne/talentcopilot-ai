@@ -443,6 +443,178 @@ def apply_enterprise_theme():
         .tc-brand-slogan {{font-size:.64rem}}
         .stTabs [data-baseweb="tab-list"] {{position:sticky;top:6.15rem;z-index:30;background:rgba(238,242,247,.96);backdrop-filter:blur(10px)}}
 
+
+
+        /* Release 7.9.2 — Unified light shell and accessible navigation */
+        .stApp {{
+            background:
+                radial-gradient(circle at 0% 0%, rgba(37,99,235,.055), transparent 26rem),
+                radial-gradient(circle at 100% 4%, rgba(6,182,212,.045), transparent 24rem),
+                linear-gradient(180deg,#F8FAFD 0%,#F3F7FC 100%) !important;
+        }}
+        [data-testid="stAppViewContainer"],
+        [data-testid="stMain"],
+        section.main {{
+            background: transparent !important;
+        }}
+        [data-testid="stHeader"] {{
+            background: rgba(248,250,253,.92) !important;
+            border-bottom: 1px solid rgba(220,230,243,.88);
+            backdrop-filter: blur(14px);
+        }}
+        [data-testid="stSidebar"] {{
+            width: 286px !important;
+            background: linear-gradient(180deg,#F8FBFF 0%,#F3F7FC 100%) !important;
+            border-right: 1px solid #DCE6F3 !important;
+            box-shadow: 8px 0 28px rgba(15,23,42,.035) !important;
+        }}
+        [data-testid="stSidebar"] > div:first-child,
+        [data-testid="stSidebarContent"] {{
+            background: transparent !important;
+        }}
+        [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+        [data-testid="stSidebar"] label,
+        [data-testid="stSidebar"] .stCaptionContainer p {{
+            color: #475569 !important;
+            opacity: 1 !important;
+        }}
+        .tc-brand-lockup {{
+            margin: 0 0 .28rem;
+            padding: .42rem .45rem .82rem;
+            border-bottom: 1px solid #DCE6F3;
+            border-radius: 12px 12px 0 0;
+        }}
+        .tc-brand-lockup:hover {{background:#EEF4FB !important}}
+        .tc-brand-name {{color:#0F172A !important}}
+        .tc-brand-slogan {{color:#2563EB !important}}
+        .tc-brand-version {{color:#64748B !important}}
+        .tc-brand-mark svg {{filter:none !important}}
+        .tc-mission-card {{
+            margin: .48rem .15rem .68rem;
+            padding: .74rem .78rem;
+            border: 1px solid #CFE0F5 !important;
+            background: linear-gradient(135deg,#FFFFFF 0%,#EEF5FF 100%) !important;
+            box-shadow: 0 5px 16px rgba(37,99,235,.055) !important;
+        }}
+        .tc-mission-kicker,
+        .tc-sidebar-section,
+        .tc-sidebar-next-kicker {{color:#52647D !important}}
+        .tc-mission-role {{color:#0F172A !important}}
+        .tc-mission-meta {{color:#52647D !important}}
+        .tc-sidebar-section {{
+            margin: .9rem .55rem .28rem !important;
+            font-size: .64rem;
+            letter-spacing: .105em;
+        }}
+        [data-testid="stSidebar"] .stButton {{margin:.08rem .15rem !important}}
+        [data-testid="stSidebar"] .stButton > button,
+        [data-testid="stSidebar"] button[data-testid="stBaseButton-secondary"],
+        [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] {{
+            min-height: 2.42rem !important;
+            justify-content: flex-start !important;
+            text-align: left !important;
+            padding: .5rem .72rem !important;
+            color: #334155 !important;
+            background: transparent !important;
+            border: 1px solid transparent !important;
+            border-radius: 9px !important;
+            box-shadow: none !important;
+            font-size: .86rem !important;
+            font-weight: 720 !important;
+            opacity: 1 !important;
+        }}
+        [data-testid="stSidebar"] .stButton > button p,
+        [data-testid="stSidebar"] .stButton > button span,
+        [data-testid="stSidebar"] button[data-testid^="stBaseButton"] p,
+        [data-testid="stSidebar"] button[data-testid^="stBaseButton"] span {{
+            color: inherit !important;
+            opacity: 1 !important;
+        }}
+        [data-testid="stSidebar"] .stButton > button:hover,
+        [data-testid="stSidebar"] button[data-testid="stBaseButton-secondary"]:hover,
+        [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"]:hover {{
+            transform: none !important;
+            color: #1E3A5F !important;
+            background: #EEF4FB !important;
+            border-color: #D8E4F2 !important;
+        }}
+        [data-testid="stSidebar"] .stButton > button[kind="primary"],
+        [data-testid="stSidebar"] button[data-testid="stBaseButton-primary"],
+        [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] {{
+            color: #0F4CD8 !important;
+            background: #E8F0FF !important;
+            border: 1px solid #C7D7FE !important;
+            box-shadow: inset 3px 0 0 #2563EB, 0 3px 10px rgba(37,99,235,.06) !important;
+            font-weight: 800 !important;
+        }}
+        [data-testid="stSidebar"] .stButton > button[kind="primary"]:before,
+        [data-testid="stSidebar"] button[data-testid="stBaseButton-primary"]:before,
+        [data-testid="stSidebar"] [data-testid="stBaseButton-primary"]:before {{
+            display:none !important;
+            content:none !important;
+        }}
+        [data-testid="stSidebar"] .stButton > button[kind="primary"]:hover,
+        [data-testid="stSidebar"] button[data-testid="stBaseButton-primary"]:hover,
+        [data-testid="stSidebar"] [data-testid="stBaseButton-primary"]:hover {{
+            color:#0B3FB8 !important;
+            background:#DBEAFE !important;
+            border-color:#AFC7F5 !important;
+        }}
+        [data-testid="stSidebar"] .stButton > button:disabled,
+        [data-testid="stSidebar"] button[data-testid^="stBaseButton"]:disabled {{
+            color:#94A3B8 !important;
+            background:#F1F5F9 !important;
+            border-color:transparent !important;
+            opacity:1 !important;
+        }}
+        [data-testid="stSidebar"] .stButton > button:focus-visible {{
+            outline: 3px solid rgba(37,99,235,.22) !important;
+            outline-offset: 1px !important;
+        }}
+        [data-testid="stSidebar"] details {{
+            border: 1px solid transparent !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }}
+        [data-testid="stSidebar"] details:hover {{background:#EEF4FB !important}}
+        [data-testid="stSidebar"] details summary {{color:#334155 !important}}
+        [data-testid="stSidebar"] [data-baseweb="select"] > div {{
+            color:#334155 !important;
+            background:#FFFFFF !important;
+            border-color:#CBD5E1 !important;
+        }}
+        .tc-sidebar-next {{
+            margin: .92rem .15rem 0;
+            background: linear-gradient(135deg,#FFFFFF 0%,#EEF5FF 100%) !important;
+            border:1px solid #CFE0F5 !important;
+            box-shadow:0 4px 14px rgba(37,99,235,.045);
+        }}
+        .tc-sidebar-next-title {{color:#0F172A !important}}
+        .tc-nav-notice {{
+            color:#075985 !important;
+            background:#ECFEFF !important;
+            border-color:#BAE6FD !important;
+        }}
+        .tc-hero {{
+            color:#0F172A !important;
+            background:
+                radial-gradient(circle at 88% 14%,rgba(6,182,212,.12),transparent 15rem),
+                linear-gradient(135deg,#FFFFFF 0%,#EEF4FF 58%,#F0FDFF 100%) !important;
+            border-color:#D9E5F3 !important;
+            box-shadow:0 12px 32px rgba(15,23,42,.06) !important;
+        }}
+        .tc-hero h1 {{color:#0F172A !important}}
+        .tc-hero p {{color:#52647D !important;opacity:1 !important}}
+        .tc-hero .tc-badge {{
+            color:#1D4ED8 !important;
+            background:#E8F0FF !important;
+            border-color:#C7D7FE !important;
+        }}
+        .block-container {{
+            padding-left: 1.55rem;
+            padding-right: 1.55rem;
+        }}
+
         @media (max-width: 760px) {{
             .block-container {{ padding-left: 1rem; padding-right: 1rem; }}
             .tc-hero {{ padding: 1.3rem 1.2rem; border-radius: 19px; }}
