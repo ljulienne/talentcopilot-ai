@@ -59,6 +59,8 @@ class RecruitmentPdfService:
                     f"- Evidence confidence: {getattr(candidate, 'confidence_score', 'Not available')}",
                     f"- Interview status: {getattr(candidate, 'interview_status', 'Not started')}",
                     f"- Compensation fit: {compensation}",
+                    f"- Strongest area: {getattr(candidate, 'strongest_area', 'No differentiated strength established')}",
+                    f"- Primary risk: {getattr(candidate, 'primary_risk', 'No critical risk identified')}",
                     f"- Critical gaps: {', '.join(getattr(candidate, 'critical_gaps', ()) or ()) or 'None documented'}",
                 ]
             )

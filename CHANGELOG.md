@@ -1,3 +1,12 @@
+# Changelog
+
+## 7.8.2 — Candidate Insight Grounding
+
+- Corrected Dashboard Perspective candidate insight grounding.
+- Replaced first-requirement fallbacks with candidate-specific evidence-ranked strengths and severity-ranked risks.
+- Kept Dashboard Perspective and PDF insight labels aligned.
+- Preserved official scores, ranks and all existing decision evidence.
+
 # Release 7.8.1 — Recruitment Journey & Reporting
 
 - Added permanent Home navigation and a clickable brand lockup.

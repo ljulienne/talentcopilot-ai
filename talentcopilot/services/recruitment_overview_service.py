@@ -24,6 +24,8 @@ class CandidateOverview:
     competency_scores_pre: tuple[tuple[str, float], ...]
     competency_scores_post: tuple[tuple[str, float], ...]
     critical_gaps: tuple[str, ...]
+    strongest_area: str
+    primary_risk: str
     additional_competencies: tuple[str, ...]
 
 
@@ -170,6 +172,12 @@ class RecruitmentOverviewService:
             )
 
             confidence = self._confidence(report)
+            strongest_area = self._strongest_area(report, required, pre_scores, post_scores)
+            primary_risk = self._primary_risk(
+                report,
+                strongest_area=strongest_area,
+                required=required,
+            )
             candidates.append(
                 CandidateOverview(
                     candidate_id=candidate_id,
@@ -187,6 +195,8 @@ class RecruitmentOverviewService:
                     competency_scores_pre=pre_scores,
                     competency_scores_post=post_scores,
                     critical_gaps=active_gaps,
+                    strongest_area=strongest_area,
+                    primary_risk=primary_risk,
                     additional_competencies=additions,
                 )
             )
@@ -233,6 +243,142 @@ class RecruitmentOverviewService:
             next_action_page=next_page,
             next_action_button=next_button,
         )
+
+
+    @classmethod
+    def _strongest_area(
+        cls,
+        report: Any,
+        required: list[Any],
+        pre_scores: tuple[tuple[str, float], ...],
+        post_scores: tuple[tuple[str, float], ...],
+    ) -> str:
+        """Return a candidate-grounded strength instead of the first role requirement.
+
+        CandidateWorkspaceService orders skills by evidence strength. We still
+        rank explicitly here so the dashboard cannot silently fall back to the
+        first requirement in the job description. When the profile has no
+        differentiated evidence, we state that rather than inventing a strength.
+        """
+
+        skills = list(getattr(report, "skills", []) or [])
+        role_skills = [
+            item
+            for item in skills
+            if str(getattr(item, "requirement_type", "")).casefold() == "role requirement"
+        ]
+        pool = role_skills or skills
+        if pool:
+            ranked = sorted(
+                pool,
+                key=lambda item: (
+                    -float(getattr(item, "level", 0) or 0),
+                    cls._evidence_priority(getattr(item, "status", "")),
+                    str(getattr(item, "name", "")).casefold(),
+                ),
+            )
+            best = ranked[0]
+            best_level = float(getattr(best, "level", 0) or 0)
+            second_level = (
+                float(getattr(ranked[1], "level", 0) or 0)
+                if len(ranked) > 1
+                else None
+            )
+            name = cls._clean_label(getattr(best, "name", ""))
+            if name and (
+                best_level >= 55
+                or second_level is None
+                or best_level > second_level
+            ):
+                return name
+
+        scores = post_scores or pre_scores
+        if scores:
+            ranked_scores = sorted(scores, key=lambda item: (-float(item[1]), item[0].casefold()))
+            best_name, best_score = ranked_scores[0]
+            second_score = float(ranked_scores[1][1]) if len(ranked_scores) > 1 else None
+            if float(best_score) >= 55 and (second_score is None or float(best_score) > second_score):
+                return cls._clean_label(best_name)
+
+        return "No differentiated strength established"
+
+    @classmethod
+    def _primary_risk(
+        cls,
+        report: Any,
+        *,
+        strongest_area: str,
+        required: list[Any],
+    ) -> str:
+        """Return the highest-priority candidate-specific risk.
+
+        Risks from Candidate Intelligence are preferred because they preserve
+        the decision engine's evidence basis and severity. The strongest area is
+        not reused as a generic risk when another grounded concern exists.
+        """
+
+        risks = list(getattr(report, "risks", []) or [])
+        severity = {"high": 0, "medium": 1, "low": 2}
+        ranked = sorted(
+            risks,
+            key=lambda item: (
+                severity.get(str(getattr(item, "severity", "medium")).casefold(), 1),
+                str(getattr(item, "classification", "")).casefold() != "confirmed risk",
+                str(getattr(item, "title", "")).casefold(),
+            ),
+        )
+        strongest_key = cls._normalise_label(strongest_area)
+        duplicate_title = ""
+        for item in ranked:
+            title = cls._clean_label(getattr(item, "title", ""))
+            related = cls._clean_label(getattr(item, "related_requirement", ""))
+            if not title and related:
+                title = f"{related} requires validation"
+            if not title:
+                continue
+            if cls._normalise_label(title) != strongest_key:
+                return title
+            duplicate_title = title
+
+        if duplicate_title:
+            return f"{duplicate_title} requires validation"
+
+        shortfalls = []
+        for item in required:
+            required_level = float(getattr(item, "required_level", 0) or 0)
+            effective = (
+                getattr(item, "interviewer_level", None)
+                if getattr(item, "interviewer_level", None) is not None
+                else getattr(item, "ai_estimated_level", 0)
+            )
+            gap = required_level - float(effective or 0)
+            if gap > 0:
+                shortfalls.append((gap, cls._clean_label(getattr(item, "competency_name", ""))))
+        shortfalls.sort(key=lambda item: (-item[0], item[1].casefold()))
+        for _, name in shortfalls:
+            if name and cls._normalise_label(name) != strongest_key:
+                return f"{name} requires validation"
+        if shortfalls and shortfalls[0][1]:
+            return f"{shortfalls[0][1]} requires validation"
+        return "No critical risk identified"
+
+    @staticmethod
+    def _evidence_priority(status: Any) -> int:
+        priorities = {
+            "strong evidence": 0,
+            "moderate evidence": 1,
+            "limited evidence": 2,
+            "not demonstrated": 3,
+        }
+        return priorities.get(str(status or "").casefold(), 4)
+
+    @staticmethod
+    def _clean_label(value: Any) -> str:
+        return " ".join(str(value or "").split())
+
+    @staticmethod
+    def _normalise_label(value: Any) -> str:
+        return "".join(character for character in str(value or "").casefold() if character.isalnum())
 
     @staticmethod
     def _alignment(level: float, required: float) -> float:

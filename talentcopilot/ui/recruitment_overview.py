@@ -383,14 +383,8 @@ def _candidate_cards(view: RecruitmentOverview, compensation_report) -> None:
                 if budget.budget_fit >= 70
                 else "Negotiation required"
             )
-            strongest = (
-                candidate.competency_scores_post[0][0]
-                if candidate.competency_scores_post
-                else candidate.competency_scores_pre[0][0]
-                if candidate.competency_scores_pre
-                else "Role evidence"
-            )
-            risk = candidate.critical_gaps[0] if candidate.critical_gaps else "No critical gap documented"
+            strongest = candidate.strongest_area
+            risk = candidate.primary_risk
             with column:
                 st.markdown(
                     f"""
