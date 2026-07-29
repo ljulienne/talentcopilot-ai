@@ -99,21 +99,26 @@ def page_header(
         if status
         else ""
     )
-    st.markdown(
-        f'''<section class="tc-page-header">
-        <div class="tc-page-header-accent"></div>
-        <div class="tc-page-header-main">
-          <div>
-            <div class="tc-page-eyebrow">{escape(str(eyebrow))}</div>
-            <h1>{escape(str(title))}</h1>
-            <p>{escape(str(subtitle))}</p>
-            {metadata_html}
-          </div>
-          {status_html}
-        </div>
-        </section>''',
-        unsafe_allow_html=True,
+    # Streamlit feeds the string through a Markdown parser before rendering HTML.
+    # Keep the shared header as one non-indented fragment so nested closing tags
+    # can never be interpreted as a Markdown code block and exposed to users.
+    header_html = "".join(
+        (
+            '<section class="tc-page-header">',
+            '<div class="tc-page-header-accent"></div>',
+            '<div class="tc-page-header-main">',
+            '<div>',
+            f'<div class="tc-page-eyebrow">{escape(str(eyebrow))}</div>',
+            f'<h1>{escape(str(title))}</h1>',
+            f'<p>{escape(str(subtitle))}</p>',
+            metadata_html,
+            '</div>',
+            status_html,
+            '</div>',
+            '</section>',
+        )
     )
+    st.markdown(header_html, unsafe_allow_html=True)
 
 
 def recommended_action(

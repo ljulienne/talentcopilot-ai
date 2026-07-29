@@ -134,7 +134,7 @@ def resolve_recruitment_destinations(
             decision_target,
             "Compare finalists and record the human-owned decision.",
             "⇄",
-            str(finalists) if finalists else "",
+            "",
         ),
     )
 

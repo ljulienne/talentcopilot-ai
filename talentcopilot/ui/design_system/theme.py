@@ -213,8 +213,27 @@ def apply_enterprise_theme():
         .tc-sidebar-section {{margin:1rem .35rem .35rem}}
         [data-testid="stSidebar"] .stButton > button {{min-height:2.65rem;border-radius:11px;justify-content:flex-start;text-align:left;padding:.56rem .74rem;color:#EEF4FC;background:transparent;border:1px solid transparent;box-shadow:none;font-weight:760;font-size:.89rem;letter-spacing:-.005em}}
         [data-testid="stSidebar"] .stButton > button:hover {{transform:none;color:#FFFFFF;background:rgba(59,130,246,.18);border-color:rgba(125,211,252,.28)}}
-        [data-testid="stSidebar"] .stButton > button[kind="primary"] {{color:#FFFFFF;background:linear-gradient(105deg,rgba(37,99,235,.94),rgba(6,182,212,.78));border:1px solid rgba(125,211,252,.35);box-shadow:0 10px 24px rgba(2,132,199,.18);position:relative}}
-        [data-testid="stSidebar"] .stButton > button[kind="primary"]:before {{content:"";width:3px;position:absolute;left:0;top:7px;bottom:7px;border-radius:999px;background:#A5F3FC}}
+        [data-testid="stSidebar"] .stButton > button[kind="primary"],
+        [data-testid="stSidebar"] button[data-testid="stBaseButton-primary"],
+        [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] {{
+            color:#FFFFFF !important;
+            background:linear-gradient(105deg,rgba(37,99,235,.96),rgba(6,182,212,.82)) !important;
+            border:1px solid rgba(125,211,252,.38) !important;
+            box-shadow:0 10px 24px rgba(2,132,199,.18) !important;
+            position:relative;
+        }}
+        [data-testid="stSidebar"] .stButton > button[kind="primary"]:before,
+        [data-testid="stSidebar"] button[data-testid="stBaseButton-primary"]:before,
+        [data-testid="stSidebar"] [data-testid="stBaseButton-primary"]:before {{
+            content:"";
+            width:3px;
+            position:absolute;
+            left:0;
+            top:7px;
+            bottom:7px;
+            border-radius:999px;
+            background:#A5F3FC;
+        }}
         [data-testid="stSidebar"] details {{border-color:rgba(148,163,184,.16);background:rgba(255,255,255,.025)}}
         [data-testid="stSidebar"] details summary {{color:#E4EDF8;font-size:.82rem;font-weight:780}}
         [data-testid="stSidebar"] [data-baseweb="select"] > div {{background:rgba(255,255,255,.06);border-color:rgba(148,163,184,.18);color:#E2E8F0}}
@@ -222,8 +241,12 @@ def apply_enterprise_theme():
         .tc-sidebar-next-title {{color:#FFFFFF;font-weight:820;font-size:.84rem;margin-top:.22rem}}
         .tc-nav-notice {{margin:.45rem 0;padding:.52rem .65rem;border-radius:10px;background:rgba(14,165,233,.09);border:1px solid rgba(125,211,252,.15);color:#BAE6FD;font-size:.7rem}}
         [data-testid="stSidebar"] div[role="radiogroup"] {{display:none !important;}}
-        .stButton > button[kind="primary"] {{background:linear-gradient(135deg,#1D4ED8 0%,#06B6D4 100%) !important;color:white !important;border:0 !important;box-shadow:0 9px 24px rgba(29,78,216,.22) !important}}
-        .stButton > button[kind="primary"]:hover {{background:linear-gradient(135deg,#1E40AF 0%,#0891B2 100%) !important}}
+        .stButton > button[kind="primary"],
+        button[data-testid="stBaseButton-primary"],
+        [data-testid="stBaseButton-primary"] {{background:linear-gradient(135deg,#1D4ED8 0%,#06B6D4 100%) !important;color:white !important;border:0 !important;box-shadow:0 9px 24px rgba(29,78,216,.22) !important}}
+        .stButton > button[kind="primary"]:hover,
+        button[data-testid="stBaseButton-primary"]:hover,
+        [data-testid="stBaseButton-primary"]:hover {{background:linear-gradient(135deg,#1E40AF 0%,#0891B2 100%) !important}}
         .stTabs [data-baseweb="tab-list"] {{gap:.4rem;border-bottom:0;background:#EEF2F7;padding:.28rem;border-radius:13px;margin-bottom:.75rem}}
         .stTabs [data-baseweb="tab"] {{height:2.45rem;border-radius:10px;font-size:.82rem;padding:0 .9rem;color:#64748B}}
         .stTabs [aria-selected="true"] {{background:#FFFFFF;color:#1D4ED8;box-shadow:0 2px 8px rgba(15,23,42,.08)}}

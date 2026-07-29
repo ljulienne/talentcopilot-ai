@@ -1,5 +1,14 @@
 # Changelog
 
+## 7.9.1 — UI Rendering & Navigation Hotfix
+
+- Fixed raw HTML fragments displayed in Candidate Intelligence, Interview & Assessment, and Compare & Decide.
+- Hardened the shared compact page header against Markdown code-block interpretation.
+- Removed the trailing finalist count from the Compare & decide sidebar label.
+- Enforced blue/cyan active navigation styling for current Streamlit button markup.
+- Preserved all official scores, ranks, evidence, interviews, compensation records, and PDF exports.
+
+
 ## 7.9.0 — Premium UX Consolidation
 
 - Introduced a compact, consistent page header across the Recruitment journey.
