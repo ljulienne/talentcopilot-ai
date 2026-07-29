@@ -1,6 +1,7 @@
 from talentcopilot.services.comparison_workspace_service import ComparisonWorkspaceService
 from talentcopilot.services.demo_session_factory import create_demo_recruitment_session
 from talentcopilot.services.streamlit_session_bridge import get_streamlit_session, set_streamlit_session
+from talentcopilot.services.recruitment_pdf_service import RecruitmentPdfService
 from talentcopilot.services.candidate_ordering import (
     order_candidate_ids,
     sort_by_official_rank,
@@ -50,10 +51,18 @@ def render_comparison_workspace():
     session = get_streamlit_session()
     report = service.build(session)
 
+    if st.button(
+        "← Back to Dashboard Perspective",
+        key="comparison_back_dashboard",
+        help="Return to the complete candidate portfolio.",
+    ):
+        request_page("Dashboard Perspective", reason="Returned to Dashboard Perspective from Compare & Decide.")
+        st.rerun()
+
     enterprise_hero(
-        "Finalist Comparison",
-        "Compare canonical pre-interview evidence with separately recorded interview findings.",
-        "Decision flow",
+        "Compare & Decide",
+        "Compare canonical pre-interview evidence, interview findings and compensation context without altering official ranking.",
+        "Human-owned Final Decision",
     )
 
     if session is None or not report.candidates:
@@ -185,6 +194,29 @@ def render_comparison_workspace():
         ("Interview assessments", str(sum(1 for item in selected_ids if item in context.interview_evaluations)), "Saved evidence"),
         ("Official ranking", "Preserved", "No score or rank recomputation"),
     ])
+
+    export = RecruitmentPdfService().comparison(report, context.interview_evaluations)
+    export_col, budget_col = st.columns([1.15, 1])
+    with export_col:
+        st.download_button(
+            "Download decision report (PDF)",
+            data=export.data,
+            file_name=export.file_name,
+            mime=export.mime,
+            key="comparison_decision_pdf",
+            use_container_width=True,
+        )
+    with budget_col:
+        if st.button(
+            "Review Compensation & Budget",
+            key="comparison_open_compensation",
+            use_container_width=True,
+        ):
+            request_page(
+                "Compensation & Budget",
+                reason="Review compensation scenarios before the final decision.",
+            )
+            st.rerun()
 
     missing = [names_by_id[item] for item in selected_ids if item not in context.interview_evaluations]
     if missing:

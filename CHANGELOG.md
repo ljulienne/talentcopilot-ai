@@ -1,3 +1,14 @@
+# Release 7.8.1 — Recruitment Journey & Reporting
+
+- Added permanent Home navigation and a clickable brand lockup.
+- Made Dashboard Perspective the first destination after candidate analysis.
+- Added whole-pool candidate review with contextual drill-down to individual profiles.
+- Integrated Compensation & Budget before and after interview, including candidate expectations and offer scenarios.
+- Restored recruitment, dashboard, candidate, interview, compensation and decision PDF exports.
+- Moved the blue/cyan recruitment journey strip above page content and made it sticky on desktop.
+- Increased sidebar navigation contrast and kept normal primary actions non-red.
+- Preserved official scores, ranks, evidence and recommendations.
+
 # Release 7.8.0 — Premium Recruitment Experience
 
 - Replaced radio-based sidebar navigation with a modern SaaS navigation shell.

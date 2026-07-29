@@ -13,7 +13,10 @@ from talentcopilot.services.recruitment_experience_architecture import WORKFLOW
 PAGE_TO_STEP = {
     "Recruitment Overview": "analysis",
     "Recruitment Workspace": "analysis",
+    "Dashboard Perspective": "candidate",
     "Candidate Intelligence": "candidate",
+    "Compensation & Budget": "candidate",
+    "Hiring Budget": "candidate",
     "Interview Intelligence": "prepare",
     "Comparison": "compare",
     "Decision Board": "decide",

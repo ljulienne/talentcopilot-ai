@@ -17,6 +17,8 @@ from talentcopilot.services.executive_decision_center_service import (
 )
 from talentcopilot.services.demo_session_factory import create_demo_recruitment_session
 from talentcopilot.services.streamlit_session_bridge import get_streamlit_session, set_streamlit_session
+from talentcopilot.services.compensation_budget_service import CompensationBudgetService
+from talentcopilot.services.recruitment_pdf_service import RecruitmentPdfService
 from talentcopilot.services.recruitment_workflow_state import get_workflow_context, select_workflow_candidate
 from talentcopilot.ui.design_system.components import enterprise_hero, insight_card, metric_grid, section_title
 from talentcopilot.ui.design_system.theme import apply_enterprise_theme
@@ -660,6 +662,14 @@ def render_candidate_workspace():
     session = get_streamlit_session()
     reports = CandidateWorkspaceService().build_all(session)
 
+    if st.button(
+        "← Back to Dashboard Perspective",
+        key="candidate_back_dashboard",
+        help="Return without clearing dashboard filters, sorting or candidate context.",
+    ):
+        request_page("Dashboard Perspective", reason="Returned to Dashboard Perspective from Candidate Intelligence.")
+        st.rerun()
+
     enterprise_hero(
         "Candidate Intelligence",
         "Review the decision first, then open only the evidence needed to validate it.",
@@ -732,6 +742,46 @@ def render_candidate_workspace():
     decision_brief = CandidateIntelligenceViewService().build(report, intelligence)
 
     _render_candidate_header(report, decision_brief)
+
+    compensation = CompensationBudgetService().load_expectation(
+        session,
+        candidate_id=report_id,
+        candidate_name=report.candidate_name,
+    )
+    export = RecruitmentPdfService().candidate(report, compensation)
+    export_col, compensation_col, interview_col = st.columns([1.15, 1, 1])
+    with export_col:
+        st.download_button(
+            "Download candidate report (PDF)",
+            data=export.data,
+            file_name=export.file_name,
+            mime=export.mime,
+            key=f"candidate_pdf_{report_id}",
+            use_container_width=True,
+        )
+    with compensation_col:
+        if st.button(
+            "Compensation expectations",
+            key=f"candidate_compensation_{report_id}",
+            use_container_width=True,
+        ):
+            request_page(
+                "Compensation & Budget",
+                reason=f"Record compensation expectations for {report.candidate_name}.",
+            )
+            st.rerun()
+    with interview_col:
+        if st.button(
+            "Prepare interview →",
+            type="primary",
+            key=f"candidate_interview_{report_id}",
+            use_container_width=True,
+        ):
+            request_page(
+                "Interview Intelligence",
+                reason=f"Prepare the interview for {report.candidate_name}.",
+            )
+            st.rerun()
 
     # Historical disclosure label: Open full dynamic competency matrix
     # Historical labels retained as a source-level migration reference:

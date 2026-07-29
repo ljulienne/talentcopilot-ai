@@ -4,6 +4,7 @@ from talentcopilot.interview.pro_service import InterviewIntelligenceProService
 from talentcopilot.interview.question_service import InterviewQuestionService
 from talentcopilot.interview.workspace_service import InterviewWorkspaceService
 from talentcopilot.services.interview_report_pdf_service import InterviewReportPdfService
+from talentcopilot.services.recruitment_pdf_service import RecruitmentPdfService
 from talentcopilot.services.streamlit_session_bridge import get_streamlit_session
 from talentcopilot.services.candidate_ordering import sort_by_official_rank
 from talentcopilot.services.recruitment_workflow_state import (
@@ -460,10 +461,18 @@ def render_interview_intelligence():
     apply_enterprise_theme()
     session = get_streamlit_session()
 
+    if st.button(
+        "← Back to Dashboard Perspective",
+        key="interview_back_dashboard",
+        help="Return to the whole candidate pool without clearing the active candidate.",
+    ):
+        request_page("Dashboard Perspective", reason="Returned to Dashboard Perspective from Interview & Assessment.")
+        st.rerun()
+
     enterprise_hero(
-        "Interview Intelligence Pro",
-        "Prepare, conduct and evaluate a focused, evidence-based interview from the active recruitment session.",
-        "Release 4.7",
+        "Interview & Assessment",
+        "Prepare, conduct and evaluate a focused, evidence-based interview while keeping pre-interview Talent Fit unchanged.",
+        "Structured Human Assessment",
     )
 
     if session is None or not getattr(session, "ranked_analyses", None):
@@ -604,6 +613,38 @@ def render_interview_intelligence():
         st.info("Preparation is complete. Continue with the structured evaluation.")
     else:
         st.info("Prepare the interview playbook before recording evidence.")
+
+    preparation_export = RecruitmentPdfService().interview(report, saved_evaluation)
+    export_col, compensation_col, compare_col = st.columns([1.15, 1, 1])
+    with export_col:
+        st.download_button(
+            "Download interview report (PDF)",
+            data=preparation_export.data,
+            file_name=preparation_export.file_name,
+            mime=preparation_export.mime,
+            key=f"interview_preparation_pdf_{selected_id}",
+            use_container_width=True,
+        )
+    with compensation_col:
+        if st.button(
+            "Record compensation",
+            key=f"interview_compensation_{selected_id}",
+            use_container_width=True,
+        ):
+            request_page(
+                "Compensation & Budget",
+                reason=f"Record compensation expectations for {report.candidate_name} during or after interview.",
+            )
+            st.rerun()
+    with compare_col:
+        if st.button(
+            "Compare finalists →",
+            type="primary",
+            key=f"interview_compare_top_{selected_id}",
+            use_container_width=True,
+        ):
+            request_page("Comparison", reason="Open finalist comparison from Interview & Assessment.")
+            st.rerun()
 
     # "Live Evaluation" remains the underlying evidence-capture capability.
     tab_prepare, tab_conduct, tab_assessment = st.tabs([

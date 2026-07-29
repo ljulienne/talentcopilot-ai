@@ -3,6 +3,9 @@ from __future__ import annotations
 from html import escape
 from typing import Iterable
 
+from talentcopilot.services.compensation_budget_service import CompensationBudgetService
+from talentcopilot.services.hiring_budget_service import HiringBudgetService
+from talentcopilot.services.recruitment_pdf_service import RecruitmentPdfService
 from talentcopilot.services.recruitment_overview_service import (
     CandidateOverview,
     RecruitmentOverview,
@@ -296,6 +299,134 @@ def _candidate_shortcut(view: RecruitmentOverview) -> None:
         st.rerun()
 
 
+def _candidate_cards(view: RecruitmentOverview, compensation_report) -> None:
+    import streamlit as st
+
+    budget_by_name = {
+        str(getattr(item, "candidate_name", "")): item
+        for item in list(getattr(compensation_report, "assessments", []) or [])
+    }
+    filter_options = [
+        "All candidates",
+        "Strong prospects",
+        "Interview ready",
+        "Compensation aligned",
+        "Critical gaps",
+        "Interview completed",
+    ]
+    sort_options = [
+        "Official ranking",
+        "Talent fit",
+        "Evidence confidence",
+        "Interview progress",
+        "Compensation alignment",
+    ]
+    filter_col, sort_col = st.columns([1.25, 1])
+    with filter_col:
+        selected_filter = st.selectbox(
+            "Candidate filter",
+            filter_options,
+            key="dashboard_perspective_filter",
+        )
+    with sort_col:
+        selected_sort = st.selectbox(
+            "Sort by",
+            sort_options,
+            key="dashboard_perspective_sort",
+        )
+
+    candidates = list(view.candidates)
+    if selected_filter == "Strong prospects":
+        candidates = [item for item in candidates if item.official_match_score >= 70]
+    elif selected_filter == "Interview ready":
+        candidates = [item for item in candidates if item.interview_status in {"Ready", "In progress", "Completed"}]
+    elif selected_filter == "Compensation aligned":
+        candidates = [
+            item
+            for item in candidates
+            if getattr(budget_by_name.get(item.candidate_name), "budget_fit", None) is not None
+            and getattr(budget_by_name.get(item.candidate_name), "budget_fit", 0) >= 70
+        ]
+    elif selected_filter == "Critical gaps":
+        candidates = [item for item in candidates if item.critical_gaps]
+    elif selected_filter == "Interview completed":
+        candidates = [item for item in candidates if item.interview_status == "Completed"]
+
+    if selected_sort == "Talent fit":
+        candidates.sort(key=lambda item: (-item.official_match_score, item.official_rank))
+    elif selected_sort == "Evidence confidence":
+        candidates.sort(key=lambda item: (-(item.confidence_score or 0), item.official_rank))
+    elif selected_sort == "Interview progress":
+        candidates.sort(key=lambda item: (-item.interview_progress, item.official_rank))
+    elif selected_sort == "Compensation alignment":
+        candidates.sort(
+            key=lambda item: (
+                -(getattr(budget_by_name.get(item.candidate_name), "budget_fit", None) or -1),
+                item.official_rank,
+            )
+        )
+    else:
+        candidates.sort(key=lambda item: item.official_rank)
+
+    if not candidates:
+        st.info("No candidate matches the selected dashboard filter.")
+        return
+
+    for start in range(0, len(candidates), 2):
+        columns = st.columns(2)
+        for column, candidate in zip(columns, candidates[start:start + 2]):
+            budget = budget_by_name.get(candidate.candidate_name)
+            compensation_label = (
+                "Not documented"
+                if budget is None or budget.budget_fit is None
+                else "Within range"
+                if budget.budget_fit >= 70
+                else "Negotiation required"
+            )
+            strongest = (
+                candidate.competency_scores_post[0][0]
+                if candidate.competency_scores_post
+                else candidate.competency_scores_pre[0][0]
+                if candidate.competency_scores_pre
+                else "Role evidence"
+            )
+            risk = candidate.critical_gaps[0] if candidate.critical_gaps else "No critical gap documented"
+            with column:
+                st.markdown(
+                    f"""
+                    <div class="tc-card" style="min-height:235px">
+                      <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start">
+                        <div>
+                          <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:#64748B;font-weight:800">Rank #{candidate.official_rank}</div>
+                          <div style="font-size:1.08rem;font-weight:850;color:#0F172A;margin-top:.15rem">{escape(candidate.candidate_name)}</div>
+                        </div>
+                        <div style="font-size:1.4rem;font-weight:900;color:#1D4ED8">{candidate.official_match_score:.0f}%</div>
+                      </div>
+                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.55rem;margin-top:.9rem;font-size:.78rem;color:#475569">
+                        <div><strong>Evidence</strong><br>{candidate.confidence_score if candidate.confidence_score is not None else '—'}%</div>
+                        <div><strong>Interview</strong><br>{escape(candidate.interview_status)}</div>
+                        <div><strong>Compensation</strong><br>{escape(compensation_label)}</div>
+                        <div><strong>Progress</strong><br>{candidate.interview_progress}%</div>
+                      </div>
+                      <div style="margin-top:.8rem;font-size:.77rem;color:#334155"><strong>Strongest area:</strong> {escape(strongest)}</div>
+                      <div style="margin-top:.3rem;font-size:.77rem;color:#334155"><strong>Primary risk:</strong> {escape(risk)}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                if st.button(
+                    f"View {candidate.candidate_name}",
+                    key=f"dashboard_open_candidate_{candidate.candidate_id}",
+                    use_container_width=True,
+                ):
+                    select_workflow_candidate(candidate.candidate_id, candidate.candidate_name)
+                    request_page(
+                        "Candidate Intelligence",
+                        reason=f"Reviewing {candidate.candidate_name} from Dashboard Perspective.",
+                    )
+                    st.rerun()
+
+
 def render_recruitment_overview() -> None:
     import streamlit as st
 
@@ -303,34 +434,66 @@ def render_recruitment_overview() -> None:
     session = get_streamlit_session()
 
     enterprise_hero(
-        "Recruitment Overview",
-        "See the candidate pool, competency coverage and interview progress before opening the detailed evidence.",
-        "Visual Recruitment Command Center",
+        "Dashboard Perspective",
+        "Review the complete candidate pool, compare decision signals and open individual evidence only when needed.",
+        "Candidate Portfolio Intelligence",
     )
 
     if session is None:
         st.info("Create or reopen a recruitment mission before opening the visual overview.")
         if st.button("Open Recruitment Workspace", type="primary", key="overview_empty_open_workspace"):
-            request_page("Recruitment Workspace", reason="Create or reopen a recruitment mission.")
+            request_page("Recruitment Overview", reason="Create or reopen a recruitment mission.")
             st.rerun()
         return
 
-    workflow_context = get_workflow_context(session, current_page="Recruitment Overview")
+    workflow_context = get_workflow_context(session, current_page="Dashboard Perspective")
     view = RecruitmentOverviewService().build(session, workflow_context)
 
     if not view.has_analysis:
-        st.info("The visual dashboard becomes available after candidate analysis.")
+        st.info("Dashboard Perspective becomes available after candidate analysis.")
         if st.button("Continue candidate analysis", type="primary", key="overview_continue_analysis"):
-            request_page("Recruitment Workspace", reason="Complete the candidate analysis first.")
+            request_page("Recruitment Overview", reason="Complete the candidate analysis first.")
             st.rerun()
         return
+
+    compensation_service = CompensationBudgetService()
+    budget = compensation_service.load_budget(session)
+    compensation_report = HiringBudgetService().build(session, budget)
+    documented_compensation = compensation_service.documented_count(session)
+    compensation_aligned = sum(
+        1
+        for item in compensation_report.assessments
+        if item.budget_fit is not None and item.budget_fit >= 70
+    )
+
+    export = RecruitmentPdfService().dashboard(view, compensation_report)
+    export_col, compare_col = st.columns([1, 1])
+    with export_col:
+        st.download_button(
+            "Download candidate perspective (PDF)",
+            data=export.data,
+            file_name=export.file_name,
+            mime=export.mime,
+            key="dashboard_perspective_pdf",
+            use_container_width=True,
+        )
+    with compare_col:
+        if st.button("Compare finalists", type="primary", key="dashboard_compare_finalists", use_container_width=True):
+            request_page("Comparison", reason="Opened finalist comparison from Dashboard Perspective.")
+            st.rerun()
 
     metric_grid([
         ("Candidates analysed", str(view.analyzed_count), f"{view.candidate_count} in the mission"),
         ("Strong / potential fit", str(view.strong_fit_count + view.potential_fit_count), "Official role-fit bands"),
-        ("Interviews completed", str(view.interview_completed_count), f"{view.interview_in_progress_count} in progress"),
-        ("Ready for comparison", str(view.ready_for_decision_count), "At least 80% of role competencies assessed"),
+        ("Interview ready", str(view.ready_for_decision_count), f"{view.interview_completed_count} completed"),
+        ("Compensation documented", f"{documented_compensation}/{view.candidate_count}", f"{compensation_aligned} aligned"),
     ])
+
+    section_title(
+        "Candidate portfolio",
+        "Start with the whole pool. Filters and sorting are preserved when you open a candidate and return.",
+    )
+    _candidate_cards(view, compensation_report)
 
     available_modes = [MODE_OFFICIAL, MODE_PRE]
     if view.has_post_interview_data:

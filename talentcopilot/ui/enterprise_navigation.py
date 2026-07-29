@@ -28,28 +28,77 @@ def _page(label, module, function, description="", icon="•"):
     return EnterprisePage(label, module, function, description, icon)
 
 
-# Release Alpha exposes a decision-led product shell. Internal utilities remain
-# importable through LEGACY_PAGES but are no longer primary navigation destinations.
+# Primary navigation stays compact. Candidate Intelligence, Comparison and the
+# Decision Board remain contextual detail routes and are resolved through
+# LEGACY_PAGES instead of crowding the sidebar.
 COMMAND_PAGES = [
     _page("Executive Brief", "talentcopilot.ui.home", "render_home", "What matters and what to do next.", "✦"),
     _page("Projects", "talentcopilot.ui.project_hub", "render_project_hub", "Resume active and saved decision projects.", "▦"),
 ]
 
 ANALYSIS_PAGES = [
-    _page("Recruitment Overview", "talentcopilot.ui.recruitment_overview", "render_recruitment_overview", "Visual summary of candidate fit, competency coverage and interview progress.", "▤"),
-    _page("Organization Intelligence", "talentcopilot.ui.organization_intelligence_preview", "render_organization_intelligence_preview", "Diagnose collaboration patterns from uploaded data.", "◉"),
-    _page("Recruitment Workspace", "talentcopilot.ui.recruitment_decision_workspace", "render_recruitment_decision_workspace", "Pilot the active recruitment and move the workflow forward.", "▣"),
-    _page("Candidate Intelligence", "talentcopilot.ui.candidate_workspace", "render_candidate_workspace", "Review one candidate's recommendation, competencies, evidence and risks.", "◆"),
-    _page("Interview Intelligence", "talentcopilot.ui.interview_intelligence", "render_interview_intelligence", "Prepare and record evidence from a focused interview.", "?"),
+    _page(
+        "Recruitment Overview",
+        "talentcopilot.ui.recruitment_decision_workspace",
+        "render_recruitment_decision_workspace",
+        "Manage the active recruitment mission, inputs, progress and operational context.",
+        "▤",
+    ),
+    _page(
+        "Dashboard Perspective",
+        "talentcopilot.ui.recruitment_overview",
+        "render_recruitment_overview",
+        "Review the whole candidate pool before opening individual evidence.",
+        "◫",
+    ),
+    _page(
+        "Compensation & Budget",
+        "talentcopilot.ui.hiring_budget",
+        "render_hiring_budget",
+        "Define the position budget and record candidate expectations throughout the recruitment.",
+        "¤",
+    ),
+    _page(
+        "Interview Intelligence",
+        "talentcopilot.ui.interview_intelligence",
+        "render_interview_intelligence",
+        "Prepare, conduct and record structured candidate assessments.",
+        "?",
+    ),
+    # Compatibility entries remain available to historical routes and tests.
+    # The custom premium sidebar deliberately does not render these labels.
+    _page(
+        "Recruitment Workspace",
+        "talentcopilot.ui.recruitment_decision_workspace",
+        "render_recruitment_decision_workspace",
+        "Compatibility route for the recruitment workspace.",
+        "▤",
+    ),
+    _page(
+        "Candidate Intelligence",
+        "talentcopilot.ui.candidate_workspace",
+        "render_candidate_workspace",
+        "Open a contextual candidate detail from Dashboard Perspective.",
+        "◎",
+    ),
+    _page(
+        "Hiring Budget",
+        "talentcopilot.ui.hiring_budget",
+        "render_hiring_budget",
+        "Compatibility label for Compensation & Budget.",
+        "¤",
+    ),
+    _page(
+        "Organization Intelligence",
+        "talentcopilot.ui.organization_intelligence_preview",
+        "render_organization_intelligence_preview",
+        "Diagnose collaboration patterns from uploaded data.",
+        "◉",
+    ),
     _page("Analytics Dashboard", "talentcopilot.ui.analytics_dashboard", "render_analytics_dashboard", icon="▥"),
 ]
 
 DECISION_PAGES = [
-    # Comparison and Decision Board remain contextually reachable through
-    # LEGACY_PAGES and the recruitment workflow shell, but are intentionally
-    # hidden from the primary navigation until the consolidated decision
-    # experience is delivered.
-    _page("Hiring Budget", "talentcopilot.ui.hiring_budget", "render_hiring_budget", icon="¤"),
     _page("Enterprise Demo Final", "talentcopilot.ui.enterprise_demo_final", "render_enterprise_demo_final", icon="▶"),
 ]
 
@@ -59,10 +108,13 @@ ADMINISTRATION_PAGES = [
 
 
 LEGACY_PAGES = {
+    "Recruitment Workspace": _page("Recruitment Workspace", "talentcopilot.ui.recruitment_decision_workspace", "render_recruitment_decision_workspace"),
+    "Candidate Intelligence": _page("Candidate Intelligence", "talentcopilot.ui.candidate_workspace", "render_candidate_workspace"),
     "Candidate Workspace": _page("Candidate Workspace", "talentcopilot.ui.candidate_workspace", "render_candidate_workspace"),
     "Comparison": _page("Comparison", "talentcopilot.ui.comparison_workspace", "render_comparison_workspace"),
     "Interview Workspace": _page("Interview Workspace", "talentcopilot.ui.interview_workspace", "render_interview_workspace"),
     "Decision Board": _page("Decision Board", "talentcopilot.ui.decision_board", "render_decision_board"),
+    "Hiring Budget": _page("Hiring Budget", "talentcopilot.ui.hiring_budget", "render_hiring_budget"),
     "Executive Reporting": _page("Executive Reporting", "talentcopilot.ui.executive_reporting", "render_executive_reporting"),
     "Product Overview": _page("Product Overview", "talentcopilot.ui.product_overview", "render_product_overview"),
     "Recruitment Command Center": _page("Recruitment Command Center", "talentcopilot.ui.command_center", "render_command_center"),
@@ -95,7 +147,7 @@ def get_enterprise_navigation() -> Dict[str, EnterpriseSection]:
     return {
         "command": EnterpriseSection("Start", "Begin with a decision-oriented AI brief.", COMMAND_PAGES, "✦"),
         "analysis": EnterpriseSection("Diagnose", "Explore recruitment and organizational signals.", ANALYSIS_PAGES, "◉"),
-        "decision": EnterpriseSection("Decide", "Turn evidence into interviews, decisions and reports.", DECISION_PAGES, "✓"),
+        "decision": EnterpriseSection("Decide", "Turn evidence into decisions and reports.", DECISION_PAGES, "✓"),
         "administration": EnterpriseSection("Explore", "Advanced and compatibility workspaces.", ADMINISTRATION_PAGES, "⋯"),
     }
 

@@ -28,9 +28,15 @@ class HiringBudgetService:
         return HiringBudgetInput(
             target_salary=85000,
             maximum_salary=100000,
+            minimum_salary=70000,
+            currency="EUR",
+            target_bonus_percent=10,
+            benefits_budget=6000,
             relocation_budget=8000,
             agency_fee=0,
             signing_bonus=5000,
+            onboarding_cost=4000,
+            first_year_cost_limit=120000,
         )
 
     def build(self, session=None, budget: HiringBudgetInput | None = None) -> HiringBudgetReport:
@@ -42,6 +48,9 @@ class HiringBudgetService:
                 target_salary=budget.target_salary,
                 maximum_salary=budget.maximum_salary,
                 assessments=[],
+                minimum_salary=budget.minimum_salary,
+                currency=budget.currency,
+                first_year_cost_limit=budget.first_year_cost_limit,
             )
 
         assessments = []
@@ -59,6 +68,7 @@ class HiringBudgetService:
                         analysis=analysis,
                         fit_score=fit_score,
                         talent_recommendation=talent_recommendation,
+                        currency=budget.currency,
                     )
                 )
                 continue
@@ -71,6 +81,17 @@ class HiringBudgetService:
                 visa_sponsorship_required=bool(
                     candidate.get("visa_sponsorship_required", False)
                 ),
+                variable_compensation=self._number(candidate.get("variable_compensation")),
+                benefits_value=self._number(candidate.get("benefits_value")),
+                signing_bonus_requested=self._number(candidate.get("signing_bonus_requested")),
+                relocation_support_requested=self._number(
+                    candidate.get("relocation_support_requested")
+                ),
+                benefits_requested=str(candidate.get("benefits_requested", "") or ""),
+                availability_date=str(candidate.get("availability_date", "") or ""),
+                flexibility=str(candidate.get("flexibility", "Unknown") or "Unknown"),
+                notes=str(candidate.get("notes", "") or ""),
+                currency=str(candidate.get("currency", budget.currency) or budget.currency),
             )
             assessment = self.assess_candidate(candidate_cost, budget, fit_score)
             assessment.talent_recommendation = talent_recommendation
@@ -81,6 +102,9 @@ class HiringBudgetService:
             target_salary=budget.target_salary,
             maximum_salary=budget.maximum_salary,
             assessments=assessments,
+            minimum_salary=budget.minimum_salary,
+            currency=budget.currency,
+            first_year_cost_limit=budget.first_year_cost_limit,
         )
 
     def _assessment_without_compensation(
@@ -89,6 +113,7 @@ class HiringBudgetService:
         analysis: Any,
         fit_score: float,
         talent_recommendation: str,
+        currency: str = "EUR",
     ) -> CandidateBudgetAssessment:
         candidate_name = str(
             getattr(analysis, "candidate_name", "Candidate") or "Candidate"
@@ -115,24 +140,34 @@ class HiringBudgetService:
                 "Confirm the approved salary range and total compensation assumptions.",
                 "Re-run the budget assessment without changing the official talent recommendation.",
             ],
+            currency=currency,
         )
 
     def _candidate_record(self, analysis: Any, session: Any) -> Mapping[str, Any]:
         candidate_id = str(getattr(analysis, "candidate_id", "") or "")
-        candidate_name = str(
-            getattr(analysis, "candidate_name", "") or ""
-        ).casefold()
+        candidate_name_raw = str(getattr(analysis, "candidate_name", "") or "")
+        candidate_name = candidate_name_raw.casefold()
+        record: dict[str, Any] = {}
         for item in list(getattr(session, "candidates", []) or []):
-            record = item if isinstance(item, Mapping) else {}
-            record_id = str(record.get("candidate_id", "") or "")
+            source = dict(item) if isinstance(item, Mapping) else {}
+            record_id = str(source.get("candidate_id", "") or "")
             record_name = str(
-                record.get("name", record.get("candidate_name", "")) or ""
+                source.get("name", source.get("candidate_name", "")) or ""
             ).casefold()
             if candidate_id and record_id == candidate_id:
-                return record
+                record = source
+                break
             if candidate_name and record_name == candidate_name:
-                return record
-        return {}
+                record = source
+                break
+
+        metadata = getattr(session, "metadata", {}) or {}
+        store = metadata.get("candidate_compensation", {}) if isinstance(metadata, Mapping) else {}
+        if isinstance(store, Mapping):
+            expectation = store.get(candidate_id) or store.get(candidate_name_raw) or {}
+            if isinstance(expectation, Mapping):
+                record = {**record, **dict(expectation)}
+        return record
 
     def _expected_salary(
         self, candidate: Mapping[str, Any], analysis: Any
@@ -191,13 +226,37 @@ class HiringBudgetService:
                 int(60 - (over / max(1, budget.maximum_salary)) * 200),
             )
 
-        extra_cost = 0
+        extra_cost = 0.0
         if candidate.relocation_required:
             extra_cost += budget.relocation_budget
         if candidate.visa_sponsorship_required:
             extra_cost += 5000
         if candidate.expected_salary > budget.maximum_salary:
             extra_cost += candidate.expected_salary - budget.maximum_salary
+
+        requested_package = float(
+            candidate.expected_salary
+            + candidate.variable_compensation
+            + candidate.benefits_value
+            + candidate.signing_bonus_requested
+            + candidate.relocation_support_requested
+        )
+        total_first_year_cost = float(
+            requested_package + budget.agency_fee + budget.onboarding_cost
+        )
+        first_year_limit = float(budget.first_year_cost_limit or 0.0)
+        if first_year_limit <= 0:
+            first_year_limit = float(
+                budget.maximum_salary
+                + budget.benefits_budget
+                + budget.signing_bonus
+                + budget.relocation_budget
+                + budget.agency_fee
+                + budget.onboarding_cost
+            )
+        package_gap = total_first_year_cost - first_year_limit
+        if package_gap > 0:
+            extra_cost += package_gap
 
         if extra_cost <= 3000:
             cost_impact = "Low"
@@ -259,4 +318,18 @@ class HiringBudgetService:
             budget_recommendation=recommendation,
             rationale=rationale,
             next_actions=next_actions,
+            requested_package=requested_package,
+            total_first_year_cost=total_first_year_cost,
+            package_gap=package_gap,
+            benefits_requested=candidate.benefits_requested,
+            availability_date=candidate.availability_date,
+            flexibility=candidate.flexibility,
+            currency=candidate.currency or budget.currency,
         )
+
+    @staticmethod
+    def _number(value: Any) -> float:
+        try:
+            return max(0.0, float(value or 0.0))
+        except (TypeError, ValueError):
+            return 0.0

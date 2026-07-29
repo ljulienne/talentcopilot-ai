@@ -39,6 +39,20 @@ def _initialize_state():
     st.session_state.setdefault("current_recruitment", None)
     st.session_state.setdefault("enterprise_page_label", "Executive Brief")
 
+    # The brand lockup links to Home through a stable query parameter. This
+    # preserves the active recruitment while making the logo a real navigation
+    # control instead of decorative artwork.
+    try:
+        requested = st.query_params.get("tc_page", "")
+        if isinstance(requested, list):
+            requested = requested[0] if requested else ""
+        requested = str(requested or "")
+        if requested and get_page_by_label(requested) is not None:
+            st.session_state["enterprise_page_label"] = requested
+            st.query_params.clear()
+    except Exception:
+        pass
+
 
 def _language_selector():
     language_keys = list(LANGUAGES.keys())
@@ -113,7 +127,10 @@ def main():
     workflow_pages = {
         "Recruitment Overview",
         "Recruitment Workspace",
+        "Dashboard Perspective",
         "Candidate Intelligence",
+        "Compensation & Budget",
+        "Hiring Budget",
         "Interview Intelligence",
         "Comparison",
         "Decision Board",

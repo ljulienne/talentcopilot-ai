@@ -1,3 +1,3 @@
-7.8.0-premium-recruitment-experience
-base_release=7.7.1-evidence-grounding-guardrails
-base_commit=76aff8808e124b9cdd020eea5f517b9f63f69a77
+7.8.1-recruitment-journey-reporting
+base_release=7.8.0-premium-recruitment-experience
+base_commit=9ed9a076ec2222b716f062591896e7fdc9f977a0

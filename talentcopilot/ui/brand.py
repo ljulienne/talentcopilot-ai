@@ -45,14 +45,14 @@ def brand_mark_svg(size: int = 44, *, include_glow: bool = True) -> str:
     """
 
 
-def brand_lockup_html(*, version: str = "", compact: bool = False) -> str:
+def brand_lockup_html(*, version: str = "", compact: bool = False, home_href: str = "?tc_page=Executive%20Brief") -> str:
     mark_size = 42 if compact else 48
     version_html = f'<span class="tc-brand-version">{escape(version)}</span>' if version else ""
     return (
-        '<div class="tc-brand-lockup">'
+        f'<a class="tc-brand-lockup" href="{escape(home_href)}" target="_self" aria-label="Return to Home">'
         f'<div class="tc-brand-mark">{brand_mark_svg(mark_size)}</div>'
         '<div class="tc-brand-copy">'
         f'<div class="tc-brand-name">{escape(BRAND_NAME)}</div>'
         f'<div class="tc-brand-slogan">{escape(BRAND_SLOGAN)}</div>'
-        f'{version_html}</div></div>'
+        f'{version_html}</div></a>'
     )
