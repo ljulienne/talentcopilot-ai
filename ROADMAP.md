@@ -1,5 +1,23 @@
 # TalentCopilot Roadmap
 
+## ✅ v8.4.0 — Persistent Recruitment Projects
+
+- Explicit save and resume from Projects
+- Canonical score/rank continuity
+- Interview, compensation and decision-history persistence
+- Atomic local project storage
+- Production database adapter remains a future infrastructure step
+
+---
+
+## ✅ v8.3.0 — Candidate Decision Workspace
+
+- Consolidated pre/post-interview decision journey
+- Independent compensation and availability signals
+- Compare & Decide matrix
+- Auditable final decision history
+
+---
 ## ✅ v8.2.0 — UX Clarity & Universal Risk Grounding
 
 - Unified product command bar

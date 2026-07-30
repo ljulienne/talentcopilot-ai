@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from copy import deepcopy
 from dataclasses import asdict, is_dataclass
 from datetime import datetime
@@ -12,7 +13,7 @@ from talentcopilot.talent_pool.talent_profile import index_recruitment_talents
 
 logger = logging.getLogger(__name__)
 
-DATA_DIR = Path("data")
+DATA_DIR = Path(os.environ.get("TALENTCOPILOT_DATA_DIR", "data"))
 RECRUITMENTS_DIR = DATA_DIR / "recruitments"
 
 
@@ -102,8 +103,12 @@ def save_recruitment(recruitment_data: Dict[str, Any]) -> Dict[str, Any]:
     file_path = get_recruitment_path(safe_data["id"])
 
     try:
-        with file_path.open("w", encoding="utf-8") as file:
+        temporary_path = file_path.with_suffix(file_path.suffix + ".tmp")
+        with temporary_path.open("w", encoding="utf-8") as file:
             json.dump(safe_data, file, ensure_ascii=False, indent=2)
+            file.flush()
+            os.fsync(file.fileno())
+        os.replace(temporary_path, file_path)
 
         logger.info("Recruitment saved: %s", file_path)
 
@@ -145,9 +150,18 @@ def list_recruitments() -> List[Dict[str, Any]]:
                     "created_at": data.get("created_at"),
                     "updated_at": data.get("updated_at"),
                     "language": data.get("language"),
-                    "candidate_count": len(
-                        data.get("analysis_batch", {}).get("results", [])
+                    "candidate_count": int(
+                        data.get("candidate_count")
+                        or len(data.get("candidates", []) or [])
+                        or len(data.get("analysis_batch", {}).get("results", []) or [])
                     ),
+                    "analyzed_count": int(
+                        data.get("analyzed_count")
+                        or len(data.get("analyses", []) or [])
+                        or len(data.get("analysis_batch", {}).get("results", []) or [])
+                    ),
+                    "status": data.get("status"),
+                    "schema_version": data.get("schema_version"),
                     "file_path": str(file_path),
                 }
             )

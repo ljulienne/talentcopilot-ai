@@ -5,17 +5,21 @@ from datetime import datetime
 from html import escape
 from typing import Any, Iterable, Mapping, Sequence
 
-from talentcopilot.models.recruitment_session import (
-    CandidateAnalysisState,
-    CandidateAnalysisStatus,
-    RecruitmentSession,
-    SessionStatus,
-)
+from talentcopilot.models.recruitment_session import RecruitmentSession
+from talentcopilot.models.recruitment_workflow import RecruitmentWorkflowContext
 from talentcopilot.services.streamlit_session_bridge import (
     get_streamlit_session,
     set_streamlit_session,
 )
-from talentcopilot.storage.recruitment_store import list_recruitments, load_recruitment
+from talentcopilot.storage.recruitment_store import list_recruitments
+from talentcopilot.services.recruitment_project_persistence import (
+    load_project,
+    persistence_enabled,
+    save_project,
+    session_from_project_payload,
+    workflow_context_from_payload,
+)
+from talentcopilot.services.recruitment_workflow_state import WORKFLOW_CONTEXT_KEY
 from talentcopilot.ui.navigation_actions import request_page
 
 
@@ -126,71 +130,24 @@ def build_project_summaries(
     )
 
 
-def _candidate_name(result: Mapping[str, Any], index: int) -> str:
-    candidate = result.get("candidate") or result.get("candidate_data") or result.get("profile") or {}
-    if isinstance(candidate, Mapping):
-        return str(candidate.get("name") or candidate.get("full_name") or result.get("candidate_name") or f"Candidate {index}")
-    return str(result.get("candidate_name") or result.get("name") or f"Candidate {index}")
-
-
-def _candidate_score(result: Mapping[str, Any]) -> float:
-    match_result = result.get("match_result") or {}
-    match_score = match_result.get("overall_score") if isinstance(match_result, Mapping) else None
-    value = result.get("match_score") or result.get("score") or result.get("overall_score") or match_score or 0
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return 0.0
-
-
 def session_from_recruitment_data(data: Mapping[str, Any]) -> RecruitmentSession:
-    context = data.get("recruitment_context") if isinstance(data.get("recruitment_context"), Mapping) else {}
-    title = str(data.get("title") or context.get("title") or context.get("job_title") or "Untitled recruitment")
-    job = dict(data.get("job") or {}) if isinstance(data.get("job"), Mapping) else {}
-    job.setdefault("title", title)
-    for key in ("company", "department", "location", "language"):
-        if key not in job and context.get(key) is not None:
-            job[key] = context.get(key)
+    """Backward-compatible public adapter used by historical tests and routes."""
 
-    batch = data.get("analysis_batch") if isinstance(data.get("analysis_batch"), Mapping) else {}
-    raw_results = batch.get("results") if isinstance(batch.get("results"), list) else []
-    candidates: list[dict[str, Any]] = []
-    analyses: list[CandidateAnalysisState] = []
-    for index, raw_result in enumerate(raw_results, start=1):
-        result = raw_result if isinstance(raw_result, Mapping) else {}
-        candidate = result.get("candidate") or result.get("candidate_data") or result.get("profile") or {}
-        candidate_dict = dict(candidate) if isinstance(candidate, Mapping) else {"name": _candidate_name(result, index)}
-        candidate_dict.setdefault("name", _candidate_name(result, index))
-        candidates.append(candidate_dict)
-        analyses.append(
-            CandidateAnalysisState(
-                candidate_name=str(candidate_dict["name"]),
-                status=CandidateAnalysisStatus.ANALYZED,
-                match_score=_candidate_score(result),
-                rank=_safe_int(result.get("rank"), index),
-                notes=[str(result.get("recommendation"))] if result.get("recommendation") else [],
-            )
-        )
-
-    status = SessionStatus.COMPLETED if candidates and len(analyses) == len(candidates) else SessionStatus.READY
-    return RecruitmentSession(
-        session_id=str(data.get("id") or "saved-recruitment"),
-        job=job,
-        candidates=candidates,
-        status=status,
-        analyses=analyses,
-        created_at=str(data.get("created_at") or datetime.utcnow().isoformat()),
-        updated_at=str(data.get("updated_at") or datetime.utcnow().isoformat()),
-        metadata={"source": "project_hub", "stored_recruitment": dict(data)},
-    )
+    return session_from_project_payload(data)
 
 
 def activate_recruitment_project(data: Mapping[str, Any]) -> RecruitmentSession:
-    session = session_from_recruitment_data(data)
+    session = session_from_project_payload(data)
+    workflow = workflow_context_from_payload(data.get("workflow_context"))
+    if not workflow.session_id:
+        workflow.session_id = session.session_id
+    if not workflow.role_title or workflow.role_title == "Recruitment":
+        workflow.role_title = session.role_title
     set_streamlit_session(session)
     try:
         import streamlit as st
 
+        st.session_state[WORKFLOW_CONTEXT_KEY] = workflow
         st.session_state["recruitment_context"] = {
             "session_id": session.session_id,
             "title": session.role_title,
@@ -206,18 +163,39 @@ def activate_recruitment_project(data: Mapping[str, Any]) -> RecruitmentSession:
     return session
 
 
+def _save_active_project(session: RecruitmentSession) -> bool:
+    try:
+        import streamlit as st
+
+        workflow = st.session_state.get(WORKFLOW_CONTEXT_KEY)
+        if not isinstance(workflow, RecruitmentWorkflowContext):
+            workflow = RecruitmentWorkflowContext(
+                session_id=session.session_id,
+                role_title=session.role_title,
+            )
+        analysis_batch = st.session_state.get("analysis_batch")
+        save_project(
+            session,
+            workflow,
+            analysis_batch=analysis_batch if isinstance(analysis_batch, Mapping) else None,
+        )
+        return True
+    except Exception:
+        return False
+
+
 def _styles() -> None:
     import streamlit as st
 
     st.markdown(
         """
         <style>
-        .tc-project-hero{padding:1.8rem 2rem;border-radius:24px;background:linear-gradient(135deg,#111827,#1e3a8a);color:#fff;margin-bottom:1.25rem}
+        .tc-project-hero{padding:1.8rem 2rem;border:1px solid #cbd8ea;border-radius:24px;background:linear-gradient(135deg,#243c66,#315b91 56%,#2e7188);color:#fff;margin-bottom:1.25rem;box-shadow:0 16px 38px rgba(37,54,82,.16)}
         .tc-project-hero h1{margin:0 0 .45rem;font-size:2.35rem;letter-spacing:-.04em}.tc-project-hero p{margin:0;color:#dbeafe}
         .tc-project-card{padding:1.15rem 1.2rem;border:1px solid #e2e8f0;border-radius:18px;background:#fff;min-height:205px;box-shadow:0 8px 24px rgba(15,23,42,.05)}
         .tc-project-card h3{margin:.45rem 0 .35rem;color:#0f172a}.tc-project-card p{color:#64748b;font-size:.9rem;margin:.2rem 0}
         .tc-project-badge{display:inline-block;padding:.22rem .55rem;border-radius:999px;background:#dbeafe;color:#1d4ed8;font-size:.72rem;font-weight:800}
-        .tc-project-active{background:#dcfce7;color:#166534}.tc-project-meta{margin-top:.75rem;padding-top:.65rem;border-top:1px solid #f1f5f9;color:#64748b;font-size:.8rem}
+        .tc-project-active{background:#dcfce7;color:#166534}.tc-project-unsaved{background:#fef3c7;color:#92400e}.tc-project-meta{margin-top:.75rem;padding-top:.65rem;border-top:1px solid #f1f5f9;color:#64748b;font-size:.8rem}
         </style>
         """,
         unsafe_allow_html=True,
@@ -245,7 +223,19 @@ def _render_project_card(project: ProjectSummary, index: int) -> None:
     if st.button(label, key=f"project_hub_open_{project.project_id}_{index}", use_container_width=True):
         if project.source == "storage":
             try:
-                activate_recruitment_project(load_recruitment(project.project_id))
+                session, workflow, data = load_project(project.project_id)
+                set_streamlit_session(session)
+                st.session_state[WORKFLOW_CONTEXT_KEY] = workflow
+                st.session_state["recruitment_context"] = {
+                    "session_id": session.session_id,
+                    "title": session.role_title,
+                    "job_title": session.role_title,
+                    "candidate_count": session.candidate_count,
+                    "analyzed_count": session.analyzed_count,
+                    **{key: value for key, value in session.job.items() if key != "title"},
+                }
+                st.session_state["analysis_batch"] = data.get("analysis_batch") or {"success": True, "results": []}
+                st.session_state["current_recruitment"] = session
                 st.success(f"{project.title} is now the active recruitment.")
             except Exception as exc:
                 st.error("This saved project could not be opened.")
@@ -284,6 +274,34 @@ def render_project_hub() -> None:
     c1.metric("Projects", len(projects), "Active and saved")
     c2.metric("Candidates", total_candidates, "Across recruitments")
     c3.metric("Decision ready", decision_ready, "Analysis completed")
+
+    if active_session is not None:
+        saved = persistence_enabled(active_session)
+        with st.container(border=True):
+            status_col, action_col = st.columns([2.2, 1])
+            with status_col:
+                st.markdown("**Project continuity**")
+                st.caption(
+                    "Saved projects preserve official candidate IDs, scores, ranks, "
+                    "interview evidence, compensation inputs and final-decision history."
+                )
+                if saved:
+                    st.success("This project is saved. New workflow updates are persisted automatically.")
+                else:
+                    st.info("This project is active only in the current browser session until you save it.")
+            with action_col:
+                button_label = "Save latest state" if saved else "Save project"
+                if st.button(
+                    button_label,
+                    type="primary" if not saved else "secondary",
+                    key="project_hub_save_active",
+                    use_container_width=True,
+                ):
+                    if _save_active_project(active_session):
+                        st.success("Project saved successfully.")
+                        st.rerun()
+                    else:
+                        st.error("The active project could not be saved.")
 
     if not projects:
         st.info("No project is available yet. Start a recruitment from the Executive Brief.")

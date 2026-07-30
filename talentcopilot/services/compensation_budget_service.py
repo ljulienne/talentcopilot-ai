@@ -128,6 +128,7 @@ class CompensationBudgetService:
         metadata[self.BUDGET_KEY] = asdict(budget)
         self._audit(metadata, actor, "position_budget_updated", "Position compensation framework updated")
         self._mark_updated(session)
+        self._persist(session)
         return budget
 
     def load_expectation(
@@ -186,6 +187,7 @@ class CompensationBudgetService:
         store[key] = asdict(saved)
         self._audit(metadata, actor, "candidate_expectation_updated", saved.candidate_name)
         self._mark_updated(session)
+        self._persist(session)
         return saved
 
     def all_expectations(self, session: Any) -> tuple[CandidateCompensationExpectation, ...]:
@@ -309,6 +311,15 @@ class CompensationBudgetService:
     def _mark_updated(session: Any) -> None:
         if session is not None and hasattr(session, "mark_updated"):
             session.mark_updated()
+
+    @staticmethod
+    def _persist(session: Any) -> None:
+        try:
+            from talentcopilot.services.recruitment_project_persistence import persist_project_best_effort
+
+            persist_project_best_effort(session)
+        except Exception:
+            pass
 
     @staticmethod
     def _audit(metadata: dict[str, Any], actor: str, event: str, detail: str) -> None:

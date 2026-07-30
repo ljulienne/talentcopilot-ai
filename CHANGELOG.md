@@ -187,3 +187,13 @@ All notable changes to TalentCopilot are documented here.
 - Added final-decision owner, timestamp, decisive evidence, accepted-risk and history audit fields.
 - Aligned candidate presentation rank with the canonical source-of-truth order.
 - Unified Candidate Intelligence and PDF decision content without recalculating scores or ranks.
+
+## 8.4.0 — Persistent Recruitment Projects
+
+- Added explicit project saving and restart-safe reopening from the Projects workspace.
+- Added a versioned canonical recruitment-project JSON schema.
+- Preserved candidate IDs, official scores, ranks and source-of-truth fingerprints.
+- Persisted interview, compensation, finalist and final-decision evidence after opt-in saving.
+- Added atomic project-file writes and configurable local storage root.
+- Added backward-compatible restoration of historical recruitment files.
+- Added integrity rejection for persisted projects whose official scores were altered.

@@ -10,6 +10,18 @@ from talentcopilot.services.recruitment_workflow_service import RecruitmentWorkf
 WORKFLOW_CONTEXT_KEY = "talentcopilot_recruitment_workflow_context"
 
 
+def _persist_current_project(context: RecruitmentWorkflowContext) -> None:
+    """Persist workflow changes only after the recruiter explicitly saved a project."""
+
+    try:
+        from talentcopilot.services.streamlit_session_bridge import get_streamlit_session
+        from talentcopilot.services.recruitment_project_persistence import persist_project_best_effort
+
+        persist_project_best_effort(get_streamlit_session(), context)
+    except Exception:
+        pass
+
+
 def get_workflow_context(session: Any = None, *, current_page: str = "") -> RecruitmentWorkflowContext:
     try:
         import streamlit as st
@@ -37,6 +49,7 @@ def save_workflow_context(context: RecruitmentWorkflowContext) -> RecruitmentWor
         st.session_state[WORKFLOW_CONTEXT_KEY] = context
     except Exception:
         pass
+    _persist_current_project(context)
     return context
 
 
@@ -108,6 +121,8 @@ def select_workflow_candidate(
             ] = candidate_id
         except Exception:
             continue
+
+    _persist_current_project(context)
 
 
 def save_interview_evaluation(candidate_id: str, evaluation: dict) -> RecruitmentWorkflowContext:
