@@ -36,6 +36,8 @@ from talentcopilot.comparative_ranking import ComparativeRankingEngine
 from talentcopilot.career_intelligence import CareerFitEngine
 from talentcopilot.decision_ranking import DecisionRankingPolicy
 from talentcopilot.technical_requirements import TechnicalRequirementService
+from talentcopilot.job_intelligence.role_extractor import RoleProfileExtractor
+from talentcopilot.extraction.text_signals import TextSignalExtractor
 
 
 class RecruitmentUploadSessionService:
@@ -155,9 +157,15 @@ class RecruitmentUploadSessionService:
         for index, analysis in enumerate(analyses, start=1):
             analysis.rank = index
 
-        role_title = str(getattr(output, "role_title", "Recruitment") or "Recruitment")
+        raw_role_title = str(getattr(output, "role_title", "Recruitment") or "Recruitment")
         job_document = report.job_document
         job_text = str(getattr(job_document, "text", "") or "")
+        role_extractor = RoleProfileExtractor(
+            extraction_mode=RoleProfileExtractor.DETERMINISTIC_MODE
+        )
+        role_title = role_extractor._infer_title(job_text, raw_role_title)
+        job_location = role_extractor.extract_location(job_text)
+        job_signals = TextSignalExtractor()
         technical_service = TechnicalRequirementService()
         technical_catalog, technical_method = technical_service.extract_with_method(
             job_text,
@@ -168,7 +176,11 @@ class RecruitmentUploadSessionService:
             "title": role_title,
             "source": getattr(job_document, "filename", "uploaded-job"),
             "raw_text": job_text,
+            "location": job_location,
             "required_skills": self._extract_skills(job_text),
+            "responsibilities": job_signals.extract_responsibilities(job_text),
+            "languages": job_signals.extract_languages(job_text),
+            "minimum_years_experience": job_signals.extract_years_experience(job_text),
             # Unified presentation/evaluation source of truth. These exact
             # requirements do not alter the official score already computed.
             "technical_requirements": [item.to_dict() for item in technical_catalog],
@@ -235,6 +247,8 @@ class RecruitmentUploadSessionService:
             "skills": skills,
             "achievements": evidence,
             "years_experience": self._extract_years(text),
+            "languages": TextSignalExtractor().extract_languages(text),
+            "responsibilities": TextSignalExtractor().extract_responsibilities(text),
             "source": filename,
             "filename": filename,
             "raw_text": text,

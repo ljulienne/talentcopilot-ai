@@ -149,8 +149,8 @@ def render_recruitment_workflow_shell(session, *, current_page: str) -> None:
     progress = completed_groups / max(1, len(groups))
     selected = context.selected_candidate_name or "No candidate selected"
     current = next((item for item in groups if item.current), groups[0])
-    next_page, action_label = _primary_route(service, states, context, current_page=current_page)
-    previous_page = _PREVIOUS_PAGE.get(current_page)
+    # The page body owns the single "Next recommended action". The shared
+    # workflow shell now communicates progress only, avoiding duplicate CTAs.
 
     st.markdown(
         """
@@ -200,32 +200,7 @@ def render_recruitment_workflow_shell(session, *, current_page: str) -> None:
         unsafe_allow_html=True,
     )
 
-    left, middle, right = st.columns([.9, 2.8, 1.35])
-    with left:
-        if previous_page and st.button(
-            "← Previous",
-            key=_key("previous", current_page, session),
-            use_container_width=True,
-            help=f"Return to {previous_page}.",
-        ):
-            request_page(previous_page, reason=f"Returned to {previous_page}.")
-            st.rerun()
-    with middle:
-        note = current.reason if not current.available and current.reason else f"Next recommended action: {action_label}"
-        st.markdown(
-            f'<div class="tc-workflow-action-note">{escape(note)}</div>',
-            unsafe_allow_html=True,
-        )
-    with right:
-        if st.button(
-            action_label + " →",
-            type="primary",
-            key=_key("continue", current_page, session),
-            use_container_width=True,
-            help=f"Continue to {next_page}.",
-        ):
-            request_page(next_page, reason=f"Continued to {next_page}.")
-            st.rerun()
+    st.caption("Use the highlighted stage to understand progress; the page below contains the single contextual action.")
 
 
 __all__ = ["WorkflowGroup", "aggregate_workflow_steps", "render_recruitment_workflow_shell"]

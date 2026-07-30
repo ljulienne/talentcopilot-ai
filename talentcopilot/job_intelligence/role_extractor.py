@@ -52,6 +52,7 @@ class RoleProfileExtractor:
         data = response.structured_data
 
         role_title = self._infer_title(analysis.cleaned_text, data.get("role_title"))
+        location = self.extract_location(analysis.cleaned_text, data.get("location"))
         required_skills = self._extract_required_skills(extraction_text)
         preferred_skills = self._extract_preferred_skills(extraction_text, required_skills)
         minimum_years = self.signals.extract_years_experience(extraction_text)
@@ -65,6 +66,8 @@ class RoleProfileExtractor:
 
         return RoleProfile(
             role_title=role_title,
+            location=location,
+            remote_policy=str(data.get("remote_policy") or ""),
             required_skills=required_skills,
             preferred_skills=preferred_skills,
             responsibilities=self._extract_bullets(analysis, "responsibilities") or self.signals.extract_responsibilities(extraction_text),
@@ -121,15 +124,99 @@ class RoleProfileExtractor:
             selected.extend(section.content for section in analysis.sections if section.title == title)
         return "\n\n".join(selected)[:6000] if selected else analysis.cleaned_text[:6000]
 
+    _STRUCTURAL_LABELS = {
+        "location", "localisation", "lieu", "job description", "description du poste",
+        "position", "poste", "about", "company", "department", "employment type",
+        "job type", "responsibilities", "responsabilités", "missions", "requirements",
+        "profile", "profil", "skills", "competencies", "compétences", "salary",
+        "remote", "remote policy", "reporting to", "date", "additional information",
+    }
+
     def _infer_title(self, text: str, fallback: str | None = None) -> str:
-        if fallback and fallback != "Unknown Role":
-            return fallback
-        for line in (text or "").splitlines():
-            clean = line.strip(" -•*")
-            lower = clean.lower()
-            if clean and len(clean) < 90 and not any(marker in lower for marker in ["requirements", "responsibilities", "missions", "skills", "compétences"]):
-                return clean
-        return fallback or "Unknown Role"
+        line_candidate = self._title_from_lines(text)
+        fallback_candidate = self.clean_role_title(fallback or "", text)
+
+        # A standalone heading at the beginning of the document is more reliable
+        # than a mock/LLM response that may have absorbed the following field
+        # label (for example: "HRIS Manager Location").
+        if line_candidate:
+            return line_candidate
+        if fallback_candidate and fallback_candidate != "Unknown Role":
+            return fallback_candidate
+        return "Unknown Role"
+
+    @classmethod
+    def clean_role_title(cls, value: str | None, text: str = "") -> str:
+        clean = " ".join(str(value or "").replace("\n", " ").split()).strip(" -•*|:;")
+        clean = re.sub(r"^(?:job\s+title|position|poste|role|intitulé(?:\s+du\s+poste)?)\s*[:\-]\s*", "", clean, flags=re.I)
+        if not clean:
+            return ""
+
+        # Remove one or more structural field labels accidentally appended to
+        # the role title by deterministic or LLM extraction.
+        words = clean.split()
+        while words:
+            removed = False
+            for width in (3, 2, 1):
+                if len(words) < width:
+                    continue
+                suffix = " ".join(words[-width:]).casefold().strip(" :")
+                if suffix in cls._STRUCTURAL_LABELS:
+                    words = words[:-width]
+                    removed = True
+                    break
+            if not removed:
+                break
+        clean = " ".join(words).strip(" -•*|:;")
+        if clean.isupper():
+            acronyms = {"HR", "HRIS", "IT", "AI", "BI", "ERP", "CRM", "CEO", "CFO", "CTO", "COO", "APAC", "EMEA", "UX", "UI", "QA"}
+            clean = " ".join(word if word in acronyms else word.title() for word in clean.split())
+        return clean[:120]
+
+    @classmethod
+    def extract_location(cls, text: str, fallback: str | None = None) -> str:
+        fallback_clean = " ".join(str(fallback or "").split()).strip(" -•*|:;")
+        if fallback_clean and fallback_clean.casefold() not in cls._STRUCTURAL_LABELS:
+            return fallback_clean[:160]
+
+        lines = [" ".join(line.split()).strip() for line in str(text or "").splitlines()]
+        for index, line in enumerate(lines):
+            match = re.match(
+                r"^(?:location|localisation|lieu|work\s+location|based\s+in)\s*[:\-]?\s*(.*)$",
+                line,
+                flags=re.I,
+            )
+            if not match:
+                continue
+            inline = match.group(1).strip(" -•*|:;")
+            if inline and inline.casefold() not in cls._STRUCTURAL_LABELS:
+                return inline[:160]
+            for following in lines[index + 1:index + 4]:
+                candidate = following.strip(" -•*|:;")
+                if not candidate:
+                    continue
+                if candidate.casefold() in cls._STRUCTURAL_LABELS:
+                    break
+                return candidate[:160]
+        return ""
+
+    @classmethod
+    def _title_from_lines(cls, text: str) -> str:
+        lines = [" ".join(line.split()).strip(" -•*|:;") for line in str(text or "").splitlines()]
+        for line in lines[:18]:
+            if not line or len(line) > 120:
+                continue
+            lower = line.casefold()
+            if lower in cls._STRUCTURAL_LABELS:
+                continue
+            if any(lower.startswith(label + ":") for label in cls._STRUCTURAL_LABELS):
+                continue
+            if re.search(r"[.!?]$", line) and len(line.split()) > 7:
+                continue
+            candidate = cls.clean_role_title(line)
+            if candidate and candidate.casefold() not in cls._STRUCTURAL_LABELS:
+                return candidate
+        return ""
 
     def _extract_required_skills(self, text: str) -> list[str]:
         return self.ontology.extract_skills(text)

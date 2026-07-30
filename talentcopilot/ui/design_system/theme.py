@@ -975,6 +975,79 @@ def apply_enterprise_theme():
             .block-container {{padding-left:1rem;padding-right:1rem}}
             [data-testid="stSidebar"] {{width:284px !important}}
         }}
+        /* Release 8.2.0 — UX clarity and unified command bar */
+        .tc-topbar-search-marker,.tc-topbar-copilot-marker {{display:none}}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.tc-product-topbar-marker) {{
+            position:sticky !important;
+            top:.55rem !important;
+            z-index:995 !important;
+            margin:0 0 .78rem !important;
+            padding:.62rem .78rem !important;
+            border:1px solid rgba(197,214,232,.96) !important;
+            border-radius:18px !important;
+            background:
+                radial-gradient(circle at 92% 8%,rgba(55,181,210,.12),transparent 28%),
+                linear-gradient(118deg,rgba(253,253,252,.98) 0%,rgba(246,249,253,.97) 52%,rgba(237,246,251,.96) 100%) !important;
+            box-shadow:0 12px 34px rgba(32,58,91,.09),inset 0 1px 0 rgba(255,255,255,.92) !important;
+            backdrop-filter:blur(20px) saturate(135%) !important;
+            overflow:hidden !important;
+        }}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.tc-product-topbar-marker)::before {{
+            content:"";
+            position:absolute;
+            left:0;
+            right:0;
+            top:0;
+            height:3px;
+            background:linear-gradient(90deg,#3556D8 0%,#2E7BE7 52%,#28B8C8 100%);
+        }}
+        .tc-topbar-title-wrap {{padding:.08rem .15rem .08rem .05rem}}
+        .tc-topbar-eyebrow {{font-size:.56rem;line-height:1.15;letter-spacing:.13em;text-transform:uppercase;color:#4F6B8F;font-weight:820;margin-bottom:.13rem}}
+        .tc-topbar-breadcrumb {{font-size:.59rem;color:#7C8BA0;font-weight:700;line-height:1.15}}
+        .tc-topbar-breadcrumb span {{padding:0 .18rem;color:#A7B3C3}}
+        .tc-topbar-page {{margin-top:.15rem;color:#172A47;font-size:1rem;font-weight:880;letter-spacing:-.022em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+        .tc-topbar-mission {{
+            min-height:2.72rem !important;
+            padding:.46rem .7rem !important;
+            border:1px solid #D4E1EE !important;
+            border-radius:13px !important;
+            background:linear-gradient(135deg,#F9FBFE 0%,#EEF5FB 100%) !important;
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.9) !important;
+        }}
+        .tc-topbar-mission-title {{color:#203653 !important;font-size:.73rem !important;font-weight:840 !important}}
+        .tc-topbar-mission-meta {{color:#6F8096 !important;font-size:.61rem !important}}
+        div[data-testid="stColumn"]:has(.tc-topbar-search-marker) [data-testid="stPopover"] button {{
+            min-height:2.72rem !important;
+            border-radius:13px !important;
+            background:rgba(255,255,255,.78) !important;
+            border:1px solid #D2DEEB !important;
+            color:#354B68 !important;
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.95) !important;
+        }}
+        div[data-testid="stColumn"]:has(.tc-topbar-search-marker) [data-testid="stPopover"] button:hover {{
+            background:#FFFFFF !important;
+            border-color:#AEC7E0 !important;
+            box-shadow:0 6px 18px rgba(48,76,109,.08) !important;
+        }}
+        div[data-testid="stColumn"]:has(.tc-topbar-copilot-marker) .stButton > button {{
+            min-height:2.72rem !important;
+            border-radius:13px !important;
+            color:#FFFFFF !important;
+            border:1px solid rgba(72,132,218,.46) !important;
+            background:linear-gradient(110deg,#344ED0 0%,#3E6DDB 64%,#2A9CB6 100%) !important;
+            box-shadow:0 8px 20px rgba(48,82,176,.18),inset 0 1px 0 rgba(255,255,255,.2) !important;
+            font-weight:780 !important;
+        }}
+        div[data-testid="stColumn"]:has(.tc-topbar-copilot-marker) .stButton > button:hover {{
+            transform:translateY(-1px);
+            filter:saturate(108%) brightness(1.02);
+            box-shadow:0 10px 24px rgba(48,82,176,.24) !important;
+        }}
+        .tc-workflow-action-note {{display:none !important}}
+        @media(max-width:1120px) {{
+            .tc-topbar-eyebrow {{display:none}}
+            .tc-topbar-page {{font-size:.92rem}}
+        }}
         </style>
         ''',
         unsafe_allow_html=True,

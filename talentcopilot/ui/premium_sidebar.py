@@ -241,35 +241,6 @@ def render_premium_sidebar(session, *, current_page: str, app_version: str = "")
                 request_page(item.page_label, reason=f"Opened {item.label}.")
                 st.rerun()
 
-    context = get_workflow_context(session, current_page=current_page)
-    next_label = "Open recruitment overview"
-    next_page = "Recruitment Overview"
-    if session and total and analyzed >= total:
-        next_label, next_page = "Review candidate dashboard", "Dashboard Perspective"
-    if current_page in {"Dashboard Perspective", "Candidate Intelligence"} and session:
-        if CompensationBudgetService().documented_count(session) < total:
-            next_label, next_page = "Record compensation expectations", "Compensation & Budget"
-        elif not context.interview_prepared_candidate_ids:
-            next_label, next_page = "Prepare an interview", "Interview Intelligence"
-    if context.interview_assessed_candidate_ids and not context.finalists_compared:
-        next_label, next_page = "Compare finalists", "Comparison"
-    elif context.finalists_compared and not context.decision_recorded:
-        next_label, next_page = "Record the decision", "Decision Board"
-
-    st.sidebar.markdown(
-        f'''<div class="tc-sidebar-next">
-        <div class="tc-sidebar-next-kicker">Next up</div>
-        <div class="tc-sidebar-next-title">{escape(next_label)}</div>
-        <div class="tc-sidebar-next-copy">Continue the active mission without losing context.</div>
-        </div>''',
-        unsafe_allow_html=True,
-    )
-    if st.sidebar.button(
-        next_label,
-        icon=":material/arrow_forward:",
-        key="premium_sidebar_next_action",
-        type="primary",
-        use_container_width=True,
-    ):
-        request_page(next_page, reason=f"Recommended next step: {next_label}.")
-        st.rerun()
+    # The historical "Next up" recommendation was removed from the sidebar.
+    # Each page now exposes one contextual next action in the main workspace,
+    # preventing competing recommendations across the shell and page content.

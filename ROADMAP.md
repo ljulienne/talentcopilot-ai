@@ -1,5 +1,15 @@
 # TalentCopilot Roadmap
 
+## ✅ v8.2.0 — UX Clarity & Universal Risk Grounding
+
+- Unified product command bar
+- One contextual next action per page
+- Generic job title / location separation
+- Universal multi-job candidate risk grounding
+- Official scores and ranks preserved
+
+---
+
 ## ✅ v0.9.0-alpha
 
 - Design System

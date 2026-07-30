@@ -106,10 +106,10 @@ def _mission_summary(session: Any) -> tuple[str, str, str]:
 
 
 def render_product_topbar(session: Any, *, current_page: str) -> None:
-    """Render the shared product top bar with functional search and help.
+    """Render the unified product command bar.
 
-    The component remains presentation-only. Search navigates to existing pages
-    and candidate detail while preserving the canonical workflow candidate.
+    Search, mission context and Copilot remain functional while the visual
+    hierarchy is kept to one compact horizontal surface.
     """
 
     import streamlit as st
@@ -118,16 +118,23 @@ def render_product_topbar(session: Any, *, current_page: str) -> None:
 
     with st.container(border=True):
         st.markdown('<span class="tc-product-topbar-marker"></span>', unsafe_allow_html=True)
-        title_col, search_col, context_col = st.columns([1.35, 1.15, 1.0], vertical_alignment="center")
+        title_col, search_col, mission_col, copilot_col = st.columns(
+            [1.3, 1.25, 1.05, .72],
+            vertical_alignment="center",
+        )
 
         with title_col:
             st.markdown(
+                f'<div class="tc-topbar-title-wrap">'
+                f'<div class="tc-topbar-eyebrow">Talent intelligence workspace</div>'
                 f'<div class="tc-topbar-breadcrumb">TalentCopilot <span>›</span> {escape(current_page)}</div>'
-                f'<div class="tc-topbar-page">{escape(current_page)}</div>',
+                f'<div class="tc-topbar-page">{escape(current_page)}</div>'
+                f'</div>',
                 unsafe_allow_html=True,
             )
 
         with search_col:
+            st.markdown('<span class="tc-topbar-search-marker"></span>', unsafe_allow_html=True)
             with st.popover("Search", icon=":material/search:", use_container_width=True):
                 query = st.text_input(
                     "Search pages or candidates",
@@ -156,7 +163,7 @@ def render_product_topbar(session: Any, *, current_page: str) -> None:
                         st.rerun()
                     st.caption(result.detail)
 
-        with context_col:
+        with mission_col:
             st.markdown(
                 f'<div class="tc-topbar-mission tc-topbar-{escape(tone)}">'
                 f'<span class="tc-topbar-status-dot"></span>'
@@ -164,6 +171,9 @@ def render_product_topbar(session: Any, *, current_page: str) -> None:
                 f'<div class="tc-topbar-mission-meta">{escape(mission_meta)}</div></div></div>',
                 unsafe_allow_html=True,
             )
+
+        with copilot_col:
+            st.markdown('<span class="tc-topbar-copilot-marker"></span>', unsafe_allow_html=True)
             if st.button(
                 "AI Copilot",
                 icon=":material/auto_awesome:",

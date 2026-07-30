@@ -7,6 +7,8 @@ from talentcopilot.document_intelligence.models import DocumentSection
 @dataclass
 class RoleProfile:
     role_title: str
+    location: str = ""
+    remote_policy: str = ""
     required_skills: List[str] = field(default_factory=list)
     preferred_skills: List[str] = field(default_factory=list)
     responsibilities: List[str] = field(default_factory=list)

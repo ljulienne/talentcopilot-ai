@@ -11,6 +11,7 @@ from talentcopilot.models.candidate_workspace import (
     CandidateWorkspaceReport,
 )
 from talentcopilot.services.candidate_identity import resolve_candidate_id
+from talentcopilot.recruitment_reasoning import UniversalCandidateRiskGroundingEngine
 
 
 class CandidateWorkspaceService:
@@ -20,6 +21,9 @@ class CandidateWorkspaceService:
     match score and official rank remain immutable and are read from the active
     RecruitmentSession source of truth.
     """
+
+    def __init__(self, risk_engine=None):
+        self.risk_engine = risk_engine or UniversalCandidateRiskGroundingEngine()
 
     def build_all(self, session=None):
         if session is None or not getattr(session, "ranked_analyses", None):
@@ -61,12 +65,7 @@ class CandidateWorkspaceService:
                 executive_summary,
             )
 
-        required_skills = self._unique(
-            job.get("required_skills")
-            or job.get("skills")
-            or job.get("competencies")
-            or []
-        )
+        required_skills = self._job_requirements(job)
         candidate_skills = self._unique(candidate.get("skills", []) or [])
         achievements = self._unique(candidate.get("achievements", []) or [])
         candidate_text = self._candidate_text(candidate)
@@ -87,6 +86,8 @@ class CandidateWorkspaceService:
             skills=skills,
             achievements=achievements,
             candidate_text=candidate_text,
+            candidate=candidate,
+            job=job,
         )
         interview_focus = self._build_interview_focus(
             decision_report=decision_report,
@@ -137,6 +138,38 @@ class CandidateWorkspaceService:
             recommendation_rationale=recommendation_rationale,
             next_action=next_action,
         )
+
+    def _job_requirements(self, job):
+        """Return role requirements from every supported job representation.
+
+        Upload sessions frequently carry a richer domain-agnostic technical
+        requirement catalog than the legacy ``required_skills`` list. Using both
+        prevents risk grounding from collapsing to a generic fallback when a job
+        description does not contain a literal "Skills" section.
+        """
+
+        values = list(
+            job.get("required_skills")
+            or job.get("skills")
+            or job.get("competencies")
+            or []
+        )
+        technical = list(job.get("technical_requirements") or [])
+        priority = {"critical": 0, "high": 1, "supporting": 2, "preferred": 3}
+        technical.sort(
+            key=lambda item: (
+                priority.get(str((item or {}).get("importance", "high")).casefold(), 2),
+                -float((item or {}).get("required_level", 0) or 0),
+                str((item or {}).get("name", "")).casefold(),
+            )
+            if isinstance(item, dict)
+            else (2, 0, str(item).casefold())
+        )
+        for item in technical:
+            name = item.get("name") if isinstance(item, dict) else str(item)
+            if name:
+                values.append(name)
+        return self._unique(values)[:12]
 
     def _build_skills(self, *, required_skills, candidate_skills, achievements, candidate_text):
         ordered = self._unique([*required_skills, *candidate_skills])[:12]
@@ -241,68 +274,32 @@ class CandidateWorkspaceService:
             ))
         return items
 
-    def _build_risks(self, *, decision_report, skills, achievements, candidate_text):
-        risks = []
-        for concern in getattr(decision_report, "concerns", []) or []:
-            risks.append(CandidateRisk(
-                title=getattr(concern, "title", "Documented concern"),
-                detail=getattr(concern, "explanation", "Validate during human review."),
-                severity=str(getattr(concern, "severity", "Medium")),
-                classification="Confirmed risk",
-                related_requirement=getattr(concern, "title", "Decision criterion"),
-                interview_question="Describe the context, your personal responsibility and the resulting impact.",
-                evidence_basis=getattr(concern, "explanation", "Documented by the decision engine."),
-            ))
+    def _build_risks(
+        self,
+        *,
+        decision_report,
+        skills,
+        achievements,
+        candidate_text,
+        candidate=None,
+        job=None,
+    ):
+        """Build universal, candidate-grounded decision risks.
 
-        required = [skill for skill in skills if skill.requirement_type == "Role requirement"]
-        for skill in sorted(required, key=lambda item: item.level):
-            if skill.level >= 70:
-                continue
-            classification = "Validation point" if skill.level >= 40 else "Probable risk"
-            severity = "Medium" if skill.level >= 40 else "High"
-            if skill.level >= 55:
-                severity = "Low"
-            risks.append(CandidateRisk(
-                title=f"{skill.name} requires validation",
-                detail=(
-                    f"The available CV evidence provides {skill.status.lower()} for {skill.name}. "
-                    "The interview should establish the scope, recency and level of personal ownership before a final decision."
-                ),
-                severity=severity,
-                classification=classification,
-                related_requirement=skill.name,
-                interview_question=(
-                    f"Describe the most relevant example of {skill.name} in your recent work. "
-                    "What did you personally own, how large was the scope and what measurable result followed?"
-                ),
-                evidence_basis=skill.evidence,
-            ))
-            if len(risks) >= 3:
-                break
+        This delegates to a domain-agnostic engine. The engine may reference any
+        requirement found in the active job, but never hard-codes a job family,
+        industry or technology and never changes the official score or rank.
+        """
 
-        if len(risks) < 3 and achievements and not any(self._outcome_label(item) != "Not quantified" for item in achievements):
-            risks.append(CandidateRisk(
-                title="Measurable impact is not established",
-                detail="The CV describes relevant activity but provides limited quantified evidence of scale, quality, adoption, cost or delivery impact.",
-                severity="Low",
-                classification="Validation point",
-                related_requirement="Demonstrated delivery impact",
-                interview_question="Which outcome best demonstrates your impact, and how was it measured?",
-                evidence_basis="No measurable outcome was identified in the available achievements.",
-            ))
-
-        if len(risks) < 3 and not self._contains_any(candidate_text, ("led", "managed", "owned", "directed", "responsible", "pilot", "dirig", "gér", "responsable")):
-            risks.append(CandidateRisk(
-                title="Personal ownership is unclear",
-                detail="The current profile does not clearly distinguish individual accountability from team participation.",
-                severity="Medium",
-                classification="Validation point",
-                related_requirement="Role ownership and decision authority",
-                interview_question="Which decisions and deliverables were you personally accountable for?",
-                evidence_basis="Ownership language is limited in the current structured CV data.",
-            ))
-
-        return self._dedupe_risks(risks)[:3]
+        return self.risk_engine.build(
+            decision_report=decision_report,
+            skills=skills,
+            candidate=candidate or {},
+            job=job or {},
+            achievements=achievements,
+            candidate_text=candidate_text,
+            limit=3,
+        )
 
     def _build_interview_focus(self, *, decision_report, risks, skills, achievements):
         focus = []

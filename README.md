@@ -6,16 +6,15 @@ TalentCopilot is an evidence-led Talent Intelligence platform that helps HR team
 
 ## Current experience
 
-Release `8.1.0-mockup-fidelity-product-shell` rebuilds the presentation shell to match the approved premium SaaS direction more closely:
+Release `8.2.0-ux-clarity-universal-risk-grounding` improves decision clarity and evidence grounding without changing official scores:
 
-- narrower softened slate-blue sidebar with high-contrast navigation;
-- reusable product topbar with functional page and candidate search;
-- premium onboarding instead of a dashboard filled with zero values;
-- data-backed active-mission dashboard and project overview;
-- balanced blue-gray workspace with tinted ivory cards;
-- compact workflow rail positioned below the global topbar;
-- responsive layout and reduced native Streamlit chrome;
-- preserved PDF reports, official Talent Fit scores, ranks and evidence.
+- balanced premium command bar for page context, Search, mission status and AI Copilot;
+- one page-owned recommended action instead of competing shell recommendations;
+- recruiter-facing sidebar without the technical App health block;
+- generic separation of job title and location during job-description extraction;
+- universal candidate risk grounding across job families and profile types;
+- candidate-specific evidence, risk rationale and interview validation questions;
+- preserved PDF reports, official Talent Fit scores, ranks, interviews and compensation data.
 
 ## Core recruitment spaces
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## 8.2.0 — UX Clarity & Universal Risk Grounding
+
+- Removed App health and duplicate shell-level next-action prompts from the recruiter journey.
+- Rebuilt the product command bar as one balanced row for context, Search, mission status and AI Copilot.
+- Separated job title and location with generic structural-label parsing.
+- Added a domain-agnostic Universal Candidate Risk Grounding Engine.
+- Grounded risk priority in role criticality, candidate evidence, experience, language, ownership and measurable outcomes.
+- Added rich technical requirements to Candidate Intelligence when legacy skill sections are absent.
+- Preserved official scores, ranks, interviews, compensation and PDF reports.
+
 
 ## 8.1.0 — Mockup Fidelity & Product Shell
 

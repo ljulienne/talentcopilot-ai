@@ -38,6 +38,8 @@ class RoleExtractionAdapter:
         facts = result.facts
         return RoleProfile(
             role_title=facts.title or "Unknown Role",
+            location=facts.location or "",
+            remote_policy=facts.remote_policy or "",
             required_skills=facts.required_skills,
             preferred_skills=facts.preferred_skills,
             responsibilities=facts.responsibilities,

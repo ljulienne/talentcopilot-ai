@@ -5,7 +5,6 @@ import streamlit as st
 
 from talentcopilot.config import APP_NAME, APP_VERSION
 from talentcopilot.i18n import LANGUAGES
-from talentcopilot.services.import_safety_audit import ImportSafetyAudit
 from talentcopilot.services.streamlit_session_bridge import (
     consume_session_invalidation_notice,
     get_streamlit_session,
@@ -13,7 +12,7 @@ from talentcopilot.services.streamlit_session_bridge import (
 from talentcopilot.ui.app_shell import render_product_topbar
 from talentcopilot.ui.brand import APP_ICON_PATH
 from talentcopilot.ui.design_system.theme import apply_enterprise_theme
-from talentcopilot.ui.enterprise_navigation import get_enterprise_navigation, get_page_by_label
+from talentcopilot.ui.enterprise_navigation import get_page_by_label
 from talentcopilot.ui.navigation_actions import consume_page_request
 from talentcopilot.ui.premium_sidebar import render_premium_sidebar
 from talentcopilot.ui.recruitment_workflow_shell import render_recruitment_workflow_shell
@@ -97,22 +96,6 @@ def _select_page(session):
     return selected_page
 
 
-def _render_import_health():
-    with st.sidebar.expander("App health"):
-        navigation = {}
-        for section in get_enterprise_navigation().values():
-            for page in section.pages:
-                navigation[page.label] = (page.module, page.function)
-
-        report = ImportSafetyAudit().audit_navigation(navigation)
-        if report["missing"]:
-            st.warning(f"{len(report['missing'])} import issue(s)")
-            for item in report["missing"][:5]:
-                st.caption(item)
-        else:
-            st.success("Imports OK")
-
-
 def main():
     page_icon = str(APP_ICON_PATH) if APP_ICON_PATH.exists() else "✦"
     st.set_page_config(page_title=APP_NAME, page_icon=page_icon, layout="wide")
@@ -143,7 +126,6 @@ def main():
     }
     if selected_page.label in workflow_pages:
         render_recruitment_workflow_shell(session, current_page=selected_page.label)
-    _render_import_health()
     _safe_call(selected_page.module, selected_page.function)()
 
 
