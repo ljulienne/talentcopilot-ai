@@ -1,4 +1,5 @@
 from talentcopilot.services.candidate_workspace_service import CandidateWorkspaceService
+from talentcopilot.services.candidate_decision_workspace_service import CandidateDecisionWorkspaceService
 from talentcopilot.services.competency_matrix_service import CompetencyMatrixService
 from talentcopilot.explainable_scoring import ExplainableScoringService
 from talentcopilot.services.candidate_intelligence import CandidateIntelligenceService
@@ -227,6 +228,115 @@ def _render_list_section(
             st.warning(item)
         else:
             st.markdown(f"- {item}")
+
+
+def _render_candidate_decision_workspace(view) -> None:
+    import pandas as pd
+    import streamlit as st
+
+    section_title(
+        "Candidate decision workspace",
+        "Pre-interview assessment, interview evidence, compensation context and the final human decision in one traceable view.",
+    )
+
+    confidence_value = (
+        f"{view.confidence_score:.0f}%"
+        if view.confidence_score is not None
+        else "Not available"
+    )
+    evidence_value = (
+        f"{view.evidence_coverage}%"
+        if view.evidence_coverage is not None
+        else "Not available"
+    )
+    metric_grid([
+        ("Official Talent Fit", f"{view.official_match_score:.0f}%", f"Immutable rank #{view.official_rank}"),
+        ("Evidence confidence", confidence_value, evidence_value + " coverage"),
+        ("Interview", view.interview_status, view.interview_recommendation),
+        ("Final decision", view.final_decision_status, view.final_decision_recommendation),
+    ])
+
+    st.markdown("#### Decision journey")
+    st.dataframe(
+        pd.DataFrame([
+            {
+                "Stage": item.label,
+                "Status": item.status,
+                "Recommendation": item.recommendation,
+                "Evidence / rationale": item.evidence_note,
+            }
+            for item in view.journey
+        ]),
+        use_container_width=True,
+        hide_index=True,
+    )
+
+    strengths_col, risks_col = st.columns(2)
+    with strengths_col:
+        _render_list_section(
+            "Demonstrated strengths",
+            view.strengths,
+            empty_message="No differentiated strength is sufficiently evidenced yet.",
+            tone="positive",
+        )
+    with risks_col:
+        _render_list_section(
+            "Risks to validate",
+            view.risks,
+            empty_message="No material candidate-specific risk is currently documented.",
+            tone="risk",
+        )
+
+    st.markdown("#### Role requirement coverage")
+    requirement_rows = [
+        {
+            "Requirement": item.requirement,
+            "Required": round(item.required_level, 1),
+            "Pre-interview": round(item.pre_interview_level, 1),
+            "Post-interview": (
+                round(item.post_interview_level, 1)
+                if item.post_interview_level is not None
+                else "—"
+            ),
+            "Current status": item.current_status,
+            "Evidence": item.evidence_status,
+            "Confidence": item.confidence,
+            "Interview action": item.interview_priority,
+        }
+        for item in view.requirements
+    ]
+    if requirement_rows:
+        st.dataframe(pd.DataFrame(requirement_rows), use_container_width=True, hide_index=True)
+    else:
+        st.info("No structured job requirement is available for this candidate.")
+
+    st.markdown("#### Compensation and availability")
+    salary = (
+        f"{view.currency} {view.expected_salary:,.0f}"
+        if view.expected_salary is not None
+        else "Not documented"
+    )
+    metric_grid([
+        ("Compensation", view.compensation_status, view.compensation_fit),
+        ("Expected base", salary, "Separate from Talent Fit"),
+        ("Availability", view.availability_date, f"Notice period: {view.notice_period_weeks} weeks"),
+        ("Flexibility", view.flexibility, "Recruiter-entered context"),
+    ])
+
+    if view.interview_priorities:
+        with st.expander("Interview validation priorities", expanded=False):
+            for priority in view.interview_priorities:
+                st.write(f"- {priority}")
+
+    if view.has_final_decision or view.decision_history:
+        with st.expander("Decision traceability", expanded=view.has_final_decision):
+            if view.has_final_decision:
+                st.markdown(f"**Decision:** {view.final_decision_recommendation}")
+                st.markdown(f"**Owner:** {view.final_decision_actor or 'Not documented'}")
+                st.markdown(f"**Recorded at:** {view.final_decision_timestamp or 'Not documented'}")
+                st.markdown(f"**Rationale:** {view.final_decision_rationale}")
+            if view.decision_history:
+                st.dataframe(pd.DataFrame(list(view.decision_history)), use_container_width=True, hide_index=True)
 
 
 def _render_candidate_decision_brief(
@@ -740,12 +850,22 @@ def render_candidate_workspace():
 
     _render_candidate_header(report, decision_brief)
 
+    decision_view = CandidateDecisionWorkspaceService().build(
+        report,
+        session,
+        workflow_context,
+        decision_brief,
+    )
     compensation = CompensationBudgetService().load_expectation(
         session,
         candidate_id=report_id,
         candidate_name=report.candidate_name,
     )
-    export = RecruitmentPdfService().candidate(report, compensation)
+    export = RecruitmentPdfService().candidate(
+        report,
+        compensation,
+        decision_view=decision_view,
+    )
     export_col, compensation_col, interview_col = st.columns([1.15, 1, 1])
     with export_col:
         st.download_button(
@@ -795,7 +915,7 @@ def render_candidate_workspace():
     ])
 
     with tab_overview:
-        _render_decision_snapshot(report, decision_brief)
+        _render_candidate_decision_workspace(decision_view)
 
     with tab_competencies:
         section_title(

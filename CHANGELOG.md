@@ -178,3 +178,12 @@ All notable changes to TalentCopilot are documented here.
 - Harmonized brand, mission, notice, select, expander, and recommended-next-step styling.
 - Lightened shared enterprise hero surfaces.
 - Preserved all business engines, scores, ranks, evidence, interviews, compensation, and PDF exports.
+
+## 8.3.0 — Candidate Decision Workspace
+
+- Consolidated pre-interview, interview, compensation, availability and final-decision context.
+- Added role-requirement decision coverage with separate pre/post interview evidence.
+- Added independent finalist decision matrix in Compare & Decide.
+- Added final-decision owner, timestamp, decisive evidence, accepted-risk and history audit fields.
+- Aligned candidate presentation rank with the canonical source-of-truth order.
+- Unified Candidate Intelligence and PDF decision content without recalculating scores or ranks.

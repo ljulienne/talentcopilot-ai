@@ -40,11 +40,18 @@ class CandidateWorkspaceService:
 
         job = dict(getattr(session, "job", {}) or {})
         reports = []
-        for analysis in RecruitmentSourceOfTruthService().ordered_analyses(session):
+        ordered_analyses = RecruitmentSourceOfTruthService().ordered_analyses(session)
+        for official_rank, analysis in enumerate(ordered_analyses, start=1):
             candidate = candidates_by_id.get(getattr(analysis, "candidate_id", ""))
             if candidate is None:
                 candidate = candidates_by_name.get(analysis.candidate_name, {})
-            reports.append(self._build_one(analysis, candidate, job))
+            report = self._build_one(analysis, candidate, job)
+            # The source-of-truth order is the canonical candidate order. Align
+            # the presentation rank with that order without changing any score,
+            # decision score or persisted analysis output.
+            report.rank = official_rank
+            report.score_breakdown["mission_fit_rank"] = official_rank
+            reports.append(report)
         return reports
 
     def _build_one(self, analysis, candidate, job=None):

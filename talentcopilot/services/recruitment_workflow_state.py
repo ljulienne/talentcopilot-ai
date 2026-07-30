@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any
+from datetime import datetime, timezone
+from typing import Any, Iterable
 
 from talentcopilot.models.recruitment_workflow import RecruitmentWorkflowContext
 from talentcopilot.services.recruitment_workflow_service import RecruitmentWorkflowService
@@ -140,12 +141,58 @@ def mark_finalists_compared() -> RecruitmentWorkflowContext:
     return save_workflow_context(context)
 
 
-def save_final_decision(candidate_id: str, recommendation: str, rationale: str) -> RecruitmentWorkflowContext:
+def save_final_decision(
+    candidate_id: str,
+    recommendation: str,
+    rationale: str,
+    *,
+    actor: str = "Recruiter",
+    evidence: Iterable[str] | None = None,
+    accepted_risks: Iterable[str] | None = None,
+) -> RecruitmentWorkflowContext:
+    """Record a human-owned final decision and append an immutable audit entry."""
+
     context = get_workflow_context()
-    context.final_decision_candidate_id = str(candidate_id or "")
-    context.final_decision_recommendation = str(recommendation or "")
-    context.final_decision_rationale = str(rationale or "")
-    context.decision_recorded = bool(context.final_decision_candidate_id and context.final_decision_rationale.strip())
+    candidate_key = str(candidate_id or "")
+    recommendation_value = str(recommendation or "")
+    rationale_value = str(rationale or "")
+    actor_value = str(actor or "Recruiter")
+    evidence_values = _unique_strings(evidence)
+    risk_values = _unique_strings(accepted_risks)
+    timestamp = datetime.now(timezone.utc).isoformat()
+
+    previous_recommendation = str(context.final_decision_recommendation or "")
+    context.final_decision_candidate_id = candidate_key
+    context.final_decision_recommendation = recommendation_value
+    context.final_decision_rationale = rationale_value
+    context.final_decision_actor = actor_value
+    context.final_decision_timestamp = timestamp
+    context.final_decision_evidence = list(evidence_values)
+    context.final_decision_accepted_risks = list(risk_values)
+    context.decision_recorded = bool(candidate_key and rationale_value.strip())
+
     if context.decision_recorded:
         context.mark_completed("decide")
+        context.decision_history.append({
+            "timestamp": timestamp,
+            "actor": actor_value,
+            "candidate_id": candidate_key,
+            "recommendation": recommendation_value,
+            "previous_recommendation": previous_recommendation,
+            "rationale": rationale_value,
+            "evidence": list(evidence_values),
+            "accepted_risks": list(risk_values),
+        })
     return save_workflow_context(context)
+
+
+def _unique_strings(values: Iterable[str] | None) -> list[str]:
+    output: list[str] = []
+    seen: set[str] = set()
+    for value in values or []:
+        text = " ".join(str(value or "").split())
+        key = text.casefold()
+        if text and key not in seen:
+            output.append(text)
+            seen.add(key)
+    return output

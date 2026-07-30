@@ -209,7 +209,55 @@ def render_decision_board():
     recommendation_options = ["Hire", "Proceed with conditions", "Hold", "Reject"]
     saved_recommendation = context.final_decision_recommendation
     recommendation_index = recommendation_options.index(saved_recommendation) if saved_recommendation in recommendation_options else 0
-    recommendation = st.selectbox("Final recommendation", recommendation_options, index=recommendation_index, key="decision_final_recommendation")
+    owner = st.text_input(
+        "Decision owner",
+        value=(
+            context.final_decision_actor
+            if context.final_decision_candidate_id == candidate_id and context.final_decision_actor
+            else "Recruiter"
+        ),
+        key=f"decision_owner_{candidate_id}",
+    )
+    recommendation = st.selectbox(
+        "Final recommendation",
+        recommendation_options,
+        index=recommendation_index,
+        key="decision_final_recommendation",
+    )
+
+    evidence_options = [
+        f"{reason.title}: {reason.detail}"
+        for reason in candidate.reasons
+        if str(reason.detail or "").strip()
+    ]
+    risk_options = list(evaluation.get("remaining_risks", [])) or [
+        risk.detail or risk.title
+        for risk in candidate.risks
+    ]
+    saved_evidence = (
+        context.final_decision_evidence
+        if context.final_decision_candidate_id == candidate_id
+        else []
+    )
+    saved_risks = (
+        context.final_decision_accepted_risks
+        if context.final_decision_candidate_id == candidate_id
+        else []
+    )
+    decisive_evidence = st.multiselect(
+        "Decisive evidence",
+        options=evidence_options,
+        default=[item for item in saved_evidence if item in evidence_options],
+        key=f"decision_evidence_{candidate_id}",
+        help="Select the evidence explicitly relied upon for this human decision.",
+    )
+    accepted_risks = st.multiselect(
+        "Risks accepted or conditionally managed",
+        options=risk_options,
+        default=[item for item in saved_risks if item in risk_options],
+        key=f"decision_accepted_risks_{candidate_id}",
+        help="Selecting a risk records that it was consciously considered; it does not remove the risk.",
+    )
     rationale = st.text_area(
         "Decision rationale",
         value=context.final_decision_rationale if context.final_decision_candidate_id == candidate_id else "",
@@ -219,14 +267,32 @@ def render_decision_board():
     )
 
     if st.button("Finalize decision", type="primary", key=f"decision_finalize_{candidate_id}", use_container_width=True):
-        if not rationale.strip():
+        if not owner.strip():
+            st.error("Identify the decision owner before finalizing the decision.")
+        elif not rationale.strip():
             st.error("Add a concise rationale before finalizing the decision.")
         else:
-            save_final_decision(candidate_id, recommendation, rationale)
-            st.success("Final decision recorded with traceability.")
+            context = save_final_decision(
+                candidate_id,
+                recommendation,
+                rationale,
+                actor=owner,
+                evidence=decisive_evidence,
+                accepted_risks=accepted_risks,
+            )
+            st.success("Final decision recorded with owner, evidence, accepted risks and timestamp.")
 
     if context.decision_recorded:
         st.success(
-            f"Decision recorded: {context.final_decision_recommendation} · "
-            f"{context.final_decision_rationale}"
+            f"Decision recorded by {context.final_decision_actor or 'Recruiter'}: "
+            f"{context.final_decision_recommendation} · {context.final_decision_rationale}"
         )
+
+    history = [
+        entry
+        for entry in context.decision_history
+        if str(entry.get("candidate_id", "")) == candidate_id
+    ]
+    if history:
+        with st.expander(f"Decision audit history ({len(history)})", expanded=False):
+            st.dataframe(history, use_container_width=True, hide_index=True)

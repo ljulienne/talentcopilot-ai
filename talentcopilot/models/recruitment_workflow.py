@@ -35,6 +35,11 @@ class RecruitmentWorkflowContext:
     final_decision_candidate_id: str = ""
     final_decision_rationale: str = ""
     final_decision_recommendation: str = ""
+    final_decision_actor: str = ""
+    final_decision_timestamp: str = ""
+    final_decision_evidence: list[str] = field(default_factory=list)
+    final_decision_accepted_risks: list[str] = field(default_factory=list)
+    decision_history: list[dict] = field(default_factory=list)
 
     def select_candidate(self, candidate_id: str, candidate_name: str = "") -> None:
         self.selected_candidate_id = str(candidate_id or "")

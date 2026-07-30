@@ -1,4 +1,6 @@
 from talentcopilot.services.comparison_workspace_service import ComparisonWorkspaceService
+from talentcopilot.services.compensation_budget_service import CompensationBudgetService
+from talentcopilot.services.hiring_budget_service import HiringBudgetService
 from talentcopilot.services.demo_session_factory import create_demo_recruitment_session
 from talentcopilot.services.streamlit_session_bridge import get_streamlit_session, set_streamlit_session
 from talentcopilot.services.recruitment_pdf_service import RecruitmentPdfService
@@ -23,22 +25,59 @@ def _candidate_id_by_name(session):
     }
 
 
-def _ranking_table(candidates, evaluations, ids_by_name):
+def _ranking_table(
+    candidates,
+    evaluations,
+    ids_by_name,
+    *,
+    budget_by_name,
+    expectations_by_id,
+    workflow_context,
+):
     import streamlit as st
+
     rows = []
     for candidate in candidates:
         candidate_id = ids_by_name.get(candidate.candidate_name, "")
         evaluation = evaluations.get(candidate_id, {})
+        expectation = expectations_by_id.get(candidate_id)
+        budget = budget_by_name.get(candidate.candidate_name)
+        unresolved_risks = evaluation.get("remaining_risks", []) if isinstance(evaluation, dict) else []
+        availability = "Not documented"
+        if expectation is not None:
+            availability = (
+                getattr(expectation, "availability_date", "")
+                or (
+                    f"{int(getattr(expectation, 'notice_period_weeks', 0) or 0)} weeks notice"
+                    if int(getattr(expectation, "notice_period_weeks", 0) or 0)
+                    else "Not documented"
+                )
+            )
+        final_recommendation = "Not recorded"
+        if (
+            workflow_context.decision_recorded
+            and workflow_context.final_decision_candidate_id == candidate_id
+        ):
+            final_recommendation = workflow_context.final_decision_recommendation or "Recorded"
+
         rows.append({
-            "Mission Rank": candidate.mission_rank or candidate.rank,
+            "Official Rank": candidate.mission_rank or candidate.rank,
             "Candidate": candidate.candidate_name,
-            "Official Mission Fit": candidate.match_score,
-            "AI Confidence": candidate.ai_confidence,
-            "Pre-interview recommendation": candidate.recommendation,
-            "Interview recommendation": evaluation.get("recommendation", "Not recorded"),
-            "Interview evidence": f"{evaluation.get('evidence_coverage', 0)}%" if evaluation else "—",
-            "Key Strength": candidate.key_strength,
-            "Unresolved Risk": (evaluation.get("remaining_risks") or [candidate.key_risk])[0],
+            "Talent Fit": f"{candidate.match_score:.0f}%",
+            "Evidence Confidence": (
+                f"{candidate.ai_confidence:.0f}%"
+                if candidate.ai_confidence is not None
+                else "Not available"
+            ),
+            "Critical Risk": (unresolved_risks or [candidate.key_risk])[0],
+            "Interview Assessment": evaluation.get("recommendation", "Not recorded"),
+            "Compensation Fit": (
+                getattr(budget, "budget_recommendation", "Pending compensation data")
+                if budget is not None
+                else "Pending compensation data"
+            ),
+            "Availability": availability,
+            "Final Recommendation": final_recommendation,
         })
     st.dataframe(rows, use_container_width=True, hide_index=True)
 
@@ -197,7 +236,30 @@ def render_comparison_workspace():
         ("Official ranking", "Preserved", "No score or rank recomputation"),
     ])
 
-    export = RecruitmentPdfService().comparison(report, context.interview_evaluations)
+    compensation_service = CompensationBudgetService()
+    budget_report = HiringBudgetService().build(
+        session,
+        compensation_service.load_budget(session),
+    )
+    budget_by_name = {
+        str(getattr(item, "candidate_name", "")): item
+        for item in list(getattr(budget_report, "assessments", []) or [])
+    }
+    expectations_by_id = {
+        candidate_id: compensation_service.load_expectation(
+            session,
+            candidate_id=candidate_id,
+            candidate_name=names_by_id.get(candidate_id, "Candidate"),
+        )
+        for candidate_id in available_ids
+    }
+    export = RecruitmentPdfService().comparison(
+        report,
+        context.interview_evaluations,
+        compensation_report=budget_report,
+        expectations=expectations_by_id,
+        workflow_context=context,
+    )
     export_col, budget_col = st.columns([1.15, 1])
     with export_col:
         st.download_button(
@@ -226,8 +288,18 @@ def render_comparison_workspace():
     else:
         st.success("Interview evidence is available for every selected finalist.")
 
-    section_title("Decision comparison", "Official Mission Fit remains unchanged; interview evidence is displayed separately.")
-    _ranking_table(selected_candidates, context.interview_evaluations, ids_by_name)
+    section_title(
+        "Decision comparison",
+        "Talent Fit, evidence confidence, risks, interview, compensation and availability remain independent decision signals.",
+    )
+    _ranking_table(
+        selected_candidates,
+        context.interview_evaluations,
+        ids_by_name,
+        budget_by_name=budget_by_name,
+        expectations_by_id=expectations_by_id,
+        workflow_context=context,
+    )
 
     with st.expander("Pre-interview score gaps and differentiators"):
         for gap in report.score_gaps:
