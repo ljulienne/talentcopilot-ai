@@ -822,6 +822,155 @@ def apply_enterprise_theme():
         .stTabs [data-baseweb="tab"] {{color:#5B6B82 !important}}
         .stTabs [aria-selected="true"] {{color:#314FC9 !important;background:#FCFDFE !important}}
 
+
+
+        /* Release 8.1.0 — Mockup fidelity and reusable product shell */
+        [data-testid="stHeader"] {{
+            height: 0 !important;
+            min-height: 0 !important;
+            background: transparent !important;
+            border: 0 !important;
+        }}
+        [data-testid="stToolbar"],
+        [data-testid="stDecoration"],
+        [data-testid="stStatusWidget"] {{
+            display: none !important;
+        }}
+        .stApp {{
+            background:
+                radial-gradient(circle at 88% 3%,rgba(29,190,211,.09),transparent 27rem),
+                radial-gradient(circle at 22% -5%,rgba(82,103,232,.09),transparent 34rem),
+                linear-gradient(180deg,#F6F8FC 0%,#EEF3F9 100%) !important;
+        }}
+        [data-testid="stAppViewContainer"] {{
+            background: transparent !important;
+        }}
+        .block-container {{
+            max-width: 1480px !important;
+            padding-top: .65rem !important;
+            padding-left: 2rem !important;
+            padding-right: 2rem !important;
+            padding-bottom: 4rem !important;
+        }}
+        [data-testid="stSidebar"] {{
+            width: 252px !important;
+            min-width: 252px !important;
+            background:
+                radial-gradient(circle at 6% 0%,rgba(49,205,224,.16),transparent 18rem),
+                linear-gradient(180deg,#102F55 0%,#153B67 58%,#12355E 100%) !important;
+            border-right: 1px solid rgba(180,209,238,.20) !important;
+            box-shadow: 8px 0 28px rgba(22,47,81,.13) !important;
+        }}
+        [data-testid="stSidebar"] > div:first-child {{padding-top:.9rem !important}}
+        [data-testid="stSidebar"] [data-testid="stSidebarContent"] {{padding-left:.72rem !important;padding-right:.72rem !important}}
+        .tc-brand-lockup {{
+            padding:.42rem .35rem .85rem !important;
+            gap:.62rem !important;
+            border-bottom:1px solid rgba(207,225,245,.16) !important;
+        }}
+        .tc-brand-mark {{width:39px !important;height:39px !important;flex-basis:39px !important}}
+        .tc-brand-mark svg {{width:39px !important;height:39px !important}}
+        .tc-brand-name {{font-size:1.02rem !important;font-weight:900 !important;color:#FFFFFF !important}}
+        .tc-brand-slogan {{font-size:.62rem !important;color:#BDEAF4 !important;line-height:1.25 !important}}
+        .tc-brand-version {{display:none !important}}
+        .tc-mission-card {{
+            margin:.55rem 0 .65rem !important;
+            padding:.72rem .74rem !important;
+            border-radius:13px !important;
+            background:linear-gradient(135deg,rgba(255,255,255,.10),rgba(72,114,180,.14)) !important;
+        }}
+        .tc-mission-kicker,.tc-sidebar-section,.tc-sidebar-next-kicker {{font-size:.59rem !important;letter-spacing:.12em !important}}
+        .tc-mission-role {{font-size:.82rem !important}}
+        .tc-mission-meta {{font-size:.66rem !important}}
+        .tc-sidebar-section {{margin:.82rem .4rem .25rem !important;color:#BFD0E5 !important}}
+        [data-testid="stSidebar"] .stButton {{margin:.045rem 0 !important}}
+        [data-testid="stSidebar"] .stButton > button,
+        [data-testid="stSidebar"] button[data-testid="stBaseButton-secondary"],
+        [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] {{
+            min-height:2.34rem !important;
+            padding:.43rem .62rem !important;
+            border-radius:9px !important;
+            color:#EAF2FB !important;
+            font-size:.81rem !important;
+            font-weight:690 !important;
+            gap:.45rem !important;
+        }}
+        [data-testid="stSidebar"] .stButton > button [data-testid="stIconMaterial"] {{color:#BFD6EE !important;font-size:1.05rem !important}}
+        [data-testid="stSidebar"] .stButton > button:hover {{background:rgba(116,164,221,.14) !important}}
+        [data-testid="stSidebar"] .stButton > button[kind="primary"],
+        [data-testid="stSidebar"] button[data-testid="stBaseButton-primary"],
+        [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] {{
+            background:linear-gradient(105deg,#314EC2 0%,#3E63D5 74%,#2B8BAA 100%) !important;
+            border:1px solid rgba(171,218,241,.30) !important;
+            box-shadow:inset 3px 0 0 #63D8E9,0 7px 18px rgba(4,22,52,.17) !important;
+        }}
+        [data-testid="stSidebar"] .stButton > button[kind="primary"] [data-testid="stIconMaterial"] {{color:#FFFFFF !important}}
+        [data-testid="stSidebar"] details {{border:0 !important;background:rgba(255,255,255,.025) !important;border-radius:9px !important}}
+        [data-testid="stSidebar"] details summary {{font-size:.8rem !important;font-weight:700 !important}}
+        .tc-sidebar-next {{
+            margin:.8rem 0 0 !important;
+            padding:.7rem .72rem !important;
+            border-radius:13px !important;
+        }}
+        .tc-sidebar-next-copy {{display:none !important}}
+        [data-testid="stSidebar"] [data-baseweb="select"] > div {{min-height:2.25rem !important;font-size:.78rem !important}}
+
+        .tc-product-topbar-marker {{display:none}}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.tc-product-topbar-marker) {{
+            position:sticky !important;
+            top:.55rem !important;
+            z-index:995 !important;
+            margin:0 0 .85rem !important;
+            padding:.5rem .68rem !important;
+            border:1px solid rgba(211,223,238,.94) !important;
+            border-radius:16px !important;
+            background:rgba(252,253,255,.90) !important;
+            box-shadow:0 10px 28px rgba(38,58,88,.08) !important;
+            backdrop-filter:blur(18px) saturate(130%) !important;
+        }}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.tc-product-topbar-marker) > div {{padding:.05rem !important}}
+        .tc-topbar-breadcrumb {{font-size:.62rem;color:#77869A;font-weight:720;line-height:1.2}}
+        .tc-topbar-breadcrumb span {{padding:0 .2rem;color:#A1AEC0}}
+        .tc-topbar-page {{margin-top:.11rem;color:#17243C;font-size:.94rem;font-weight:880;letter-spacing:-.02em}}
+        .tc-topbar-mission {{display:flex;align-items:center;gap:.58rem;min-height:2.45rem;padding:.42rem .62rem;border:1px solid #DCE5F0;border-radius:12px;background:#F7F9FD}}
+        .tc-topbar-status-dot {{width:8px;height:8px;border-radius:50%;background:#94A3B8;box-shadow:0 0 0 4px rgba(148,163,184,.12)}}
+        .tc-topbar-ready .tc-topbar-status-dot {{background:#22C55E;box-shadow:0 0 0 4px rgba(34,197,94,.11)}}
+        .tc-topbar-progress .tc-topbar-status-dot {{background:#3B82F6;box-shadow:0 0 0 4px rgba(59,130,246,.11)}}
+        .tc-topbar-mission-title {{color:#263750;font-size:.72rem;font-weight:820;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+        .tc-topbar-mission-meta {{color:#7A899D;font-size:.61rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:.05rem}}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.tc-product-topbar-marker) .stButton > button,
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.tc-product-topbar-marker) [data-testid="stPopover"] button {{
+            min-height:2.45rem !important;
+            background:#F7F9FD !important;
+            color:#40536E !important;
+            border:1px solid #DCE5F0 !important;
+            box-shadow:none !important;
+            font-size:.76rem !important;
+        }}
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.tc-product-topbar-marker) .stButton > button:hover,
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.tc-product-topbar-marker) [data-testid="stPopover"] button:hover {{background:#EEF3FB !important;border-color:#C8D7E9 !important}}
+
+        .tc-home-head {{padding:.35rem .05rem .85rem !important}}
+        .tc-home-head h1 {{font-size:clamp(1.8rem,3vw,2.45rem) !important}}
+        .tc-home-stat {{min-height:124px !important;border-radius:18px !important;background:rgba(253,253,251,.97) !important;box-shadow:0 9px 26px rgba(38,58,88,.065) !important}}
+        .tc-home-panel {{border-radius:19px !important;background:rgba(253,253,251,.97) !important;box-shadow:0 10px 28px rgba(38,58,88,.065) !important}}
+        .tc-brief-card {{border-radius:18px !important;background:rgba(253,253,251,.97) !important;box-shadow:0 9px 25px rgba(38,58,88,.055) !important}}
+        .tc-card,div[data-testid="stMetric"],div[data-testid="stExpander"],[data-testid="stVerticalBlockBorderWrapper"] {{border-color:#D9E3EF}}
+        .tc-page-header {{border-radius:19px !important;padding:1.05rem 1.15rem 1rem 1.35rem !important}}
+        .tc-hero {{border-radius:21px !important}}
+        .stTabs [data-baseweb="tab-list"] {{top:9.35rem !important;background:rgba(238,243,249,.94) !important}}
+        h1,h2,h3 {{color:#17243C}}
+
+        @media (max-width: 980px) {{
+            .block-container {{padding-left:1.2rem !important;padding-right:1.2rem !important}}
+            div[data-testid="stVerticalBlockBorderWrapper"]:has(.tc-product-topbar-marker) {{position:relative !important;top:auto !important}}
+        }}
+        @media (max-width:760px) {{
+            [data-testid="stSidebar"] {{width:252px !important;min-width:252px !important}}
+            .block-container {{padding-left:.85rem !important;padding-right:.85rem !important}}
+            .tc-topbar-mission {{display:none}}
+        }}
+
         @media (max-width:760px) {{
             .block-container {{padding-left:1rem;padding-right:1rem}}
             [data-testid="stSidebar"] {{width:284px !important}}

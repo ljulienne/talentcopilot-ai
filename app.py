@@ -10,6 +10,7 @@ from talentcopilot.services.streamlit_session_bridge import (
     consume_session_invalidation_notice,
     get_streamlit_session,
 )
+from talentcopilot.ui.app_shell import render_product_topbar
 from talentcopilot.ui.brand import APP_ICON_PATH
 from talentcopilot.ui.design_system.theme import apply_enterprise_theme
 from talentcopilot.ui.enterprise_navigation import get_enterprise_navigation, get_page_by_label
@@ -123,6 +124,11 @@ def main():
     invalidation_notice = consume_session_invalidation_notice()
     if invalidation_notice:
         st.warning(invalidation_notice)
+
+    render_product_topbar(
+        session,
+        current_page=selected_page.label,
+    )
 
     workflow_pages = {
         "Recruitment Overview",

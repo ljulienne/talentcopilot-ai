@@ -224,7 +224,15 @@ def _styles() -> None:
         .tc-ready{background:#DCFCE7;color:#166534}.tc-attention{background:#FEF3C7;color:#92400E}.tc-partial{background:#EDE9FE;color:#5B21B6}.tc-locked{background:#EDF1F7;color:#52647D}
         .tc-ai-brief{padding:.95rem 1.05rem;border-radius:16px;background:linear-gradient(135deg,#F9FAFF,#F1F5FF);border:1px solid #DCE3F3;margin:.75rem 0 1rem}
         .tc-ai-brief strong{color:#3457E5}.tc-ai-brief p{margin:.32rem 0 0;color:#53647C;font-size:.8rem}
-        @media(max-width:820px){.tc-home-head{display:block}.tc-home-context{margin-top:.7rem}.tc-home-project{grid-template-columns:1fr 1fr}.tc-home-project>div:last-child{grid-column:1/-1}}
+        .tc-zero-hero{position:relative;overflow:hidden;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(260px,.65fr);gap:2rem;align-items:center;padding:2rem 2.1rem;border:1px solid #D9E3F0;border-radius:24px;background:linear-gradient(135deg,#FCFDFE 0%,#F4F6FF 54%,#EEF9FC 100%);box-shadow:0 18px 46px rgba(37,54,82,.09);margin:.1rem 0 1.25rem}
+        .tc-zero-hero:after{content:"";position:absolute;right:-90px;top:-110px;width:310px;height:310px;border-radius:50%;background:radial-gradient(circle,rgba(52,87,229,.16),rgba(21,184,207,.04) 58%,transparent 70%)}
+        .tc-zero-copy{position:relative;z-index:2}.tc-zero-kicker{display:inline-flex;align-items:center;gap:.45rem;padding:.3rem .62rem;border-radius:999px;color:#3457E5;background:#EEF2FF;border:1px solid #D9DFFC;font-size:.68rem;font-weight:850;letter-spacing:.06em;text-transform:uppercase}
+        .tc-zero-title{margin:.75rem 0 .45rem;color:#14213D;font-size:clamp(1.8rem,3.5vw,2.65rem);font-weight:900;letter-spacing:-.055em;line-height:1.04}.tc-zero-body{max-width:690px;color:#5B6B82;font-size:.98rem;line-height:1.58}
+        .tc-zero-steps{position:relative;z-index:2;padding:1rem 1.05rem;border:1px solid rgba(204,216,234,.9);border-radius:18px;background:rgba(252,253,254,.82);backdrop-filter:blur(14px);box-shadow:0 10px 26px rgba(37,54,82,.07)}
+        .tc-zero-step{display:flex;gap:.72rem;align-items:flex-start;padding:.68rem 0;border-bottom:1px solid #E9EEF6}.tc-zero-step:last-child{border-bottom:0}.tc-zero-step-num{display:grid;place-items:center;width:28px;height:28px;flex:0 0 28px;border-radius:9px;background:#E8EDFF;color:#3457E5;font-size:.72rem;font-weight:900}.tc-zero-step strong{display:block;color:#263750;font-size:.78rem}.tc-zero-step span{display:block;color:#738198;font-size:.68rem;line-height:1.4;margin-top:.08rem}
+        .tc-zero-section-head{display:flex;align-items:end;justify-content:space-between;gap:1rem;margin:1.4rem 0 .75rem}.tc-zero-section-head h2{margin:0;color:#14213D;font-size:1.35rem}.tc-zero-section-head p{margin:0;color:#6B7B91;font-size:.78rem}
+        @media(max-width:920px){.tc-zero-hero{grid-template-columns:1fr}.tc-zero-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem}.tc-zero-step{border:0;padding:.25rem}.tc-home-head{display:block}.tc-home-context{margin-top:.7rem}}
+        @media(max-width:680px){.tc-zero-hero{padding:1.35rem}.tc-zero-steps{grid-template-columns:1fr}.tc-home-project{grid-template-columns:1fr 1fr}.tc-home-project>div:last-child{grid-column:1/-1}}
         </style>
         """,
         unsafe_allow_html=True,
@@ -336,6 +344,88 @@ def _render_mission_canvas(canvas: MissionCanvas) -> None:
         )
 
 
+def _render_mission_prompt(session: Any | None) -> None:
+    import streamlit as st
+
+    with st.expander("Describe a new mission", expanded=False):
+        st.caption(
+            "Start with the business outcome. TalentCopilot will route the mission, "
+            "identify the minimum useful evidence and propose the workflow."
+        )
+        prompt = st.text_area(
+            "What are you trying to accomplish?",
+            placeholder=(
+                "Example: We need to recruit a Global HRIS Director within three months. "
+                "International transformation experience is mandatory."
+            ),
+            label_visibility="collapsed",
+            height=120,
+            key="enterprise_mission_prompt",
+        )
+
+        analyse_clicked = st.button(
+            "Understand my mission",
+            key="enterprise_mission_analyse",
+            type="primary",
+            disabled=not bool(prompt.strip()),
+        )
+        if analyse_clicked:
+            st.session_state["enterprise_mission_canvas"] = understand_mission(prompt)
+
+        canvas = st.session_state.get("enterprise_mission_canvas")
+        if isinstance(canvas, MissionCanvas):
+            _render_mission_canvas(canvas)
+            render_mission_workspace(canvas, session)
+
+
+def _render_zero_state(domains: tuple[BriefingDomain, ...], session: Any | None) -> None:
+    import streamlit as st
+
+    st.markdown(
+        '<div class="tc-zero-hero"><div class="tc-zero-copy">'
+        '<div class="tc-zero-kicker">✦ Evidence-grounded talent decisions</div>'
+        '<div class="tc-zero-title">Turn recruitment evidence into confident decisions.</div>'
+        '<div class="tc-zero-body">Create a recruitment mission, upload the job description and candidate CVs, '
+        'then move from a transparent candidate perspective to structured interviews and a traceable final decision.</div>'
+        '</div><div class="tc-zero-steps">'
+        '<div class="tc-zero-step"><div class="tc-zero-step-num">1</div><div><strong>Create the mission</strong><span>Define the role and decision context.</span></div></div>'
+        '<div class="tc-zero-step"><div class="tc-zero-step-num">2</div><div><strong>Add evidence</strong><span>Upload the job description and candidate CVs.</span></div></div>'
+        '<div class="tc-zero-step"><div class="tc-zero-step-num">3</div><div><strong>Review and decide</strong><span>Compare grounded insights without opaque scoring.</span></div></div>'
+        '</div></div>',
+        unsafe_allow_html=True,
+    )
+
+    action_col, spacer = st.columns([1.05, 2.95])
+    with action_col:
+        if st.button(
+            "Start recruitment mission",
+            icon=":material/add_circle:",
+            type="primary",
+            key="home_zero_start_recruitment",
+            use_container_width=True,
+        ):
+            request_page("Recruitment Overview", reason="Started a recruitment mission from the premium onboarding.")
+            st.rerun()
+
+    st.markdown(
+        '<div class="tc-zero-section-head"><div><h2>Choose a diagnostic</h2>'
+        '<p>Start with the business question; TalentCopilot will request only the evidence required.</p></div></div>',
+        unsafe_allow_html=True,
+    )
+    columns = st.columns(3)
+    for index, (column, domain) in enumerate(zip(columns, domains[:3])):
+        with column:
+            _render_domain(domain, index)
+
+    st.markdown(
+        '<div class="tc-ai-brief"><strong>Today’s AI brief</strong><p>'
+        'No mission is active. Recruitment Intelligence is ready to start; organization and workforce diagnostics remain '
+        'evidence-gated until their required datasets are available.</p></div>',
+        unsafe_allow_html=True,
+    )
+    _render_mission_prompt(session)
+
+
 def render_executive_briefing() -> None:
     import streamlit as st
 
@@ -349,6 +439,10 @@ def render_executive_briefing() -> None:
         projects = list(build_project_summaries(session, list_recruitments()))
     except Exception:
         projects = list(build_project_summaries(session, ()))
+
+    if not snapshot["has_recruitment"] and not projects:
+        _render_zero_state(domains, session)
+        return
 
     active_label = snapshot["role_title"] if snapshot["has_recruitment"] else "No active mission"
     st.markdown(
@@ -449,35 +543,7 @@ def render_executive_briefing() -> None:
             with column:
                 _render_domain(domain, row_start + offset)
 
-    with st.expander("Describe a new mission", expanded=False):
-        st.caption(
-            "Start with the business outcome. TalentCopilot will route the mission, "
-            "identify the minimum useful evidence and propose the workflow."
-        )
-        prompt = st.text_area(
-            "What are you trying to accomplish?",
-            placeholder=(
-                "Example: We need to recruit a Global HRIS Director within three months. "
-                "International transformation experience is mandatory."
-            ),
-            label_visibility="collapsed",
-            height=120,
-            key="enterprise_mission_prompt",
-        )
-
-        analyse_clicked = st.button(
-            "Understand my mission",
-            key="enterprise_mission_analyse",
-            type="primary",
-            disabled=not bool(prompt.strip()),
-        )
-        if analyse_clicked:
-            st.session_state["enterprise_mission_canvas"] = understand_mission(prompt)
-
-        canvas = st.session_state.get("enterprise_mission_canvas")
-        if isinstance(canvas, MissionCanvas):
-            _render_mission_canvas(canvas)
-            render_mission_workspace(canvas, session)
+    _render_mission_prompt(session)
 
 
 

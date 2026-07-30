@@ -6,15 +6,16 @@ TalentCopilot is an evidence-led Talent Intelligence platform that helps HR team
 
 ## Current experience
 
-Release `8.0.1-decision-ranking-consistency-hotfix` preserves the balanced premium interface and restores cross-page ranking consistency:
+Release `8.1.0-mockup-fidelity-product-shell` rebuilds the presentation shell to match the approved premium SaaS direction more closely:
 
-- softened navy navigation with accessible contrast;
-- light blue-gray workspace and softly tinted cards;
-- indigo, electric-blue and cyan accents;
-- data-backed Home dashboard;
-- unified Recruitment journey from analysis to final decision;
-- canonical candidate ranks aligned across Dashboard, Candidate, Interview, Compare and Decision Board;
-- preserved PDF reports and explainable evidence.
+- narrower softened slate-blue sidebar with high-contrast navigation;
+- reusable product topbar with functional page and candidate search;
+- premium onboarding instead of a dashboard filled with zero values;
+- data-backed active-mission dashboard and project overview;
+- balanced blue-gray workspace with tinted ivory cards;
+- compact workflow rail positioned below the global topbar;
+- responsive layout and reduced native Streamlit chrome;
+- preserved PDF reports, official Talent Fit scores, ranks and evidence.
 
 ## Core recruitment spaces
 

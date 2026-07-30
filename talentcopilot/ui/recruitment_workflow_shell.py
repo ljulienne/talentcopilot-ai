@@ -155,7 +155,7 @@ def render_recruitment_workflow_shell(session, *, current_page: str) -> None:
     st.markdown(
         """
         <style>
-        .tc-workflow-anchor{position:sticky;top:.15rem;z-index:980;margin:-.25rem 0 .65rem;padding-top:.1rem}
+        .tc-workflow-anchor{position:sticky;top:5.35rem;z-index:980;margin:-.25rem 0 .65rem;padding-top:.1rem}
         .tc-workflow-shell{border:1px solid #D9E5F5;border-radius:14px;padding:9px 12px 8px;background:rgba(255,255,255,.975);box-shadow:0 8px 24px rgba(15,23,42,.07);backdrop-filter:blur(16px)}
         .tc-workflow-top{display:grid;grid-template-columns:minmax(210px,1.25fr) minmax(420px,3fr) auto;gap:12px;align-items:center}
         .tc-workflow-context{min-width:0}
@@ -172,7 +172,7 @@ def render_recruitment_workflow_shell(session, *, current_page: str) -> None:
         .tc-workflow-bar>span{display:block;height:100%;background:linear-gradient(90deg,#1D4ED8 0%,#0EA5E9 58%,#06B6D4 100%);border-radius:999px;box-shadow:0 0 14px rgba(14,165,233,.35)}
         .tc-workflow-action-note{display:flex;align-items:center;min-height:2.35rem;padding:.35rem .55rem;color:#52647D;font-size:.72rem}
         @media(max-width:1000px){.tc-workflow-top{grid-template-columns:1fr auto}.tc-workflow-track{grid-column:1 / -1;order:3}.tc-workflow-context{order:1}.tc-workflow-kicker{order:2}}
-        @media(max-width:760px){.tc-workflow-anchor{position:relative;top:auto}.tc-workflow-track{display:grid;grid-template-columns:repeat(2,minmax(120px,1fr))}.tc-workflow-step{justify-content:flex-start}.tc-workflow-meta{white-space:normal}.tc-workflow-top{grid-template-columns:1fr}}
+        @media(max-width:980px){.tc-workflow-anchor{position:relative;top:auto}.tc-workflow-track{display:grid;grid-template-columns:repeat(2,minmax(120px,1fr))}.tc-workflow-step{justify-content:flex-start}.tc-workflow-meta{white-space:normal}.tc-workflow-top{grid-template-columns:1fr}}
         </style>
         """,
         unsafe_allow_html=True,

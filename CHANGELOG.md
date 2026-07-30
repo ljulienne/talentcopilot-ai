@@ -1,6 +1,15 @@
 # Changelog
 
 
+## 8.1.0 — Mockup Fidelity & Product Shell
+
+- Added a reusable application topbar with functional page and candidate search.
+- Narrowed and refined the slate-blue sidebar, introduced Material icons and removed the technical version from the brand lockup.
+- Replaced the empty zero-value Home dashboard with a premium evidence-led onboarding experience.
+- Preserved the data-backed dashboard when active missions or saved projects exist.
+- Reduced native Streamlit chrome and aligned the global topbar, workflow rail, tabs and page content.
+- Updated the visible app version to `v8.1.0`.
+- Preserved official scores, ranks, evidence, interviews, compensation data and PDF reports.
 ## 8.0.1 — Decision Ranking Consistency Hotfix
 
 - Corrected Decision Board to display the canonical mission rank used across Recruitment.

@@ -19,7 +19,7 @@ def brand_mark_svg(size: int = 44, *, include_glow: bool = True) -> str:
     <svg width="{size}" height="{size}" viewBox="0 0 64 64" role="img" aria-label="TalentCopilot-AI">
       <defs>
         <linearGradient id="tcHuman" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#081B4B"/><stop offset="1" stop-color="#3157D8"/>
+          <stop offset="0" stop-color="#7CA7FF"/><stop offset="1" stop-color="#4667E8"/>
         </linearGradient>
         <linearGradient id="tcDigital" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stop-color="#00D4FF"/><stop offset="1" stop-color="#7C3AED"/>

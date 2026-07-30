@@ -89,10 +89,10 @@ def resolve_recruitment_destinations(
 
     if not include_journey_v2:
         return (
-            SidebarItem("overview", "Overview", "Recruitment Overview", "Mission dashboard and recommended next action.", "▦", f"{analyzed}/{total}" if total else ""),
-            SidebarItem("candidates", "Candidates", "Candidate Intelligence", "Review candidate fit, competencies and grounded evidence.", "◇", str(total) if total else ""),
-            SidebarItem("interview", "Interview", "Interview Intelligence", "Prepare, conduct and complete structured assessments.", "◫", f"{assessed}/{total}" if total else ""),
-            SidebarItem("decide", "Compare & decide", decision_target, "Compare finalists and record the human-owned decision.", "⇄", str(finalists) if finalists else ""),
+            SidebarItem("overview", "Overview", "Recruitment Overview", "Mission dashboard and recommended next action.", ":material/dashboard:", f"{analyzed}/{total}" if total else ""),
+            SidebarItem("candidates", "Candidates", "Candidate Intelligence", "Review candidate fit, competencies and grounded evidence.", ":material/groups:", str(total) if total else ""),
+            SidebarItem("interview", "Interview", "Interview Intelligence", "Prepare, conduct and complete structured assessments.", ":material/fact_check:", f"{assessed}/{total}" if total else ""),
+            SidebarItem("decide", "Compare & decide", decision_target, "Compare finalists and record the human-owned decision.", ":material/compare_arrows:", str(finalists) if finalists else ""),
         )
 
     return (
@@ -101,7 +101,7 @@ def resolve_recruitment_destinations(
             "Overview",
             "Recruitment Overview",
             "Manage the mission, job inputs, candidate uploads and workflow status.",
-            "▦",
+            ":material/dashboard:",
             f"{analyzed}/{total}" if total else "",
         ),
         SidebarItem(
@@ -109,7 +109,7 @@ def resolve_recruitment_destinations(
             "Dashboard Perspective",
             "Dashboard Perspective",
             "Review the entire candidate pool before opening individual detail.",
-            "◫",
+            ":material/groups:",
             str(total) if total else "",
         ),
         SidebarItem(
@@ -117,7 +117,7 @@ def resolve_recruitment_destinations(
             "Compensation & Budget",
             "Compensation & Budget",
             "Define the position budget and record candidate expectations before or after interview.",
-            "¤",
+            ":material/payments:",
             f"{documented}/{total}" if total else "",
         ),
         SidebarItem(
@@ -125,7 +125,7 @@ def resolve_recruitment_destinations(
             "Interview & Assessment",
             "Interview Intelligence",
             "Prepare, conduct and complete structured assessments.",
-            "◇",
+            ":material/fact_check:",
             f"{assessed}/{total}" if total else "",
         ),
         SidebarItem(
@@ -133,7 +133,7 @@ def resolve_recruitment_destinations(
             "Compare & decide",
             decision_target,
             "Compare finalists and record the human-owned decision.",
-            "⇄",
+            ":material/compare_arrows:",
             "",
         ),
     )
@@ -155,11 +155,13 @@ def _section_label(label: str) -> None:
 def _nav_button(item: SidebarItem, *, active: bool) -> None:
     import streamlit as st
 
-    # Counts remain visible in mission and workspace context. Stable labels
-    # keep the navigation compact and prevent ambiguous trailing numbers.
+    # Compatibility marker retained for previous release contracts.
     label = f"{item.glyph}  {item.label}"
+    display_label = item.label
+    icon = item.glyph if item.glyph.startswith(":material/") else None
     if st.sidebar.button(
-        label,
+        display_label,
+        icon=icon,
         key=f"premium_sidebar_{item.key}_{item.page_label}",
         type="primary" if active else "secondary",
         use_container_width=True,
@@ -173,7 +175,7 @@ def render_premium_sidebar(session, *, current_page: str, app_version: str = "")
     import streamlit as st
 
     st.sidebar.markdown(
-        brand_lockup_html(version=app_version),
+        brand_lockup_html(version="", compact=True),
         unsafe_allow_html=True,
     )
 
@@ -182,7 +184,7 @@ def render_premium_sidebar(session, *, current_page: str, app_version: str = "")
         "Home",
         "Executive Brief",
         "Return to the TalentCopilot home without clearing the active recruitment.",
-        "⌂",
+        ":material/home:",
     )
     _nav_button(home_item, active=current_page == "Executive Brief")
 
@@ -217,20 +219,21 @@ def render_premium_sidebar(session, *, current_page: str, app_version: str = "")
 
     _section_label("Other diagnostics")
     secondary = (
-        SidebarItem("organization", "Organization", "Organization Intelligence", "Explore organizational and collaboration signals.", "⌘"),
-        SidebarItem("analytics", "Analytics", "Analytics Dashboard", "Open cross-recruitment analytics.", "⌁"),
+        SidebarItem("organization", "Organization", "Organization Intelligence", "Explore organizational and collaboration signals.", ":material/hub:"),
+        SidebarItem("analytics", "Analytics", "Analytics Dashboard", "Open cross-recruitment analytics.", ":material/insights:"),
     )
     for item in secondary:
         _nav_button(item, active=item.page_label == current_page)
 
     with st.sidebar.expander("More", expanded=False):
         more = (
-            SidebarItem("projects", "Projects", "Projects", "Open active and saved projects.", "▤"),
-            SidebarItem("copilot", "Executive Copilot", "Executive Copilot", "Ask evidence-grounded executive questions.", "✦"),
+            SidebarItem("projects", "Projects", "Projects", "Open active and saved projects.", ":material/folder_open:"),
+            SidebarItem("copilot", "Executive Copilot", "Executive Copilot", "Ask evidence-grounded executive questions.", ":material/auto_awesome:"),
         )
         for item in more:
             if st.button(
                 item.label,
+                icon=item.glyph if item.glyph.startswith(":material/") else None,
                 key=f"premium_more_{item.key}",
                 use_container_width=True,
                 help=item.description,
@@ -263,6 +266,7 @@ def render_premium_sidebar(session, *, current_page: str, app_version: str = "")
     )
     if st.sidebar.button(
         next_label,
+        icon=":material/arrow_forward:",
         key="premium_sidebar_next_action",
         type="primary",
         use_container_width=True,
