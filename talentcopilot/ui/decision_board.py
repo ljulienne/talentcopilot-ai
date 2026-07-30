@@ -11,13 +11,6 @@ from talentcopilot.ui.design_system.components import enterprise_hero, insight_c
 from talentcopilot.ui.design_system.theme import apply_enterprise_theme
 
 
-def _candidate_id_by_name(session):
-    return {
-        str(getattr(item, "candidate_name", "")): str(getattr(item, "candidate_id", ""))
-        for item in getattr(session, "ranked_analyses", []) or []
-    }
-
-
 def render_decision_board():
     import streamlit as st
 
@@ -44,10 +37,6 @@ def render_decision_board():
         current_page="Decision Board",
     )
 
-    ids_by_name = _candidate_id_by_name(
-        session
-    )
-
     finalists = set(
         context.finalist_candidate_ids
         or context.shortlisted_candidate_ids
@@ -58,9 +47,7 @@ def render_decision_board():
         for candidate in report.candidates
         if (
             not finalists
-            or ids_by_name.get(
-                candidate.candidate_name
-            ) in finalists
+            or candidate.candidate_id in finalists
         )
     ]
 
@@ -85,15 +72,9 @@ def render_decision_board():
         )
 
     candidates_by_id = {
-        ids_by_name.get(
-            candidate.candidate_name,
-            "",
-        ): candidate
+        candidate.candidate_id: candidate
         for candidate in candidates
-        if ids_by_name.get(
-            candidate.candidate_name,
-            "",
-        )
+        if candidate.candidate_id
     }
 
     option_ids = list(

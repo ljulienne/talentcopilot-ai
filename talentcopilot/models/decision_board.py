@@ -31,6 +31,7 @@ class CandidateDecisionSummary:
     match_score: float
     ai_recommendation: str
     consensus_score: int
+    candidate_id: str = ""
     stakeholder_decisions: List[StakeholderDecision] = field(default_factory=list)
     reasons: List[DecisionReason] = field(default_factory=list)
     risks: List[DecisionRisk] = field(default_factory=list)

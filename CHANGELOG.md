@@ -1,6 +1,15 @@
 # Changelog
 
 
+## 8.0.1 — Decision Ranking Consistency Hotfix
+
+- Corrected Decision Board to display the canonical mission rank used across Recruitment.
+- Removed the stale decision-rank fallback from the Decision Board presentation model.
+- Resolved Decision Board candidates by canonical candidate ID instead of candidate name.
+- Aligned the candidate selector and summary card with Dashboard Perspective, Candidate Intelligence, Interview and Compare & Decide.
+- Preserved official scores, decision priority, evidence, interviews, compensation and PDF reports.
+
+
 ## 8.0.0 — Premium Unified Experience
 
 - Deployed the approved balanced premium UI direction across the shared application shell.

@@ -1,4 +1,5 @@
 from talentcopilot.recruitment_source_of_truth import RecruitmentSourceOfTruthService
+from talentcopilot.services.candidate_identity import resolve_candidate_id
 from talentcopilot.services.candidate_ordering import sort_by_official_rank
 from talentcopilot.models.decision_board import (
     CandidateDecisionSummary,
@@ -14,14 +15,36 @@ class DecisionBoardService:
         if session is None or not getattr(session, "ranked_analyses", None):
             return self._empty_report()
 
-        candidates = []
-        candidate_lookup = {}
+        source = RecruitmentSourceOfTruthService().get(session)
+        analyses_by_id = {
+            str(getattr(item, "candidate_id", "")): item
+            for item in getattr(session, "analyses", []) or []
+        }
+        analyses_by_name = {
+            str(getattr(item, "candidate_name", "")): item
+            for item in getattr(session, "analyses", []) or []
+        }
+        candidates_by_id = {}
+        candidates_by_name = {}
         for candidate in getattr(session, "candidates", []) or []:
-            if candidate.get("name"):
-                candidate_lookup[candidate["name"]] = candidate
+            candidate_id = resolve_candidate_id(candidate)
+            if candidate_id:
+                candidates_by_id[candidate_id] = candidate
+            candidate_name = str(candidate.get("name", "") or "")
+            if candidate_name:
+                candidates_by_name.setdefault(candidate_name, candidate)
 
-        for analysis in RecruitmentSourceOfTruthService().ordered_analyses(session):
-            candidate = candidate_lookup.get(analysis.candidate_name, {})
+        candidates = []
+        for record in sort_by_official_rank(source.candidates):
+            analysis = analyses_by_id.get(str(record.candidate_id))
+            if analysis is None:
+                analysis = analyses_by_name.get(record.candidate_name)
+            if analysis is None:
+                continue
+
+            candidate = candidates_by_id.get(str(record.candidate_id))
+            if candidate is None:
+                candidate = candidates_by_name.get(record.candidate_name, {})
             decision_report = getattr(analysis, "decision_report", None)
 
             ai_recommendation = "Review"
@@ -52,19 +75,26 @@ class DecisionBoardService:
                 reasons.append(DecisionReason("Evidence", str(achievement), "High"))
 
             if not risks:
-                risks.append(DecisionRisk("No major risk detected", "No blocking risk identified in current analysis.", "Low"))
+                risks.append(
+                    DecisionRisk(
+                        "No major risk detected",
+                        "No blocking risk identified in current analysis.",
+                        "Low",
+                    )
+                )
 
-            match = float(getattr(analysis, "match_score", 0) or 0)
+            match = float(record.mission_fit_score or 0)
             consensus = min(96, max(55, int((match + 88) / 2)))
 
             candidates.append(
                 CandidateDecisionSummary(
-                    candidate_name=getattr(analysis, "candidate_name", "Candidate"),
-                    rank=int(
-                        (getattr(analysis, "score_breakdown", {}) or {}).get("decision_rank")
-                        or getattr(analysis, "rank", 0)
-                        or 0
-                    ),
+                    candidate_id=str(record.candidate_id),
+                    candidate_name=record.candidate_name,
+                    # Decision Board displays the canonical recruitment rank used
+                    # by Dashboard Perspective, Candidate Intelligence, Interview
+                    # and Compare & Decide. Decision priority remains available in
+                    # the source-of-truth record but must not replace this label.
+                    rank=int(record.mission_rank or 0),
                     match_score=match,
                     ai_recommendation=str(ai_recommendation),
                     consensus_score=consensus,
@@ -79,9 +109,7 @@ class DecisionBoardService:
                 )
             )
 
-        candidates = sort_by_official_rank(
-            candidates
-        )
+        candidates = sort_by_official_rank(candidates)
 
         return DecisionBoardReport(
             role_title=getattr(session, "role_title", "Recruitment"),
