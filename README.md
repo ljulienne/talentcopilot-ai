@@ -6,14 +6,15 @@ TalentCopilot is an evidence-led Talent Intelligence platform that helps HR team
 
 ## Current experience
 
-Release `8.4.0-persistent-recruitment-projects` adds controlled decision continuity without changing official scores:
+Release `8.5.0-recruitment-portfolio-lifecycle` adds portfolio-level control to restart-safe recruitment projects:
 
-- explicit project saving from the Projects workspace;
-- versioned restoration of canonical candidate IDs, Talent Fit scores and ranks;
-- persisted interview evidence, compensation context, finalist selection and decision history;
-- automatic project updates only after an explicit first save;
-- atomic local JSON storage with source-of-truth integrity validation;
-- preserved Candidate Decision Workspace, universal risk grounding and PDF alignment.
+- search by project, role, location or owner;
+- lifecycle filters from Draft through Decided and Archived;
+- sorting by activity, name, progress and priority;
+- editable project name, owner and priority;
+- safe archive and reopen actions with decision evidence retained;
+- portfolio metrics aligned between Projects and the Executive Brief;
+- preserved official candidate IDs, Talent Fit scores, ranks, interviews, compensation and decision history.
 
 The local persistence adapter is a product foundation, not a production multi-user database.
 

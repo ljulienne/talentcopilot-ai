@@ -197,3 +197,13 @@ All notable changes to TalentCopilot are documented here.
 - Added atomic project-file writes and configurable local storage root.
 - Added backward-compatible restoration of historical recruitment files.
 - Added integrity rejection for persisted projects whose official scores were altered.
+## 8.5.0 — Recruitment Portfolio & Lifecycle
+
+- Added project search across name, role, location and owner.
+- Added lifecycle filters, portfolio sorting and archived-project visibility.
+- Added project display name, owner and priority management.
+- Added safe archive and reopen actions while retaining decision evidence.
+- Added lifecycle-aware portfolio metrics to Projects and Executive Brief.
+- Preserved official candidate identities, scores, ranks, interviews, compensation and decision history.
+- Updated the visible application version to `v8.5.0`.
+

@@ -452,14 +452,15 @@ def render_executive_briefing() -> None:
         unsafe_allow_html=True,
     )
 
-    total_candidates = sum(project.candidate_count for project in projects)
-    total_analyzed = sum(project.analyzed_count for project in projects)
+    open_projects = [project for project in projects if not getattr(project, "archived", False)]
+    total_candidates = sum(project.candidate_count for project in open_projects)
+    total_analyzed = sum(project.analyzed_count for project in open_projects)
     decision_ready = sum(
-        1 for project in projects
-        if project.candidate_count > 0 and project.analyzed_count >= project.candidate_count
+        1 for project in open_projects
+        if getattr(project, "lifecycle", "") in {"decision_ready", "decided"}
     )
     stat_items = (
-        ("▦", "Active missions", str(len(projects)), "Active and saved workspaces", "#EEF2FF", "#3457E5"),
+        ("▦", "Active missions", str(len(open_projects)), "Open decision workspaces", "#EEF2FF", "#3457E5"),
         ("◇", "Candidates", str(total_candidates), "Across current recruitments", "#ECFEFF", "#16889A"),
         ("✓", "Analysed", str(total_analyzed), "Official analyses available", "#ECFDF5", "#15803D"),
         ("✦", "Decision ready", str(decision_ready), "Missions ready for review", "#F5F3FF", "#7456E8"),
@@ -503,9 +504,9 @@ def render_executive_briefing() -> None:
         _render_priorities(priorities)
 
     st.markdown("### Active projects")
-    if projects:
+    if open_projects:
         project_rows = []
-        for project in projects[:5]:
+        for project in open_projects[:5]:
             progress = project.progress_percent
             project_rows.append(
                 f'<div class="tc-home-project"><div><div class="tc-home-project-name">{escape(project.title)}</div>'

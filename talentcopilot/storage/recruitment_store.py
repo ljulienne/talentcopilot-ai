@@ -162,6 +162,18 @@ def list_recruitments() -> List[Dict[str, Any]]:
                     ),
                     "status": data.get("status"),
                     "schema_version": data.get("schema_version"),
+                    "job": data.get("job") if isinstance(data.get("job"), dict) else {},
+                    "location": (
+                        data.get("job", {}).get("location")
+                        if isinstance(data.get("job"), dict)
+                        else None
+                    ),
+                    "metadata": data.get("metadata") if isinstance(data.get("metadata"), dict) else {},
+                    "workflow_context": (
+                        data.get("workflow_context")
+                        if isinstance(data.get("workflow_context"), dict)
+                        else {}
+                    ),
                     "file_path": str(file_path),
                 }
             )

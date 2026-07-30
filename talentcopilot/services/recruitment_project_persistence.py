@@ -185,6 +185,19 @@ def project_payload(
     metadata = dict(getattr(session, "metadata", {}) or {})
     metadata[PERSISTENCE_FLAG] = True
     metadata[PROJECT_SCHEMA_KEY] = PROJECT_SCHEMA_VERSION
+    workflow_payload = _workflow_payload(workflow_context)
+    management = dict(metadata.get("project_management") or {})
+    if workflow_payload:
+        management.setdefault("version", "talentcopilot-project-portfolio-v1")
+        management["workflow_context"] = {
+            "decision_recorded": bool(workflow_payload.get("decision_recorded")),
+            "finalists_compared": bool(workflow_payload.get("finalists_compared")),
+            "interview_assessed_candidate_ids": list(workflow_payload.get("interview_assessed_candidate_ids") or []),
+            "interview_prepared_candidate_ids": list(workflow_payload.get("interview_prepared_candidate_ids") or []),
+        }
+        management["interview_count"] = len(workflow_payload.get("interview_assessed_candidate_ids") or [])
+        management["finalist_count"] = len(workflow_payload.get("finalist_candidate_ids") or [])
+        metadata["project_management"] = management
     session.metadata = metadata
     batch = dict(analysis_batch or {}) if isinstance(analysis_batch, Mapping) else _compatibility_analysis_batch(session)
     return {
@@ -200,7 +213,7 @@ def project_payload(
         "candidates": _json_safe(session.candidates),
         "analyses": [_analysis_payload(item) for item in list(session.analyses or [])],
         "metadata": _json_safe(metadata),
-        "workflow_context": _workflow_payload(workflow_context),
+        "workflow_context": workflow_payload,
         "analysis_batch": _json_safe(batch),
     }
 

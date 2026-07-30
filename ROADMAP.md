@@ -1,5 +1,15 @@
 # TalentCopilot Roadmap
 
+## ✅ v8.5.0 — Recruitment Portfolio & Lifecycle
+
+- Searchable and filterable recruitment portfolio
+- Project owner, display name and priority
+- Lifecycle-aware stages and portfolio metrics
+- Safe archive and reopen with evidence retention
+- Official score and rank protection preserved
+
+---
+
 ## ✅ v8.4.0 — Persistent Recruitment Projects
 
 - Explicit save and resume from Projects
