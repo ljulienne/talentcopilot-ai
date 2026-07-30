@@ -626,6 +626,206 @@ def apply_enterprise_theme():
             .tc-candidate-row .tc-candidate-insight {{grid-column:1 / -1}}
             .stTabs [data-baseweb="tab-list"] {{position:relative;top:auto;overflow-x:auto}}
         }}
+
+
+        /* Release 8.0.0 — Premium unified balanced experience */
+        .stApp {{
+            background:
+                radial-gradient(circle at 91% 4%,rgba(21,184,207,.08),transparent 24rem),
+                radial-gradient(circle at 18% 0%,rgba(52,87,229,.07),transparent 30rem),
+                linear-gradient(180deg,#F5F7FC 0%,#EFF3FA 100%) !important;
+        }}
+        [data-testid="stAppViewContainer"] {{
+            background: linear-gradient(180deg,rgba(248,250,255,.76),rgba(241,245,251,.78)) !important;
+        }}
+        [data-testid="stHeader"] {{
+            background: rgba(244,247,252,.88) !important;
+            border-bottom: 1px solid rgba(203,215,232,.82) !important;
+            backdrop-filter: blur(16px);
+        }}
+        .block-container {{
+            max-width: 1390px;
+            padding-top: .7rem;
+            padding-left: 1.8rem;
+            padding-right: 1.8rem;
+        }}
+        [data-testid="stSidebar"] {{
+            width: 288px !important;
+            background:
+                radial-gradient(circle at 8% 0%,rgba(21,184,207,.18),transparent 18rem),
+                linear-gradient(180deg,#102A56 0%,#153764 58%,#102B53 100%) !important;
+            border-right: 1px solid #284B78 !important;
+            box-shadow: 10px 0 32px rgba(23,43,76,.12) !important;
+        }}
+        [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+        [data-testid="stSidebar"] label,
+        [data-testid="stSidebar"] .stCaptionContainer p {{
+            color:#C8D7EA !important;
+        }}
+        .tc-brand-lockup {{
+            margin:0 0 .34rem;
+            padding:.45rem .42rem .9rem;
+            border-bottom:1px solid rgba(210,226,245,.16) !important;
+            border-radius:13px 13px 0 0;
+        }}
+        .tc-brand-lockup:hover {{background:rgba(255,255,255,.055) !important}}
+        .tc-brand-name {{color:#FFFFFF !important;font-size:.98rem !important}}
+        .tc-brand-slogan {{color:#A9DDF4 !important}}
+        .tc-brand-version {{color:#87A4C8 !important}}
+        .tc-brand-mark svg {{filter:drop-shadow(0 5px 11px rgba(0,207,232,.16)) !important}}
+        .tc-mission-card {{
+            margin:.48rem .12rem .72rem;
+            padding:.78rem .82rem;
+            border:1px solid rgba(174,205,239,.20) !important;
+            background:linear-gradient(135deg,rgba(255,255,255,.09),rgba(63,105,174,.15)) !important;
+            box-shadow:0 10px 24px rgba(4,19,43,.13) !important;
+        }}
+        .tc-mission-kicker,.tc-sidebar-section,.tc-sidebar-next-kicker {{color:#AFC8E8 !important}}
+        .tc-mission-role {{color:#FFFFFF !important}}
+        .tc-mission-meta {{color:#C4D5E9 !important}}
+        .tc-sidebar-section {{margin:.95rem .52rem .3rem !important}}
+        [data-testid="stSidebar"] .stButton {{margin:.08rem .12rem !important}}
+        [data-testid="stSidebar"] .stButton > button,
+        [data-testid="stSidebar"] button[data-testid="stBaseButton-secondary"],
+        [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] {{
+            min-height:2.45rem !important;
+            justify-content:flex-start !important;
+            text-align:left !important;
+            padding:.5rem .72rem !important;
+            color:#E7F0FC !important;
+            background:transparent !important;
+            border:1px solid transparent !important;
+            border-radius:10px !important;
+            box-shadow:none !important;
+            font-size:.86rem !important;
+            font-weight:710 !important;
+            opacity:1 !important;
+        }}
+        [data-testid="stSidebar"] .stButton > button p,
+        [data-testid="stSidebar"] .stButton > button span,
+        [data-testid="stSidebar"] button[data-testid^="stBaseButton"] p,
+        [data-testid="stSidebar"] button[data-testid^="stBaseButton"] span {{
+            color:inherit !important;
+            opacity:1 !important;
+        }}
+        [data-testid="stSidebar"] .stButton > button:hover,
+        [data-testid="stSidebar"] button[data-testid="stBaseButton-secondary"]:hover,
+        [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"]:hover {{
+            transform:none !important;
+            color:#FFFFFF !important;
+            background:rgba(110,160,226,.16) !important;
+            border-color:rgba(176,209,244,.19) !important;
+        }}
+        [data-testid="stSidebar"] .stButton > button[kind="primary"],
+        [data-testid="stSidebar"] button[data-testid="stBaseButton-primary"],
+        [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] {{
+            color:#FFFFFF !important;
+            background:linear-gradient(105deg,#2949B8 0%,#365FCB 74%,#267FAD 100%) !important;
+            border:1px solid rgba(159,208,238,.32) !important;
+            box-shadow:inset 3px 0 0 #63D4E7,0 8px 18px rgba(5,22,54,.17) !important;
+            font-weight:790 !important;
+        }}
+        [data-testid="stSidebar"] .stButton > button[kind="primary"]:hover,
+        [data-testid="stSidebar"] button[data-testid="stBaseButton-primary"]:hover,
+        [data-testid="stSidebar"] [data-testid="stBaseButton-primary"]:hover {{
+            color:#FFFFFF !important;
+            background:linear-gradient(105deg,#2441A6 0%,#3158BE 70%,#24789F 100%) !important;
+            border-color:rgba(173,216,242,.42) !important;
+        }}
+        [data-testid="stSidebar"] .stButton > button:disabled,
+        [data-testid="stSidebar"] button[data-testid^="stBaseButton"]:disabled {{
+            color:#89A1C1 !important;
+            background:rgba(255,255,255,.035) !important;
+            border-color:transparent !important;
+            opacity:1 !important;
+        }}
+        [data-testid="stSidebar"] details {{
+            border:1px solid rgba(174,205,239,.08) !important;
+            background:rgba(255,255,255,.025) !important;
+        }}
+        [data-testid="stSidebar"] details:hover {{background:rgba(255,255,255,.055) !important}}
+        [data-testid="stSidebar"] details summary {{color:#E7F0FC !important}}
+        [data-testid="stSidebar"] [data-baseweb="select"] > div {{
+            color:#EAF2FC !important;
+            background:rgba(255,255,255,.07) !important;
+            border-color:rgba(188,211,239,.18) !important;
+        }}
+        .tc-sidebar-next {{
+            margin:.95rem .12rem 0;
+            padding:.82rem .85rem !important;
+            background:linear-gradient(135deg,rgba(255,255,255,.09),rgba(96,114,205,.14)) !important;
+            border:1px solid rgba(188,211,239,.18) !important;
+            box-shadow:0 9px 22px rgba(5,22,54,.12) !important;
+        }}
+        .tc-sidebar-next-title {{color:#FFFFFF !important}}
+        .tc-sidebar-next-copy {{color:#BFD0E5;font-size:.67rem;line-height:1.4;margin-top:.28rem}}
+        .tc-nav-notice {{
+            color:#D9F7FB !important;
+            background:rgba(21,184,207,.12) !important;
+            border-color:rgba(127,220,234,.22) !important;
+        }}
+        .tc-card,
+        div[data-testid="stMetric"],
+        div[data-testid="stExpander"],
+        [data-testid="stVerticalBlockBorderWrapper"] {{
+            background:#FCFDFE !important;
+            border-color:#DCE4F0 !important;
+            box-shadow:0 7px 22px rgba(37,54,82,.055) !important;
+        }}
+        .tc-page-header {{
+            background:
+                radial-gradient(circle at 92% 12%,rgba(21,184,207,.09),transparent 12rem),
+                linear-gradient(135deg,#FCFDFE 0%,#F6F8FD 100%) !important;
+            border-color:#D9E3F0 !important;
+            box-shadow:0 8px 23px rgba(37,54,82,.055) !important;
+        }}
+        .tc-page-header-accent {{background:linear-gradient(180deg,#3457E5 0%,#15B8CF 100%) !important}}
+        .tc-page-eyebrow {{color:#3457E5 !important}}
+        .tc-page-header h1 {{color:#14213D !important}}
+        .tc-page-header p {{color:#5B6B82 !important}}
+        .tc-page-meta span {{background:#F4F7FC !important;border-color:#D8E2EF !important;color:#53647C !important}}
+        .tc-page-status {{background:#EAF9FC !important;border-color:#BDEAF1 !important;color:#16677B !important}}
+        .tc-hero {{
+            color:#FFFFFF !important;
+            background:
+                radial-gradient(circle at 88% 10%,rgba(91,222,238,.19),transparent 14rem),
+                linear-gradient(135deg,#24437E 0%,#4658C2 64%,#5465D3 100%) !important;
+            border-color:rgba(255,255,255,.14) !important;
+            box-shadow:0 16px 38px rgba(37,63,120,.16) !important;
+        }}
+        .tc-hero h1 {{color:#FFFFFF !important}}
+        .tc-hero p {{color:#E8EEFF !important;opacity:1 !important}}
+        .tc-hero .tc-badge {{color:#F2FAFF !important;background:rgba(255,255,255,.12) !important;border-color:rgba(255,255,255,.18) !important}}
+        .tc-insight,.tc-recommended-action {{
+            background:linear-gradient(135deg,#FCFDFE 0%,#F5F3FF 100%) !important;
+            border-color:#DDDDF4 !important;
+        }}
+        .stButton > button[kind="primary"],
+        button[data-testid="stBaseButton-primary"],
+        [data-testid="stBaseButton-primary"] {{
+            background:linear-gradient(135deg,#3457E5 0%,#5368E7 72%,#318CAA 100%) !important;
+            color:#FFFFFF !important;
+            border:0 !important;
+            box-shadow:0 8px 20px rgba(52,87,229,.20) !important;
+        }}
+        .stButton > button[kind="primary"]:hover,
+        button[data-testid="stBaseButton-primary"]:hover,
+        [data-testid="stBaseButton-primary"]:hover {{
+            background:linear-gradient(135deg,#2948C6 0%,#465CCF 72%,#287E99 100%) !important;
+        }}
+        .stDownloadButton > button {{
+            color:#31445F !important;
+            background:#FCFDFE !important;
+            border-color:#C8D5E6 !important;
+        }}
+        .stTabs [data-baseweb="tab-list"] {{background:#E9EEF7 !important}}
+        .stTabs [data-baseweb="tab"] {{color:#5B6B82 !important}}
+        .stTabs [aria-selected="true"] {{color:#314FC9 !important;background:#FCFDFE !important}}
+
+        @media (max-width:760px) {{
+            .block-container {{padding-left:1rem;padding-right:1rem}}
+            [data-testid="stSidebar"] {{width:284px !important}}
+        }}
         </style>
         ''',
         unsafe_allow_html=True,

@@ -1,22 +1,26 @@
 # TalentCopilot AI
 
-AI Hiring Copilot
+**Human Intelligence. AI Amplified.**
 
-Understand every candidate.
-Explain every decision.
+TalentCopilot is an evidence-led Talent Intelligence platform that helps HR teams analyse candidates, structure interviews, model compensation, compare finalists and support human-owned decisions.
 
----
+## Current experience
 
-## Features
+Release `8.0.0-premium-unified-experience` introduces a balanced premium interface:
 
-- CV Screening
-- AI Recruiter Brief
-- Gap Analysis
-- Interview Questions
-- Evidence Explorer
-- Dynamic Scoring
-- Candidate Ranking
+- softened navy navigation with accessible contrast;
+- light blue-gray workspace and softly tinted cards;
+- indigo, electric-blue and cyan accents;
+- data-backed Home dashboard;
+- unified Recruitment journey from analysis to final decision;
+- preserved PDF reports and explainable evidence.
 
----
+## Core recruitment spaces
 
-Built with ❤️ using Python + Streamlit + OpenAI
+- Recruitment Overview
+- Dashboard Perspective
+- Compensation & Budget
+- Interview & Assessment
+- Compare & Decide
+
+Built with Python and Streamlit.

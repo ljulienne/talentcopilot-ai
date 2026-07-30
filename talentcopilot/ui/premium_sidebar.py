@@ -155,9 +155,9 @@ def _section_label(label: str) -> None:
 def _nav_button(item: SidebarItem, *, active: bool) -> None:
     import streamlit as st
 
+    # Counts remain visible in mission and workspace context. Stable labels
+    # keep the navigation compact and prevent ambiguous trailing numbers.
     label = f"{item.glyph}  {item.label}"
-    if item.badge:
-        label += f"   {item.badge}"
     if st.sidebar.button(
         label,
         key=f"premium_sidebar_{item.key}_{item.page_label}",
@@ -255,8 +255,9 @@ def render_premium_sidebar(session, *, current_page: str, app_version: str = "")
 
     st.sidebar.markdown(
         f'''<div class="tc-sidebar-next">
-        <div class="tc-sidebar-next-kicker">Recommended next step</div>
+        <div class="tc-sidebar-next-kicker">Next up</div>
         <div class="tc-sidebar-next-title">{escape(next_label)}</div>
+        <div class="tc-sidebar-next-copy">Continue the active mission without losing context.</div>
         </div>''',
         unsafe_allow_html=True,
     )

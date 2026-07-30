@@ -182,21 +182,49 @@ def _styles() -> None:
     st.markdown(
         """
         <style>
-        .tc-brief-hero{padding:2.1rem 2.25rem;border-radius:26px;background:linear-gradient(135deg,#0f172a 0%,#172554 52%,#312e81 100%);color:#fff;margin-bottom:1.35rem;box-shadow:0 20px 50px rgba(15,23,42,.18)}
-        .tc-brief-kicker{font-size:.78rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:#c7d2fe;margin-bottom:.7rem}
-        .tc-brief-hero h1{font-size:2.55rem;letter-spacing:-.045em;line-height:1.05;margin:0 0 .7rem}
-        .tc-brief-hero p{font-size:1.04rem;color:#e0e7ff;max-width:820px;margin:0}
-        .tc-brief-card{padding:1.15rem 1.2rem;border:1px solid #e2e8f0;border-radius:19px;background:#fff;min-height:210px;box-shadow:0 8px 28px rgba(15,23,42,.055)}
-        .tc-brief-card h3{font-size:1.13rem;margin:.55rem 0 .3rem;color:#0f172a}
-        .tc-brief-question{font-weight:750;color:#334155;margin-bottom:.55rem}
-        .tc-brief-copy{color:#64748b;font-size:.91rem;line-height:1.45;min-height:64px}
-        .tc-brief-meta{font-size:.8rem;color:#64748b;margin-top:.7rem;padding-top:.65rem;border-top:1px solid #f1f5f9}
-        .tc-brief-status{display:inline-block;border-radius:999px;padding:.25rem .58rem;font-size:.72rem;font-weight:850;letter-spacing:.02em}
-        .tc-ready{background:#dcfce7;color:#166534}.tc-attention{background:#fef3c7;color:#92400e}.tc-partial{background:#ede9fe;color:#5b21b6}.tc-locked{background:#f1f5f9;color:#475569}
-        .tc-priority{padding:1rem 1.1rem;border-radius:16px;border:1px solid #e2e8f0;background:#fff;margin-bottom:.65rem}
-        .tc-priority strong{display:block;color:#0f172a;margin-bottom:.25rem}.tc-priority span{color:#64748b;font-size:.9rem}
-        .tc-ai-brief{padding:1.25rem 1.3rem;border-radius:19px;background:#f8fafc;border:1px solid #dbeafe;margin-bottom:1rem}
-        .tc-ai-brief strong{color:#3730a3}.tc-ai-brief p{margin:.4rem 0 0;color:#475569}
+        .tc-home-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1.2rem;padding:.65rem .15rem 1.05rem}
+        .tc-home-kicker{font-size:.68rem;font-weight:850;letter-spacing:.12em;text-transform:uppercase;color:#3457E5;margin-bottom:.3rem}
+        .tc-home-head h1{margin:0;color:#14213D;font-size:clamp(1.65rem,2.6vw,2.25rem);letter-spacing:-.045em;line-height:1.08}
+        .tc-home-head p{margin:.4rem 0 0;color:#5B6B82;font-size:.94rem}
+        .tc-home-context{display:inline-flex;align-items:center;gap:.45rem;padding:.48rem .72rem;border-radius:999px;background:#FCFDFE;border:1px solid #DCE4F0;color:#53647C;font-size:.72rem;font-weight:760;box-shadow:0 5px 15px rgba(37,54,82,.045);white-space:nowrap}
+        .tc-home-dot{width:8px;height:8px;border-radius:50%;background:#22C55E;box-shadow:0 0 0 4px rgba(34,197,94,.11)}
+        .tc-home-stat{position:relative;overflow:hidden;padding:1rem 1.05rem;border:1px solid #DCE4F0;border-radius:17px;background:#FCFDFE;min-height:112px;box-shadow:0 7px 22px rgba(37,54,82,.055)}
+        .tc-home-stat:after{content:"";position:absolute;width:82px;height:82px;border-radius:50%;right:-34px;top:-38px;background:var(--tc-stat-soft,#EEF2FF)}
+        .tc-home-stat-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:var(--tc-stat-soft,#EEF2FF);color:var(--tc-stat,#3457E5);font-weight:900;font-size:1rem}
+        .tc-home-stat-label{margin-top:.62rem;color:#5B6B82;font-size:.72rem;font-weight:720}
+        .tc-home-stat-value{color:#14213D;font-size:1.55rem;font-weight:900;letter-spacing:-.045em;line-height:1.05;margin-top:.08rem}
+        .tc-home-stat-note{color:#718198;font-size:.66rem;margin-top:.2rem}
+        .tc-home-panel{height:100%;padding:1.05rem 1.12rem;border:1px solid #DCE4F0;border-radius:18px;background:#FCFDFE;box-shadow:0 8px 24px rgba(37,54,82,.055)}
+        .tc-home-panel-head{display:flex;align-items:center;justify-content:space-between;gap:.8rem;margin-bottom:.8rem}
+        .tc-home-panel-title{color:#14213D;font-weight:850;font-size:1rem}
+        .tc-home-panel-meta{color:#3457E5;font-size:.68rem;font-weight:780}
+        .tc-home-role{font-size:1.15rem;color:#14213D;font-weight:880;letter-spacing:-.025em}
+        .tc-home-role-meta{color:#5B6B82;font-size:.76rem;margin-top:.2rem}
+        .tc-home-progress{height:8px;border-radius:999px;background:#E8EDF6;overflow:hidden;margin:.9rem 0 .45rem}
+        .tc-home-progress span{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#3457E5,#5368E7 62%,#15B8CF)}
+        .tc-home-progress-copy{display:flex;justify-content:space-between;color:#6B7B91;font-size:.69rem}
+        .tc-home-priority{display:flex;gap:.72rem;padding:.72rem 0;border-bottom:1px solid #EDF1F7}
+        .tc-home-priority:last-child{border-bottom:0}
+        .tc-home-priority-icon{display:grid;place-items:center;width:30px;height:30px;flex:0 0 30px;border-radius:9px;background:#EEF2FF;color:#3457E5;font-weight:900}
+        .tc-home-priority strong{display:block;color:#263750;font-size:.8rem;margin-bottom:.12rem}
+        .tc-home-priority span{display:block;color:#6B7B91;font-size:.7rem;line-height:1.4}
+        .tc-home-project{display:grid;grid-template-columns:minmax(180px,1.35fr) .72fr .72fr 1.15fr;gap:.8rem;align-items:center;padding:.74rem .15rem;border-bottom:1px solid #EDF1F7}
+        .tc-home-project:last-child{border-bottom:0}
+        .tc-home-project-name{font-size:.79rem;color:#25364D;font-weight:820}
+        .tc-home-project-sub{font-size:.65rem;color:#7A899D;margin-top:.12rem}
+        .tc-home-project-value{font-size:.72rem;color:#53647C}
+        .tc-home-mini-track{height:6px;border-radius:999px;background:#E8EDF6;overflow:hidden}
+        .tc-home-mini-track span{display:block;height:100%;background:linear-gradient(90deg,#3457E5,#7456E8);border-radius:999px}
+        .tc-brief-card{padding:1rem 1.05rem;border:1px solid #DCE4F0;border-radius:17px;background:#FCFDFE;min-height:198px;box-shadow:0 7px 22px rgba(37,54,82,.05)}
+        .tc-brief-card h3{font-size:1.05rem;margin:.5rem 0 .28rem;color:#14213D}
+        .tc-brief-question{font-weight:760;color:#34465F;margin-bottom:.5rem;font-size:.82rem}
+        .tc-brief-copy{color:#6B7B91;font-size:.78rem;line-height:1.45;min-height:58px}
+        .tc-brief-meta{font-size:.68rem;color:#718198;margin-top:.62rem;padding-top:.58rem;border-top:1px solid #EDF1F7}
+        .tc-brief-status{display:inline-block;border-radius:999px;padding:.22rem .52rem;font-size:.64rem;font-weight:850;letter-spacing:.02em}
+        .tc-ready{background:#DCFCE7;color:#166534}.tc-attention{background:#FEF3C7;color:#92400E}.tc-partial{background:#EDE9FE;color:#5B21B6}.tc-locked{background:#EDF1F7;color:#52647D}
+        .tc-ai-brief{padding:.95rem 1.05rem;border-radius:16px;background:linear-gradient(135deg,#F9FAFF,#F1F5FF);border:1px solid #DCE3F3;margin:.75rem 0 1rem}
+        .tc-ai-brief strong{color:#3457E5}.tc-ai-brief p{margin:.32rem 0 0;color:#53647C;font-size:.8rem}
+        @media(max-width:820px){.tc-home-head{display:block}.tc-home-context{margin-top:.7rem}.tc-home-project{grid-template-columns:1fr 1fr}.tc-home-project>div:last-child{grid-column:1/-1}}
         </style>
         """,
         unsafe_allow_html=True,
@@ -232,13 +260,23 @@ def _render_domain(domain: BriefingDomain, index: int) -> None:
 def _render_priorities(priorities: Iterable[BriefingPriority]) -> None:
     import streamlit as st
 
-    tone_icons = {"attention": "⚠", "success": "✓", "info": "•"}
+    tone_icons = {"attention": "!", "success": "✓", "info": "i"}
+    items = []
     for priority in priorities:
         icon = tone_icons.get(priority.tone, "•")
-        st.markdown(
-            f'<div class="tc-priority"><strong>{icon} {escape(priority.title)}</strong><span>{escape(priority.detail)}</span></div>',
-            unsafe_allow_html=True,
+        items.append(
+            f'<div class="tc-home-priority"><div class="tc-home-priority-icon">{escape(icon)}</div>'
+            f'<div><strong>{escape(priority.title)}</strong><span>{escape(priority.detail)}</span></div></div>'
         )
+    body = "".join(items)
+    st.markdown(
+        '<div class="tc-home-panel"><div class="tc-home-panel-head">'
+        '<div class="tc-home-panel-title">Today’s priorities</div>'
+        '<div class="tc-home-panel-meta">AI-guided</div></div>'
+        + body
+        + '</div>',
+        unsafe_allow_html=True,
+    )
 
 
 def _render_mission_canvas(canvas: MissionCanvas) -> None:
@@ -307,16 +345,88 @@ def render_executive_briefing() -> None:
     domains = build_briefing_domains(session)
     priorities = build_priorities(session)
 
+    try:
+        projects = list(build_project_summaries(session, list_recruitments()))
+    except Exception:
+        projects = list(build_project_summaries(session, ()))
+
+    active_label = snapshot["role_title"] if snapshot["has_recruitment"] else "No active mission"
     st.markdown(
-        """
-        <div class="tc-brief-hero">
-          <div class="tc-brief-kicker">TalentCopilot · AI Talent Intelligence Platform</div>
-          <h1>What would you like to diagnose today?</h1>
-          <p>Start with a real HR question. TalentCopilot checks whether the available evidence is sufficient, then guides you toward a clear and explainable decision.</p>
-        </div>
-        """,
+        f'<div class="tc-home-head"><div><div class="tc-home-kicker">Talent intelligence workspace</div>'
+        f'<h1>Welcome back</h1><p>See what matters now, then continue directly to the next evidence-led decision.</p></div>'
+        f'<div class="tc-home-context"><span class="tc-home-dot"></span>{escape(active_label)}</div></div>',
         unsafe_allow_html=True,
     )
+
+    total_candidates = sum(project.candidate_count for project in projects)
+    total_analyzed = sum(project.analyzed_count for project in projects)
+    decision_ready = sum(
+        1 for project in projects
+        if project.candidate_count > 0 and project.analyzed_count >= project.candidate_count
+    )
+    stat_items = (
+        ("▦", "Active missions", str(len(projects)), "Active and saved workspaces", "#EEF2FF", "#3457E5"),
+        ("◇", "Candidates", str(total_candidates), "Across current recruitments", "#ECFEFF", "#16889A"),
+        ("✓", "Analysed", str(total_analyzed), "Official analyses available", "#ECFDF5", "#15803D"),
+        ("✦", "Decision ready", str(decision_ready), "Missions ready for review", "#F5F3FF", "#7456E8"),
+    )
+    columns = st.columns(4)
+    for column, (icon, label, value, note, soft, tone) in zip(columns, stat_items):
+        with column:
+            st.markdown(
+                f'<div class="tc-home-stat" style="--tc-stat-soft:{soft};--tc-stat:{tone}">'
+                f'<div class="tc-home-stat-icon">{escape(icon)}</div>'
+                f'<div class="tc-home-stat-label">{escape(label)}</div>'
+                f'<div class="tc-home-stat-value">{escape(value)}</div>'
+                f'<div class="tc-home-stat-note">{escape(note)}</div></div>',
+                unsafe_allow_html=True,
+            )
+
+    left, right = st.columns([1.25, .85])
+    with left:
+        candidate_count = snapshot["candidate_count"]
+        analyzed_count = snapshot["analyzed_count"]
+        progress = round(analyzed_count / candidate_count * 100) if candidate_count else 0
+        st.markdown(
+            f'<div class="tc-home-panel"><div class="tc-home-panel-head">'
+            f'<div class="tc-home-panel-title">Active recruitment</div><div class="tc-home-panel-meta">Current mission</div></div>'
+            f'<div class="tc-home-role">{escape(snapshot["role_title"])}</div>'
+            f'<div class="tc-home-role-meta">{analyzed_count}/{candidate_count} candidates analysed</div>'
+            f'<div class="tc-home-progress"><span style="width:{progress}%"></span></div>'
+            f'<div class="tc-home-progress-copy"><span>Analysis progress</span><strong>{progress}%</strong></div></div>',
+            unsafe_allow_html=True,
+        )
+        if snapshot["has_recruitment"]:
+            if st.button("Continue active recruitment", type="primary", key="home_continue_active_recruitment", use_container_width=True):
+                request_page("Recruitment Overview", reason="Continued the active recruitment from Home.")
+                st.rerun()
+        else:
+            if st.button("Start a recruitment mission", type="primary", key="home_start_recruitment", use_container_width=True):
+                request_page("Recruitment Overview", reason="Started a recruitment mission from Home.")
+                st.rerun()
+
+    with right:
+        _render_priorities(priorities)
+
+    st.markdown("### Active projects")
+    if projects:
+        project_rows = []
+        for project in projects[:5]:
+            progress = project.progress_percent
+            project_rows.append(
+                f'<div class="tc-home-project"><div><div class="tc-home-project-name">{escape(project.title)}</div>'
+                f'<div class="tc-home-project-sub">{escape(project.status)} · {escape(project.next_action)}</div></div>'
+                f'<div class="tc-home-project-value">{project.candidate_count} candidates</div>'
+                f'<div class="tc-home-project-value">{project.analyzed_count} analysed</div>'
+                f'<div><div class="tc-home-mini-track"><span style="width:{progress}%"></span></div>'
+                f'<div class="tc-home-project-sub">{progress}% complete</div></div></div>'
+            )
+        st.markdown('<div class="tc-home-panel">' + "".join(project_rows) + '</div>', unsafe_allow_html=True)
+        if st.button("View all projects", key="briefing_view_projects"):
+            request_page("Projects", reason="Opened the Project Hub from the Executive Brief.")
+            st.rerun()
+    else:
+        st.caption("No project yet. Start with Recruitment Intelligence to create your first decision project.")
 
     if snapshot["has_recruitment"]:
         brief = (
@@ -327,14 +437,11 @@ def render_executive_briefing() -> None:
     else:
         brief = (
             "No recruitment is active yet. Recruitment Intelligence can be activated with a job description and candidate CVs. "
-            "Other diagnostics will unlock only when their required organizational evidence is available."
+            "Other diagnostics unlock only when their required organizational evidence is available."
         )
     st.markdown(f'<div class="tc-ai-brief"><strong>Today’s AI brief</strong><p>{brief}</p></div>', unsafe_allow_html=True)
 
-    st.subheader("Today’s priorities")
-    _render_priorities(priorities)
-
-    st.subheader("Choose a diagnostic")
+    st.markdown("### Choose a diagnostic")
     for row_start in range(0, len(domains), 3):
         row = domains[row_start:row_start + 3]
         columns = st.columns(3)
@@ -342,54 +449,35 @@ def render_executive_briefing() -> None:
             with column:
                 _render_domain(domain, row_start + offset)
 
-    st.subheader("Recent projects")
-    try:
-        projects = build_project_summaries(session, list_recruitments())[:4]
-    except Exception:
-        projects = build_project_summaries(session, ())[:4]
-    if projects:
-        project_columns = st.columns(min(4, len(projects)))
-        for column, project in zip(project_columns, projects):
-            with column:
-                st.markdown(
-                    f'<div class="tc-priority"><strong>{escape(project.title)}</strong><span>{project.analyzed_count}/{project.candidate_count} analysed · {escape(project.next_action)}</span></div>',
-                    unsafe_allow_html=True,
-                )
-        if st.button("View all projects", key="briefing_view_projects"):
-            request_page("Projects", reason="Opened the Project Hub from the Executive Brief.")
-            st.rerun()
-    else:
-        st.caption("No project yet. Start with Recruitment Intelligence to create your first decision project.")
+    with st.expander("Describe a new mission", expanded=False):
+        st.caption(
+            "Start with the business outcome. TalentCopilot will route the mission, "
+            "identify the minimum useful evidence and propose the workflow."
+        )
+        prompt = st.text_area(
+            "What are you trying to accomplish?",
+            placeholder=(
+                "Example: We need to recruit a Global HRIS Director within three months. "
+                "International transformation experience is mandatory."
+            ),
+            label_visibility="collapsed",
+            height=120,
+            key="enterprise_mission_prompt",
+        )
 
-    st.subheader("Describe your mission")
-    st.caption(
-        "Start with the business outcome. TalentCopilot will route the mission, "
-        "identify the minimum useful evidence and propose the workflow."
-    )
-    prompt = st.text_area(
-        "What are you trying to accomplish?",
-        placeholder=(
-            "Example: We need to recruit a Global HRIS Director within three months. "
-            "International transformation experience is mandatory."
-        ),
-        label_visibility="collapsed",
-        height=120,
-        key="enterprise_mission_prompt",
-    )
+        analyse_clicked = st.button(
+            "Understand my mission",
+            key="enterprise_mission_analyse",
+            type="primary",
+            disabled=not bool(prompt.strip()),
+        )
+        if analyse_clicked:
+            st.session_state["enterprise_mission_canvas"] = understand_mission(prompt)
 
-    analyse_clicked = st.button(
-        "Understand my mission",
-        key="enterprise_mission_analyse",
-        type="primary",
-        disabled=not bool(prompt.strip()),
-    )
-    if analyse_clicked:
-        st.session_state["enterprise_mission_canvas"] = understand_mission(prompt)
-
-    canvas = st.session_state.get("enterprise_mission_canvas")
-    if isinstance(canvas, MissionCanvas):
-        _render_mission_canvas(canvas)
-        render_mission_workspace(canvas, session)
+        canvas = st.session_state.get("enterprise_mission_canvas")
+        if isinstance(canvas, MissionCanvas):
+            _render_mission_canvas(canvas)
+            render_mission_workspace(canvas, session)
 
 
 

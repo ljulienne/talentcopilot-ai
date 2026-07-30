@@ -1,5 +1,15 @@
 # Changelog
 
+
+## 8.0.0 — Premium Unified Experience
+
+- Deployed the approved balanced premium UI direction across the shared application shell.
+- Restored a softened navy sidebar with high-contrast integrated navigation rows.
+- Harmonized the sidebar, main workspace, cards, page headers, tabs and actions with one indigo/cyan design language.
+- Rebuilt Home as a real data-backed executive dashboard with active missions, candidate totals, analysis progress, priorities and project status.
+- Removed inline navigation counts from button labels while preserving mission context and workflow data.
+- Preserved official Talent Fit scores, ranks, evidence, interview assessments, compensation records and all PDF exports.
+
 ## 7.9.1 — UI Rendering & Navigation Hotfix
 
 - Fixed raw HTML fragments displayed in Candidate Intelligence, Interview & Assessment, and Compare & Decide.
