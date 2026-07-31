@@ -6,15 +6,15 @@ TalentCopilot is an evidence-led Talent Intelligence platform that helps HR team
 
 ## Current experience
 
-Release `8.6.0-recruitment-portfolio-intelligence` adds transparent cross-project operational intelligence:
+Release `8.7.0-recruitment-action-center` turns portfolio signals into accountable operational follow-up:
 
-- lifecycle distribution across saved recruitment projects;
-- last-activity freshness based on recorded timestamps;
-- one primary operational alert per project;
-- ownership, workflow, interview, pipeline and decision attention signals;
-- descriptive owner workload without capacity inference;
-- active-mission analytics retained in a dedicated tab;
-- preserved official candidate IDs, scores, ranks, evidence and decision history.
+- one deterministic action per non-archived recruitment project;
+- persistent Open, In progress and Done execution statuses;
+- search and filters by action status, severity and owner;
+- direct activation of the recruitment project concerned;
+- actor and timestamp traceability for status changes;
+- source alerts remain visible until the underlying workflow condition changes;
+- official candidate IDs, scores, ranks, evidence and decision history remain preserved.
 
 The local persistence adapter remains a product foundation, not a production multi-user database.
 
@@ -25,5 +25,6 @@ The local persistence adapter remains a product foundation, not a production mul
 - Compensation & Budget
 - Interview & Assessment
 - Compare & Decide
+- Recruitment Action Center
 
 Built with Python and Streamlit.

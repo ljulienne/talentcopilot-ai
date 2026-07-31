@@ -34,6 +34,13 @@ def _page(label, module, function, description="", icon="•"):
 COMMAND_PAGES = [
     _page("Executive Brief", "talentcopilot.ui.home", "render_home", "What matters and what to do next.", "✦"),
     _page("Projects", "talentcopilot.ui.project_hub", "render_project_hub", "Resume active and saved decision projects.", "▦"),
+    _page(
+        "Action Center",
+        "talentcopilot.ui.recruitment_action_center",
+        "render_recruitment_action_center",
+        "Track one accountable operational action per open recruitment project.",
+        "✓",
+    ),
 ]
 
 ANALYSIS_PAGES = [

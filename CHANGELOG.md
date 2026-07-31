@@ -1,5 +1,15 @@
 # Changelog
 
+## 8.7.0 — Recruitment Action Center
+
+- Added one deterministic operational action per non-archived recruitment project.
+- Added persistent Open, In progress and Done execution statuses.
+- Added search and filters by status, severity and owner.
+- Added direct project opening and status traceability.
+- Linked the Analytics attention queue to the Action Center.
+- Kept source portfolio alerts visible after action completion.
+- Preserved candidate IDs, evidence, interviews, compensation, scores and ranks.
+
 ## 8.2.0 — UX Clarity & Universal Risk Grounding
 
 - Removed App health and duplicate shell-level next-action prompts from the recruiter journey.

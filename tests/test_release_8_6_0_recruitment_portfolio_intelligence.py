@@ -183,6 +183,8 @@ def test_service_never_reads_candidate_score_or_rank_fields():
     assert not any(item in source for item in forbidden)
 
 
-def test_visible_version_is_release_8_6_0():
-    source = Path("talentcopilot/config.py").read_text(encoding="utf-8")
-    assert 'APP_VERSION = "v8.6.0"' in source
+def test_visible_version_is_release_8_6_0_or_later():
+    from talentcopilot.config import APP_VERSION
+
+    version = tuple(int(part) for part in APP_VERSION.lstrip("v").split("."))
+    assert version >= (8, 6, 0)

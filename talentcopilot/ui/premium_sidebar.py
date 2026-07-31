@@ -221,6 +221,7 @@ def render_premium_sidebar(session, *, current_page: str, app_version: str = "")
     secondary = (
         SidebarItem("organization", "Organization", "Organization Intelligence", "Explore organizational and collaboration signals.", ":material/hub:"),
         SidebarItem("analytics", "Analytics", "Analytics Dashboard", "Open cross-recruitment analytics.", ":material/insights:"),
+        SidebarItem("actions", "Action Center", "Action Center", "Track accountable follow-up across recruitment projects.", ":material/task_alt:"),
     )
     for item in secondary:
         _nav_button(item, active=item.page_label == current_page)

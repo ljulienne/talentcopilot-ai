@@ -1,5 +1,15 @@
 # TalentCopilot Roadmap
 
+## ✅ v8.7.0 — Recruitment Action Center
+
+- One accountable action per open recruitment project
+- Persistent Open, In progress and Done execution states
+- Search and filters by owner, severity and status
+- Direct project activation from the action queue
+- Candidate scores, ranks and evidence remain immutable
+
+---
+
 ## ✅ v8.6.0 — Recruitment Portfolio Intelligence
 
 - Cross-project lifecycle and activity visibility

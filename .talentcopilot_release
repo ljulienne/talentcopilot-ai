@@ -1,3 +1,3 @@
-8.6.0-recruitment-portfolio-intelligence
-base_release=8.5.0-recruitment-portfolio-lifecycle
-base_commit=fd19965c17730233d0521faac0fda93436c95aab
+8.7.0-recruitment-action-center
+base_release=8.6.0-recruitment-portfolio-intelligence
+base_commit=8c6797c16355ca3baa8a9102edc0392686cf7631

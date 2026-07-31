@@ -131,8 +131,8 @@ def _render_attention_queue(report) -> None:
             unsafe_allow_html=True,
         )
 
-    if st.button("Open Projects", type="primary", key="portfolio_intelligence_open_projects"):
-        request_page("Projects", reason="Opened from the recruitment portfolio attention queue.")
+    if st.button("Open Action Center", type="primary", key="portfolio_intelligence_open_actions"):
+        request_page("Action Center", reason="Opened from the recruitment portfolio attention queue.")
         st.rerun()
 
 
