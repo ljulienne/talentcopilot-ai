@@ -1,5 +1,16 @@
 # TalentCopilot Roadmap
 
+## ✅ v8.6.0 — Recruitment Portfolio Intelligence
+
+- Cross-project lifecycle and activity visibility
+- One primary operational alert per project
+- Ownership and decision bottleneck signals
+- Descriptive owner workload
+- Active-mission analytics retained
+- Official candidate scores and ranks preserved
+
+---
+
 ## ✅ v8.5.0 — Recruitment Portfolio & Lifecycle
 
 - Searchable and filterable recruitment portfolio

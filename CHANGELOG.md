@@ -207,3 +207,12 @@ All notable changes to TalentCopilot are documented here.
 - Preserved official candidate identities, scores, ranks, interviews, compensation and decision history.
 - Updated the visible application version to `v8.5.0`.
 
+## 8.6.0 — Recruitment Portfolio Intelligence
+
+- Replaced the single-mission Analytics landing view with cross-project portfolio intelligence.
+- Added lifecycle distribution and recorded last-activity freshness bands.
+- Added one deterministic primary operational alert per project.
+- Added owner workload visibility without inferring recruiter capacity.
+- Retained active-mission analytics in a dedicated tab.
+- Avoided predictive time-to-hire claims and preserved official candidate scores, ranks and evidence.
+

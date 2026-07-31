@@ -250,6 +250,8 @@ def test_project_hub_exposes_portfolio_controls_and_no_score_mutation():
     assert "decision_score" not in source
 
 
-def test_visible_version_is_release_8_5_0():
-    source = Path("talentcopilot/config.py").read_text(encoding="utf-8")
-    assert 'APP_VERSION = "v8.5.0"' in source
+def test_visible_version_is_release_8_5_0_or_later():
+    from talentcopilot.config import APP_VERSION
+
+    version = tuple(int(part) for part in APP_VERSION.lstrip("v").split("."))
+    assert version >= (8, 5, 0)
